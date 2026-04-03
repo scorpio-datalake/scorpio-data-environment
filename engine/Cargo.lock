@@ -882,41 +882,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ballista"
-version = "53.0.0"
-dependencies = [
- "async-trait",
- "ballista-core",
- "ballista-executor",
- "ballista-scheduler",
- "ctor",
- "datafusion",
- "datafusion-proto",
- "env_logger",
- "log",
- "rstest",
- "tempfile",
- "tokio",
- "tonic",
- "url",
-]
-
-[[package]]
-name = "ballista-cli"
-version = "53.0.0"
-dependencies = [
- "ballista",
- "clap",
- "datafusion",
- "datafusion-cli",
- "dirs",
- "env_logger",
- "mimalloc",
- "rustyline",
- "tokio",
-]
-
-[[package]]
 name = "ballista-core"
 version = "53.0.0"
 dependencies = [
@@ -4622,6 +4587,41 @@ name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
+
+[[package]]
+name = "scorpio-engine"
+version = "53.0.0"
+dependencies = [
+ "async-trait",
+ "ballista-core",
+ "ballista-executor",
+ "ballista-scheduler",
+ "ctor",
+ "datafusion",
+ "datafusion-proto",
+ "env_logger",
+ "log",
+ "rstest",
+ "tempfile",
+ "tokio",
+ "tonic",
+ "url",
+]
+
+[[package]]
+name = "scorpio-engine-cli"
+version = "53.0.0"
+dependencies = [
+ "clap",
+ "datafusion",
+ "datafusion-cli",
+ "dirs",
+ "env_logger",
+ "mimalloc",
+ "rustyline",
+ "scorpio-engine",
+ "tokio",
+]
 
 [[package]]
 name = "security-framework"

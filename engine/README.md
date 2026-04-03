@@ -1,44 +1,44 @@
 # Scorpio engine (Rust)
 
-Committed **Scorpio** workspace (`Cargo.toml` at this level). Public naming in APIs and docs should stay **Scorpio**; third-party library names appear only where required by dependencies and attribution.
+Workspace root for the **Ballista-derived** distributed engine (`ballista-cli`, `ballista/client`, `ballista/core`, `ballista/executor`, `ballista/scheduler`). Public product naming should stay **Scorpio** where you control user-facing text.
+
+## Prerequisites
+
+- **Rust:** **1.91.1** (see `rust-toolchain.toml`; Ballista and AWS SDK crates in the graph declare this MSRV).
+- **`protoc`:** `ballista-core` runs `prost-build` over `.proto` files. Cargo reads **`PROTOC`** (full path to `protoc.exe`) if set; otherwise `protoc` on `PATH`. From repo root on Windows: `. .\scripts\set-protoc-for-cargo.ps1` then build.
 
 ## Contents
 
-| Crate | Role |
-|-------|------|
-| `crates/scorpio-core` | `ScorpioObjectStoreRegistry` — `file`, `http(s)`, `s3`, `gs`/`gcs`, Azure (`az`, `abfs`, `abfss`, `azure`, `adl`); dynamic `register_store` / `deregister_store`; in-process SQL smoke via DataFusion |
+| Path | Role |
+|------|------|
+| `ballista-cli` | CLI binary **`ballista-cli`** |
+| `ballista/core` | Core types, protos, shared logic |
+| `ballista/scheduler` | Scheduler service |
+| `ballista/executor` | Executor service |
+| `ballista/client` | Client library (`ballista` crate) |
 
 ## Build / test
 
-Requires **Rust 1.91.1** (see `rust-toolchain.toml`; Ballista and AWS SDK crates in the graph declare this MSRV).
-
 ```bash
 cd engine
-cargo test -p scorpio-core --locked
+cargo build -p ballista-cli --locked
+cargo test --workspace --locked
 ```
-
-From repo root: `.\scripts\run-smoke-sql.ps1` or `./scripts/run-smoke-sql.sh` runs all `smoke_*` tests (defaults `SCORPIO_ENGINE_ROOT` to `engine/`).
 
 ## Environment variables
 
-- **S3 / AWS:** `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, etc. (see `AmazonS3Builder::from_env`).
-- **GCS:** Application Default Credentials or `GOOGLE_APPLICATION_CREDENTIALS` (see `GoogleCloudStorageBuilder::from_env`).
-- **Azure:** `AZURE_STORAGE_ACCOUNT`, keys or workload identity as supported by `MicrosoftAzureBuilder::from_env` and `with_url`.
+- **S3 / AWS:** `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, etc.
+- **GCS:** Application Default Credentials or `GOOGLE_APPLICATION_CREDENTIALS`
+- **Azure:** `AZURE_STORAGE_ACCOUNT` and related `object_store` vars
 
 ## Reference clone
 
-A read-only clone under `vendor/datafusion-ballista` (gitignored) is optional for comparison only—not the Scorpio codebase.
+A read-only clone under `vendor/datafusion-ballista` (gitignored) is optional for comparison only.
 
 ## Git remotes
 
-See [REPOSITORY_SETUP.md](REPOSITORY_SETUP.md). Use **your** org as `origin` for Scorpio; do not treat third-party repos as the primary remote.
+[REPOSITORY_SETUP.md](REPOSITORY_SETUP.md), [../docs/scorpio-engine-fork.md](../docs/scorpio-engine-fork.md).
 
 ## Legal
 
-Scorpio-authored code in this workspace is under **Apache License 2.0** ([LICENSE](LICENSE)). [NOTICE](NOTICE) summarizes third-party components and attribution; keep it updated as dependencies change and retain upstream NOTICE content where Ballista-derived code ships.
-
-Fork/trim/remotes checklist: [REPOSITORY_SETUP.md](REPOSITORY_SETUP.md). Full policy notes: [license-and-notice.txt](../license-and-notice.txt).
-
-## Roadmap (not in this crate yet)
-
-Scheduler, executor, and Docker build scripts from a historical distributed query stack are **separate, large** porting tasks—track them in `Planning/Phase1.md`.
+[LICENSE](LICENSE), [NOTICE](NOTICE). Derived from Apache DataFusion Ballista; retain upstream notices when shipping.
