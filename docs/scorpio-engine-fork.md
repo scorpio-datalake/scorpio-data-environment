@@ -72,3 +72,5 @@ Those scripts run every test named `smoke_*` in `scorpio-core`. If **`scorpio-co
 ## 4. CI habit
 
 This repository runs **`cargo fmt`**, **`clippy`**, and **`cargo test --locked`** for `engine/` on push/PR via `.github/workflows/scorpio-engine.yml`. Mirror the same jobs on your **standalone** Scorpio engine fork once it exists.
+
+DataFusion ↔ Ballista version notes: [scorpio-engine-compatibility.md](scorpio-engine-compatibility.md).
