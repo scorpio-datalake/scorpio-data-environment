@@ -10,7 +10,7 @@ Committed **Scorpio** workspace (`Cargo.toml` at this level). Public naming in A
 
 ## Build / test
 
-Requires **Rust 1.88** (see `rust-toolchain.toml`).
+Requires **Rust 1.91.1** (see `rust-toolchain.toml`; Ballista and AWS SDK crates in the graph declare this MSRV).
 
 ```bash
 cd engine
