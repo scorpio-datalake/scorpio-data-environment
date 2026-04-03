@@ -1,0 +1,36 @@
+name: Scorpio engine (Rust)
+
+on:
+  push:
+    paths:
+      - "engine/**"
+      - ".github/workflows/scorpio-engine.yml"
+  pull_request:
+    paths:
+      - "engine/**"
+      - ".github/workflows/scorpio-engine.yml"
+
+defaults:
+  run:
+    working-directory: engine
+
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.88.0
+          components: rustfmt, clippy
+
+      - name: cargo fmt
+        run: cargo fmt --all -- --check
+
+      - name: cargo clippy
+        run: cargo clippy --workspace --locked --all-targets -- -D warnings
+
+      - name: cargo test
+        run: cargo test --workspace --locked
