@@ -27,9 +27,9 @@ cargo test --workspace --locked
 
 ## Environment variables
 
-- **S3 / AWS:** `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, etc.
-- **GCS:** Application Default Credentials or `GOOGLE_APPLICATION_CREDENTIALS`
-- **Azure:** `AZURE_STORAGE_ACCOUNT` and related `object_store` vars
+- **S3 / AWS:** `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, etc. (and Ballista `s3.*` SQL options when using `CustomObjectStoreRegistry`).
+- **GCS (`gs://`):** Application Default Credentials or `GOOGLE_APPLICATION_CREDENTIALS` (see [object_store GCP](https://docs.rs/object_store/latest/object_store/gcp/index.html)).
+- **Azure (`abfs`/`abfss`/`az`/`azure`/`adl` or `https://*.blob.core.windows.net`):** `AZURE_STORAGE_ACCOUNT`, `AZURE_STORAGE_ACCESS_KEY`, managed identity / CLI / SAS as supported by [object_store Azure](https://docs.rs/object_store/latest/object_store/azure/index.html).
 
 ## Reference clone
 

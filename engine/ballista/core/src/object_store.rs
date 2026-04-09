@@ -15,15 +15,19 @@
 // specific language governing permissions and limitations
 // under the License.
 
-//! # Extending Ballista
+//! # Object store registry (Ballista / Scorpio engine)
 //!
-//! This example demonstrates extending standard ballista behavior,
-//! integrating external `ObjectStoreRegistry`.
+//! [`CustomObjectStoreRegistry`] resolves stores for **`file`**, **`http`/`https`** (generic HTTP or
+//! Azure Blob/DFS HTTPS hosts), **`s3`**, **`gs`**, and **`adl` / `azure` / `az` / `abfs` / `abfss`**
+//! using [`object_store`]. Credentials follow each backend’s usual environment variables (e.g. GCP
+//! ADC, `AZURE_STORAGE_*`, AWS keys for S3).
 //!
-//! `ObjectStore` is provided by `ObjectStoreRegistry`, and configured
-//! using `ExtensionOptions`, which can be configured using SQL `SET` command.
+//! Dynamic registration via [`ObjectStoreRegistry::register_store`] uses the same URL keys as
+//! DataFusion’s default registry (scheme + `://` + host/port, excluding userinfo).
+//!
+//! S3-specific SQL `SET` options are defined on [`S3Options`].
 
-use datafusion::common::{config_err, exec_err};
+use datafusion::common::{config_err, exec_err, internal_datafusion_err};
 use datafusion::config::{
     ConfigEntry, ConfigExtension, ConfigField, ExtensionOptions, Visit,
 };
@@ -35,11 +39,14 @@ use datafusion::execution::runtime_env::{RuntimeEnv, RuntimeEnvBuilder};
 use datafusion::execution::{SessionState, SessionStateBuilder};
 use datafusion::prelude::SessionConfig;
 use object_store::aws::AmazonS3Builder;
+use object_store::azure::MicrosoftAzureBuilder;
+use object_store::gcp::GoogleCloudStorageBuilder;
 use object_store::http::HttpBuilder;
 use object_store::local::LocalFileSystem;
 use object_store::{ClientOptions, ObjectStore};
 use parking_lot::RwLock;
 use std::any::Any;
+use std::collections::HashMap;
 use std::fmt::Display;
 use std::sync::Arc;
 use url::Url;
@@ -122,6 +129,9 @@ pub fn state_with_s3_support() -> datafusion::common::Result<SessionState> {
 pub struct CustomObjectStoreRegistry {
     local: Arc<LocalFileSystem>,
     s3options: S3Options,
+    /// Stores registered with [`ObjectStoreRegistry::register_store`], keyed like DataFusion's
+    /// default registry (`scheme` + `://` + authority host/port, excluding userinfo).
+    dynamic_stores: RwLock<HashMap<String, Arc<dyn ObjectStore>>>,
 }
 
 impl CustomObjectStoreRegistry {
@@ -130,36 +140,99 @@ impl CustomObjectStoreRegistry {
         Self {
             s3options,
             local: Arc::new(LocalFileSystem::new()),
+            dynamic_stores: RwLock::new(HashMap::new()),
         }
+    }
+
+    /// Key format aligned with DataFusion [`DefaultObjectStoreRegistry`]
+    /// (see `datafusion_execution::object_store::get_url_key`).
+    fn object_store_registry_key(url: &Url) -> String {
+        format!(
+            "{}://{}",
+            url.scheme(),
+            &url[url::Position::BeforeHost..url::Position::AfterPort],
+        )
+    }
+
+    fn url_host_is_azure_blob_or_dfs(url: &Url) -> bool {
+        url.host_str().is_some_and(|host| {
+            host.ends_with(".dfs.core.windows.net")
+                || host.ends_with(".blob.core.windows.net")
+                || host.ends_with(".dfs.fabric.microsoft.com")
+                || host.ends_with(".blob.fabric.microsoft.com")
+        })
     }
 }
 
 impl ObjectStoreRegistry for CustomObjectStoreRegistry {
     fn register_store(
         &self,
-        _url: &Url,
-        _store: Arc<dyn ObjectStore>,
+        url: &Url,
+        store: Arc<dyn ObjectStore>,
     ) -> Option<Arc<dyn ObjectStore>> {
-        unimplemented!("register_store not supported")
+        let key = Self::object_store_registry_key(url);
+        self.dynamic_stores.write().insert(key, store)
+    }
+
+    fn deregister_store(&self, url: &Url) -> Result<Arc<dyn ObjectStore>> {
+        let key = Self::object_store_registry_key(url);
+        self.dynamic_stores
+            .write()
+            .remove(&key)
+            .ok_or_else(|| {
+                internal_datafusion_err!(
+                    "Failed to deregister object store. No store registered for {url}."
+                )
+            })
     }
 
     fn get_store(&self, url: &Url) -> Result<Arc<dyn ObjectStore>> {
+        let key = Self::object_store_registry_key(url);
+        if let Some(store) = self.dynamic_stores.read().get(&key).map(Arc::clone) {
+            return Ok(store);
+        }
+
         let scheme = url.scheme();
         log::trace!("get_store: {:?}", &self.s3options.config.read());
         match scheme {
             "" | "file" => Ok(self.local.clone()),
-            "http" | "https" => Ok(Arc::new(
-                HttpBuilder::new()
-                    .with_client_options(ClientOptions::new().with_allow_http(true))
-                    .with_url(url.origin().ascii_serialization())
-                    .build()?,
-            )),
+            "http" | "https" => {
+                if Self::url_host_is_azure_blob_or_dfs(url) {
+                    let azure = MicrosoftAzureBuilder::from_env()
+                        .with_url(url.as_str())
+                        .build()
+                        .map_err(|e| DataFusionError::External(Box::new(e)))?;
+                    Ok(Arc::new(azure))
+                } else {
+                    Ok(Arc::new(
+                        HttpBuilder::new()
+                            .with_client_options(ClientOptions::new().with_allow_http(true))
+                            .with_url(url.origin().ascii_serialization())
+                            .build()
+                            .map_err(|e| DataFusionError::External(Box::new(e)))?,
+                    ))
+                }
+            }
             "s3" => {
                 let s3store =
                     Self::s3_object_store_builder(url, &self.s3options.config.read())?
                         .build()?;
 
                 Ok(Arc::new(s3store))
+            }
+            "gs" => {
+                let gcs = GoogleCloudStorageBuilder::from_env()
+                    .with_url(url.as_str())
+                    .build()
+                    .map_err(|e| DataFusionError::External(Box::new(e)))?;
+                Ok(Arc::new(gcs))
+            }
+            "adl" | "azure" | "az" | "abfs" | "abfss" => {
+                let azure = MicrosoftAzureBuilder::from_env()
+                    .with_url(url.as_str())
+                    .build()
+                    .map_err(|e| DataFusionError::External(Box::new(e)))?;
+                Ok(Arc::new(azure))
             }
 
             _ => exec_err!("get_store - store not supported, url {}", url),
@@ -349,4 +422,53 @@ struct S3RegistryConfiguration {
     pub endpoint: Option<String>,
     /// Allow HTTP (otherwise will always use https)
     pub allow_http: Option<bool>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use url::Url;
+
+    #[test]
+    fn register_store_replaces_and_returns_previous() {
+        let reg = CustomObjectStoreRegistry::new(S3Options::default());
+        let key_url = Url::parse("myscheme://bucket").unwrap();
+        let s1: Arc<dyn ObjectStore> = Arc::new(LocalFileSystem::new());
+        let s2: Arc<dyn ObjectStore> = Arc::new(LocalFileSystem::new());
+        assert!(reg.register_store(&key_url, s1.clone()).is_none());
+        let prev = reg.register_store(&key_url, s2.clone()).expect("second register");
+        assert!(Arc::ptr_eq(&prev, &s1));
+        let got = reg
+            .get_store(&Url::parse("myscheme://bucket/path").unwrap())
+            .expect("get_store");
+        assert!(Arc::ptr_eq(&got, &s2));
+    }
+
+    #[test]
+    fn deregister_store_roundtrip() {
+        let reg = CustomObjectStoreRegistry::new(S3Options::default());
+        let url = Url::parse("myscheme://b").unwrap();
+        let s: Arc<dyn ObjectStore> = Arc::new(LocalFileSystem::new());
+        assert!(reg.register_store(&url, s.clone()).is_none());
+        let out = reg.deregister_store(&url).expect("deregister");
+        assert!(Arc::ptr_eq(&out, &s));
+        assert!(reg.deregister_store(&url).is_err());
+    }
+
+    #[test]
+    fn object_store_registry_key_matches_bucket_style_urls() {
+        let u = Url::parse("s3://mybucket/prefix/o").unwrap();
+        assert_eq!(
+            CustomObjectStoreRegistry::object_store_registry_key(&u),
+            "s3://mybucket"
+        );
+    }
+
+    #[test]
+    fn url_host_is_azure_detects_blob_endpoint() {
+        let u = Url::parse("https://acct.blob.core.windows.net/container").unwrap();
+        assert!(CustomObjectStoreRegistry::url_host_is_azure_blob_or_dfs(&u));
+        let u2 = Url::parse("https://example.com/").unwrap();
+        assert!(!CustomObjectStoreRegistry::url_host_is_azure_blob_or_dfs(&u2));
+    }
 }

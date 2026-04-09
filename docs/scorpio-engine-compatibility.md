@@ -23,7 +23,7 @@ This document is for **operators and contributors**. User-facing Scorpio product
    Keep **arrow** / **arrow-flight** aligned across scheduler, executor, and clients sharing IPC.
 
 4. **Object stores**  
-   Keep **`object_store`** versions aligned so URLs and auth behave the same on scheduler and executors.
+   Keep **`object_store`** versions aligned so URLs and auth behave the same on scheduler and executors. The Ballista **`CustomObjectStoreRegistry`** (in `ballista-core`, `build-binary`) resolves **`gs://`**, **`abfs`/`abfss`/`az`/`azure`/`adl`**, **`https://`…`blob.core.windows.net` / `dfs.core.windows.net`** (and Fabric hosts), plus **`s3`**, **`http`**, and **`file`**, and supports **`register_store`** / **`deregister_store`** for explicit bucket registration.
 
 ## Practical caveats
 

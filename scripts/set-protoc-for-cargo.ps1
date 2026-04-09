@@ -28,6 +28,8 @@ if (-not $candidates) {
     Write-Error "protoc.exe not found. Install with: winget install Google.Protobuf"
 }
 
+# Single path from the pipeline is a [string]; [0] would be the first character ("C" from "C:\...").
+$candidates = @($candidates)
 $exe = $candidates[0]
 $binDir = Split-Path -Parent $exe
 $env:PROTOC = $exe
