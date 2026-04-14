@@ -75,8 +75,7 @@ impl From<&BallistaConfig> for GrpcClientConfig {
             connect_timeout_seconds: config.grpc_client_connect_timeout_seconds() as u64,
             timeout_seconds: config.grpc_client_timeout_seconds() as u64,
             tcp_keepalive_seconds: config.grpc_client_tcp_keepalive_seconds() as u64,
-            http2_keepalive_interval_seconds: config
-                .grpc_client_http2_keepalive_interval_seconds()
+            http2_keepalive_interval_seconds: config.grpc_client_http2_keepalive_interval_seconds()
                 as u64,
             use_tls: config.client_use_tls(),
             max_message_size: config.grpc_client_max_message_size(),
@@ -134,12 +133,9 @@ impl Default for GrpcServerConfig {
 }
 
 /// Default session builder using the provided configuration
-pub fn default_session_builder(
-    config: SessionConfig,
-) -> datafusion::common::Result<SessionState> {
+pub fn default_session_builder(config: SessionConfig) -> datafusion::common::Result<SessionState> {
     use crate::extension::{
-        ballista_aggregate_functions, ballista_scalar_functions,
-        ballista_window_functions,
+        ballista_aggregate_functions, ballista_scalar_functions, ballista_window_functions,
     };
 
     let state = SessionStateBuilder::new()
@@ -174,11 +170,10 @@ pub async fn write_stream_to_disk(
     let mut num_batches = 0;
     let mut num_bytes = 0;
 
-    let options = IpcWriteOptions::default()
-        .try_with_compression(Some(CompressionType::LZ4_FRAME))?;
+    let options =
+        IpcWriteOptions::default().try_with_compression(Some(CompressionType::LZ4_FRAME))?;
 
-    let mut writer =
-        StreamWriter::try_new_with_options(file, stream.schema().as_ref(), options)?;
+    let mut writer = StreamWriter::try_new_with_options(file, stream.schema().as_ref(), options)?;
 
     while let Some(result) = stream.next().await {
         let batch = result?;
@@ -228,9 +223,7 @@ where
         // Disable Nagle's Algorithm since we don't want packets to wait
         .tcp_nodelay(true)
         .tcp_keepalive(Some(Duration::from_secs(config.tcp_keepalive_seconds)))
-        .http2_keep_alive_interval(Duration::from_secs(
-            config.http2_keepalive_interval_seconds,
-        ))
+        .http2_keep_alive_interval(Duration::from_secs(config.http2_keepalive_interval_seconds))
         // Use a fixed timeout for keep-alive pings to keep configuration simple
         // since this is a standalone configuration
         .keep_alive_timeout(Duration::from_secs(20))
@@ -256,9 +249,7 @@ where
             .timeout(Duration::from_secs(config.timeout_seconds))
             .tcp_nodelay(true)
             .tcp_keepalive(Some(Duration::from_secs(config.tcp_keepalive_seconds)))
-            .http2_keep_alive_interval(Duration::from_secs(
-                config.http2_keepalive_interval_seconds,
-            ))
+            .http2_keep_alive_interval(Duration::from_secs(config.http2_keepalive_interval_seconds))
             .keep_alive_timeout(Duration::from_secs(20))
             .keep_alive_while_idle(true))
     } else {

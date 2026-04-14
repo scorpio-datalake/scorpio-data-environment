@@ -44,8 +44,8 @@ use datafusion::physical_optimizer::PhysicalOptimizerRule;
 use datafusion::physical_plan::execution_plan::EmissionType;
 use datafusion::physical_plan::joins::utils::{ColumnIndex, JoinFilter};
 use datafusion::physical_plan::joins::{
-    CrossJoinExec, HashJoinExec, NestedLoopJoinExec, PartitionMode,
-    StreamJoinPartitionMode, SymmetricHashJoinExec,
+    CrossJoinExec, HashJoinExec, NestedLoopJoinExec, PartitionMode, StreamJoinPartitionMode,
+    SymmetricHashJoinExec,
 };
 use datafusion::physical_plan::{ExecutionPlan, ExecutionPlanProperties};
 
@@ -225,17 +225,9 @@ pub(crate) fn try_collect_left(
     let right = hash_join.right();
 
     let left_can_collect = ignore_threshold
-        || supports_collect_by_thresholds(
-            &**left,
-            threshold_byte_size,
-            threshold_num_rows,
-        );
+        || supports_collect_by_thresholds(&**left, threshold_byte_size, threshold_num_rows);
     let right_can_collect = ignore_threshold
-        || supports_collect_by_thresholds(
-            &**right,
-            threshold_byte_size,
-            threshold_num_rows,
-        );
+        || supports_collect_by_thresholds(&**right, threshold_byte_size, threshold_num_rows);
 
     match (left_can_collect, right_can_collect) {
         (true, true) => {
@@ -276,9 +268,7 @@ pub(crate) fn try_collect_left(
 /// Checks if the join order should be swapped based on the join type and input statistics.
 /// If swapping is optimal and supported, creates a swapped partitioned hash join; otherwise,
 /// creates a standard partitioned hash join.
-pub(crate) fn partitioned_hash_join(
-    hash_join: &HashJoinExec,
-) -> Result<Arc<dyn ExecutionPlan>> {
+pub(crate) fn partitioned_hash_join(hash_join: &HashJoinExec) -> Result<Arc<dyn ExecutionPlan>> {
     let left = hash_join.left();
     let right = hash_join.right();
     // Don't swap null-aware anti joins as they have specific side requirements
@@ -314,66 +304,63 @@ fn statistical_join_selection_subrule(
     collect_threshold_byte_size: usize,
     collect_threshold_num_rows: usize,
 ) -> Result<Transformed<Arc<dyn ExecutionPlan>>> {
-    let transformed =
-        if let Some(hash_join) = plan.as_any().downcast_ref::<HashJoinExec>() {
-            match hash_join.partition_mode() {
-                PartitionMode::Auto => try_collect_left(
-                    hash_join,
-                    false,
-                    collect_threshold_byte_size,
-                    collect_threshold_num_rows,
-                )?
-                .map_or_else(
-                    || partitioned_hash_join(hash_join).map(Some),
-                    |v| Ok(Some(v)),
-                )?,
-                PartitionMode::CollectLeft => try_collect_left(hash_join, true, 0, 0)?
-                    .map_or_else(
-                        || partitioned_hash_join(hash_join).map(Some),
-                        |v| Ok(Some(v)),
-                    )?,
-                PartitionMode::Partitioned => {
-                    let left = hash_join.left();
-                    let right = hash_join.right();
-                    if hash_join.join_type().supports_swap()
-                        && should_swap_join_order(&**left, &**right)?
-                    {
-                        hash_join
-                            .swap_inputs(PartitionMode::Partitioned)
-                            .map(Some)?
-                    } else {
-                        None
-                    }
+    let transformed = if let Some(hash_join) = plan.as_any().downcast_ref::<HashJoinExec>() {
+        match hash_join.partition_mode() {
+            PartitionMode::Auto => try_collect_left(
+                hash_join,
+                false,
+                collect_threshold_byte_size,
+                collect_threshold_num_rows,
+            )?
+            .map_or_else(
+                || partitioned_hash_join(hash_join).map(Some),
+                |v| Ok(Some(v)),
+            )?,
+            PartitionMode::CollectLeft => try_collect_left(hash_join, true, 0, 0)?.map_or_else(
+                || partitioned_hash_join(hash_join).map(Some),
+                |v| Ok(Some(v)),
+            )?,
+            PartitionMode::Partitioned => {
+                let left = hash_join.left();
+                let right = hash_join.right();
+                if hash_join.join_type().supports_swap()
+                    && should_swap_join_order(&**left, &**right)?
+                {
+                    hash_join
+                        .swap_inputs(PartitionMode::Partitioned)
+                        .map(Some)?
+                } else {
+                    None
                 }
             }
-        } else if let Some(cross_join) = plan.as_any().downcast_ref::<CrossJoinExec>() {
-            let left = cross_join.left();
-            let right = cross_join.right();
-            if right.properties().output_partitioning().partition_count() > 1 {
-                None
-            } else if should_swap_join_order(&**left, &**right)? {
-                cross_join.swap_inputs().map(Some)?
-            } else {
-                None
-            }
-        } else if let Some(nl_join) = plan.as_any().downcast_ref::<NestedLoopJoinExec>() {
-            let left = nl_join.left();
-            let right = nl_join.right();
-            // next few lines are different from original datafusion rule
-            // partition count of right side has to be equal one to be
-            // able to swap inputs
-            if right.properties().output_partitioning().partition_count() > 1 {
-                None
-            } else if nl_join.join_type().supports_swap()
-                && should_swap_join_order(&**left, &**right)?
-            {
-                nl_join.swap_inputs().map(Some)?
-            } else {
-                None
-            }
+        }
+    } else if let Some(cross_join) = plan.as_any().downcast_ref::<CrossJoinExec>() {
+        let left = cross_join.left();
+        let right = cross_join.right();
+        if right.properties().output_partitioning().partition_count() > 1 {
+            None
+        } else if should_swap_join_order(&**left, &**right)? {
+            cross_join.swap_inputs().map(Some)?
         } else {
             None
-        };
+        }
+    } else if let Some(nl_join) = plan.as_any().downcast_ref::<NestedLoopJoinExec>() {
+        let left = nl_join.left();
+        let right = nl_join.right();
+        // next few lines are different from original datafusion rule
+        // partition count of right side has to be equal one to be
+        // able to swap inputs
+        if right.properties().output_partitioning().partition_count() > 1 {
+            None
+        } else if nl_join.join_type().supports_swap() && should_swap_join_order(&**left, &**right)?
+        {
+            nl_join.swap_inputs().map(Some)?
+        } else {
+            None
+        }
+    } else {
+        None
+    };
 
     Ok(if let Some(transformed) = transformed {
         Transformed::yes(transformed)
@@ -573,16 +560,11 @@ pub(crate) fn swap_join_according_to_unboundedness(
     let partition_mode = hash_join.partition_mode();
     let join_type = hash_join.join_type();
     match (*partition_mode, *join_type) {
-        (
-            _,
-            JoinType::Right | JoinType::RightSemi | JoinType::RightAnti | JoinType::Full,
-        ) => internal_err!("{join_type} join cannot be swapped for unbounded input."),
-        (PartitionMode::Partitioned, _) => {
-            hash_join.swap_inputs(PartitionMode::Partitioned)
+        (_, JoinType::Right | JoinType::RightSemi | JoinType::RightAnti | JoinType::Full) => {
+            internal_err!("{join_type} join cannot be swapped for unbounded input.")
         }
-        (PartitionMode::CollectLeft, _) => {
-            hash_join.swap_inputs(PartitionMode::CollectLeft)
-        }
+        (PartitionMode::Partitioned, _) => hash_join.swap_inputs(PartitionMode::Partitioned),
+        (PartitionMode::CollectLeft, _) => hash_join.swap_inputs(PartitionMode::CollectLeft),
         (PartitionMode::Auto, _) => {
             // Use `PartitionMode::Partitioned` as default if `Auto` is selected.
             hash_join.swap_inputs(PartitionMode::Partitioned)

@@ -56,8 +56,7 @@ use crate::execution_plans::{
     ShuffleReaderExec, ShuffleWriterExec, SortShuffleWriterExec, UnresolvedShuffleExec,
 };
 use crate::serde::protobuf::{
-    ballista_logical_plan_node::LogicalPlanType,
-    ballista_physical_plan_node::PhysicalPlanType,
+    ballista_logical_plan_node::LogicalPlanType, ballista_physical_plan_node::PhysicalPlanType,
 };
 use crate::serde::scheduler::PartitionLocation;
 pub use generated::ballista as protobuf;
@@ -272,8 +271,8 @@ impl LogicalExtensionCodec for BallistaLogicalExtensionCodec {
         buf: &[u8],
         ctx: &TaskContext,
     ) -> Result<Arc<dyn datafusion::datasource::file_format::FileFormatFactory>> {
-        let proto = FileFormatProto::decode(buf)
-            .map_err(|e| DataFusionError::Internal(e.to_string()))?;
+        let proto =
+            FileFormatProto::decode(buf).map_err(|e| DataFusionError::Internal(e.to_string()))?;
 
         let codec = self
             .file_format_codecs
@@ -401,8 +400,7 @@ impl PhysicalExtensionCodec for BallistaPhysicalExtensionCodec {
             }
             PhysicalPlanType::ShuffleReader(shuffle_reader) => {
                 let stage_id = shuffle_reader.stage_id as usize;
-                let schema: SchemaRef =
-                    Arc::new(convert_required!(shuffle_reader.schema)?);
+                let schema: SchemaRef = Arc::new(convert_required!(shuffle_reader.schema)?);
                 let partition_location: Vec<Vec<PartitionLocation>> = shuffle_reader
                     .partition
                     .iter()
@@ -428,17 +426,12 @@ impl PhysicalExtensionCodec for BallistaPhysicalExtensionCodec {
                 )?;
                 let partitioning = partitioning
                     .ok_or_else(|| proto_error("missing required partitioning field"))?;
-                let shuffle_reader = ShuffleReaderExec::try_new(
-                    stage_id,
-                    partition_location,
-                    schema,
-                    partitioning,
-                )?;
+                let shuffle_reader =
+                    ShuffleReaderExec::try_new(stage_id, partition_location, schema, partitioning)?;
                 Ok(Arc::new(shuffle_reader))
             }
             PhysicalPlanType::UnresolvedShuffle(unresolved_shuffle) => {
-                let schema: SchemaRef =
-                    Arc::new(convert_required!(unresolved_shuffle.schema)?);
+                let schema: SchemaRef = Arc::new(convert_required!(unresolved_shuffle.schema)?);
                 let partitioning = parse_protobuf_partitioning(
                     unresolved_shuffle.partitioning.as_ref(),
                     ctx,
@@ -470,7 +463,12 @@ impl PhysicalExtensionCodec for BallistaPhysicalExtensionCodec {
                     Some(datafusion_proto::protobuf::PhysicalHashRepartition {
                         hash_expr: exprs
                             .iter()
-                            .map(|expr|datafusion_proto::physical_plan::to_proto::serialize_physical_expr(&expr.clone(), self.default_codec.as_ref()))
+                            .map(|expr| {
+                                datafusion_proto::physical_plan::to_proto::serialize_physical_expr(
+                                    &expr.clone(),
+                                    self.default_codec.as_ref(),
+                                )
+                            })
                             .collect::<Result<Vec<_>, DataFusionError>>()?,
                         partition_count: *partition_count as u64,
                     })
@@ -659,8 +657,7 @@ mod test {
             produce_one_row: false,
             schema: Arc::new(DFSchema::empty()),
         };
-        let file_type =
-            Arc::new(DefaultFileType::new(Arc::new(ParquetFormatFactory::new())));
+        let file_type = Arc::new(DefaultFileType::new(Arc::new(ParquetFormatFactory::new())));
         let original_plan = LogicalPlan::Copy(CopyTo {
             input: Arc::new(LogicalPlan::EmptyRelation(empty)),
             output_url: "/tmp/file".to_string(),
@@ -671,8 +668,7 @@ mod test {
         });
 
         let codec = crate::serde::BallistaLogicalExtensionCodec::default();
-        let plan_message =
-            LogicalPlanNode::try_from_logical_plan(&original_plan, &codec).unwrap();
+        let plan_message = LogicalPlanNode::try_from_logical_plan(&original_plan, &codec).unwrap();
 
         let mut buf: Vec<u8> = vec![];
         plan_message.try_encode(&mut buf).unwrap();
@@ -699,8 +695,7 @@ mod test {
     #[tokio::test]
     async fn test_unresolved_shuffle_exec_roundtrip() {
         let schema = create_test_schema();
-        let partitioning =
-            Partitioning::Hash(vec![col("id", schema.as_ref()).unwrap()], 4);
+        let partitioning = Partitioning::Hash(vec![col("id", schema.as_ref()).unwrap()], 4);
 
         let original_exec = UnresolvedShuffleExec::new(
             1, // stage_id
@@ -730,8 +725,7 @@ mod test {
     #[tokio::test]
     async fn test_shuffle_reader_exec_roundtrip() {
         let schema = create_test_schema();
-        let partitioning =
-            Partitioning::Hash(vec![col("id", schema.as_ref()).unwrap()], 4);
+        let partitioning = Partitioning::Hash(vec![col("id", schema.as_ref()).unwrap()], 4);
 
         let original_exec = ShuffleReaderExec::try_new(
             1, // stage_id

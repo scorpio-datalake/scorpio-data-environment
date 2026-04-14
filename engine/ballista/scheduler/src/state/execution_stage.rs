@@ -379,10 +379,7 @@ impl UnresolvedStage {
             .iter()
             .map(|(stage, input)| (*stage, input.partition_locations.clone()))
             .collect();
-        let plan = crate::planner::remove_unresolved_shuffles(
-            self.plan.clone(),
-            &input_locations,
-        )?;
+        let plan = crate::planner::remove_unresolved_shuffles(self.plan.clone(), &input_locations)?;
 
         // ballista specific JoinSelection, as datafusion rule can't be used here.
         // Datafusion JoinSelection may produce plans which need change of partitions
@@ -391,8 +388,7 @@ impl UnresolvedStage {
         // we should consider changing ballista core to support adding new stages
         // if plan changes.
 
-        let optimize_join =
-            crate::physical_optimizer::join_selection::JoinSelection::new();
+        let optimize_join = crate::physical_optimizer::join_selection::JoinSelection::new();
         let plan = optimize_join.optimize(plan, options)?;
 
         let optimize_aggregate = AggregateStatistics::new();
@@ -569,10 +565,7 @@ impl RunningStage {
     }
 
     /// Change to the unresolved state and bump the stage attempt number
-    pub fn to_unresolved(
-        &self,
-        failure_reasons: HashSet<String>,
-    ) -> Result<UnresolvedStage> {
+    pub fn to_unresolved(&self, failure_reasons: HashSet<String>) -> Result<UnresolvedStage> {
         let new_plan = crate::planner::rollback_resolved_shuffles(self.plan.clone())?;
 
         let unresolved = UnresolvedStage::new_with_inputs(
@@ -627,10 +620,11 @@ impl RunningStage {
             .iter()
             .enumerate()
             .filter_map(|(partition, info)| match info {
-                Some(TaskInfo {task_id,
-                         task_status: task_status::Status::Running(RunningTask { executor_id }), ..}) => {
-                    Some((*task_id, self.stage_id, partition, executor_id.clone()))
-                }
+                Some(TaskInfo {
+                    task_id,
+                    task_status: task_status::Status::Running(RunningTask { executor_id }),
+                    ..
+                }) => Some((*task_id, self.stage_id, partition, executor_id.clone())),
                 _ => None,
             })
             .collect()
@@ -717,9 +711,7 @@ impl RunningStage {
             combined_metrics
                 .iter_mut()
                 .zip(metrics_values_array)
-                .map(|(first, second)| {
-                    Self::combine_metrics_set(first, second, partition)
-                })
+                .map(|(first, second)| Self::combine_metrics_set(first, second, partition))
                 .collect()
         } else {
             metrics
@@ -885,10 +877,7 @@ impl SuccessfulStage {
                 TaskInfo {
                     task_id,
                     scheduled_time,
-                    task_status:
-                        task_status::Status::Successful(SuccessfulTask {
-                            executor_id, ..
-                        }),
+                    task_status: task_status::Status::Successful(SuccessfulTask { executor_id, .. }),
                     ..
                 } if *executor == *executor_id => {
                     *task = TaskInfo {
@@ -916,11 +905,8 @@ impl SuccessfulStage {
 
 impl Debug for SuccessfulStage {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let plan = DisplayableBallistaExecutionPlan::new(
-            self.plan.as_ref(),
-            &self.stage_metrics,
-        )
-        .indent();
+        let plan =
+            DisplayableBallistaExecutionPlan::new(self.plan.as_ref(), &self.stage_metrics).indent();
 
         write!(
             f,
@@ -1036,10 +1022,7 @@ impl StageOutput {
     }
     /// returns vector of partition locations
     /// which is compatible with ShuffleReader vector format
-    pub fn partition_locations(
-        mut self,
-        output_partitions: usize,
-    ) -> Vec<Vec<PartitionLocation>> {
+    pub fn partition_locations(mut self, output_partitions: usize) -> Vec<Vec<PartitionLocation>> {
         let mut partition_locations = Vec::new();
         for i in 0..output_partitions {
             let p = self.partition_locations.remove(&i).unwrap_or_default();

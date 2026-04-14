@@ -209,12 +209,10 @@ fn sanitize(str: &str, max_len: Option<usize>) -> String {
     for ch in str.chars() {
         match ch {
             '"' => sanitized.push('`'),
-            ' ' | '_' | '+' | '-' | '*' | '/' | '(' | ')' | '[' | ']' | '{' | '}'
-            | '!' | '@' | '#' | '$' | '%' | '&' | '=' | ':' | ';' | '\\' | '\'' | '.'
-            | ',' | '<' | '>' | '`' => sanitized.push(ch),
-            _ if ch.is_ascii_alphanumeric() || ch.is_ascii_whitespace() => {
-                sanitized.push(ch)
-            }
+            ' ' | '_' | '+' | '-' | '*' | '/' | '(' | ')' | '[' | ']' | '{' | '}' | '!' | '@'
+            | '#' | '$' | '%' | '&' | '=' | ':' | ';' | '\\' | '\'' | '.' | ',' | '<' | '>'
+            | '`' => sanitized.push(ch),
+            _ if ch.is_ascii_alphanumeric() || ch.is_ascii_whitespace() => sanitized.push(ch),
             _ => sanitized.push('?'),
         }
     }
@@ -327,19 +325,18 @@ filter_expr={}",
             exec.input_partition_count()
         )
     } else if let Some(exec) = plan.as_any().downcast_ref::<DataSourceExec>() {
-        let config = if let Some(config) =
-            exec.data_source().as_any().downcast_ref::<FileScanConfig>()
-        {
-            get_file_scan(config)
-        } else if let Some(_config) = exec
-            .data_source()
-            .as_any()
-            .downcast_ref::<MemorySourceConfig>()
-        {
-            "Memory".to_string()
-        } else {
-            "Unknown".to_string()
-        };
+        let config =
+            if let Some(config) = exec.data_source().as_any().downcast_ref::<FileScanConfig>() {
+                get_file_scan(config)
+            } else if let Some(_config) = exec
+                .data_source()
+                .as_any()
+                .downcast_ref::<MemorySourceConfig>()
+            {
+                "Memory".to_string()
+            } else {
+                "Unknown".to_string()
+            };
 
         let parts = exec.properties().output_partitioning().partition_count();
 
@@ -629,8 +626,7 @@ filter_expr="]
             .optimizer
             .enable_round_robin_repartition = false;
         let ctx = SessionContext::new_with_config(config);
-        let schema =
-            Arc::new(Schema::new(vec![Field::new("a", DataType::UInt32, false)]));
+        let schema = Arc::new(Schema::new(vec![Field::new("a", DataType::UInt32, false)]));
         // we specify the input partitions to be > 1 because of https://github.com/apache/datafusion/issues/12611
         let table = Arc::new(MemTable::try_new(schema.clone(), vec![vec![], vec![]])?);
         ctx.register_table("foo", table.clone())?;

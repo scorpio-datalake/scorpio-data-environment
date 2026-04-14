@@ -57,9 +57,7 @@ impl PrometheusMetricsCollector {
             vec![0.5_f64, 1_f64, 5_f64, 30_f64, 60_f64],
             registry
         )
-        .map_err(|e| {
-            BallistaError::Internal(format!("Error registering metric: {e:?}"))
-        })?;
+        .map_err(|e| BallistaError::Internal(format!("Error registering metric: {e:?}")))?;
 
         let planning_time = register_histogram_with_registry!(
             "planning_time_ms",
@@ -67,54 +65,39 @@ impl PrometheusMetricsCollector {
             vec![1.0_f64, 5.0_f64, 25.0_f64, 100.0_f64, 500.0_f64],
             registry
         )
-        .map_err(|e| {
-            BallistaError::Internal(format!("Error registering metric: {e:?}"))
-        })?;
+        .map_err(|e| BallistaError::Internal(format!("Error registering metric: {e:?}")))?;
 
-        let failed = register_counter_with_registry!(
-            "job_failed_total",
-            "Counter of failed jobs",
-            registry
-        )
-        .map_err(|e| {
-            BallistaError::Internal(format!("Error registering metric: {e:?}"))
-        })?;
+        let failed =
+            register_counter_with_registry!("job_failed_total", "Counter of failed jobs", registry)
+                .map_err(|e| BallistaError::Internal(format!("Error registering metric: {e:?}")))?;
 
         let cancelled = register_counter_with_registry!(
             "job_cancelled_total",
             "Counter of cancelled jobs",
             registry
         )
-        .map_err(|e| {
-            BallistaError::Internal(format!("Error registering metric: {e:?}"))
-        })?;
+        .map_err(|e| BallistaError::Internal(format!("Error registering metric: {e:?}")))?;
 
         let completed = register_counter_with_registry!(
             "job_completed_total",
             "Counter of completed jobs",
             registry
         )
-        .map_err(|e| {
-            BallistaError::Internal(format!("Error registering metric: {e:?}"))
-        })?;
+        .map_err(|e| BallistaError::Internal(format!("Error registering metric: {e:?}")))?;
 
         let submitted = register_counter_with_registry!(
             "job_submitted_total",
             "Counter of submitted jobs",
             registry
         )
-        .map_err(|e| {
-            BallistaError::Internal(format!("Error registering metric: {e:?}"))
-        })?;
+        .map_err(|e| BallistaError::Internal(format!("Error registering metric: {e:?}")))?;
 
         let pending_queue_size = register_gauge_with_registry!(
             "pending_task_queue_size",
             "Number of pending tasks",
             registry
         )
-        .map_err(|e| {
-            BallistaError::Internal(format!("Error registering metric: {e:?}"))
-        })?;
+        .map_err(|e| BallistaError::Internal(format!("Error registering metric: {e:?}")))?;
 
         Ok(Self {
             execution_time,

@@ -97,8 +97,7 @@ impl AdaptivePlanner {
     ) -> common::Result<Self> {
         let max_passes = session_config.adaptive_query_planner_max_passes();
 
-        let session_state =
-            Self::create_session_state(session_config, physical_optimizer_rules);
+        let session_state = Self::create_session_state(session_config, physical_optimizer_rules);
         let planner = DefaultPhysicalPlanner::default();
         let plan = planner.optimize_physical_plan(plan, &session_state, |_, _| {})?;
 
@@ -127,12 +126,7 @@ impl AdaptivePlanner {
         plan: Arc<dyn ExecutionPlan>,
         job_name: String,
     ) -> common::Result<Self> {
-        Self::try_new_with_optimizers(
-            plan,
-            session_config,
-            Self::default_optimizers(),
-            job_name,
-        )
+        Self::try_new_with_optimizers(plan, session_config, Self::default_optimizers(), job_name)
     }
     /// Cancels a stage by its ID.
     ///
@@ -298,9 +292,7 @@ impl AdaptivePlanner {
     /// - `CancellableStageIds`: Stage IDs that should be canceled
     ///
     /// Stages are derived from the current physical plan on each call.
-    pub fn actionable_stages(
-        &mut self,
-    ) -> common::Result<(RunnableStages, CancellableStageIds)> {
+    pub fn actionable_stages(&mut self) -> common::Result<(RunnableStages, CancellableStageIds)> {
         match self.identify_runnable_stages()? {
             None => {
                 let stages_to_cancel = self
@@ -368,9 +360,7 @@ impl AdaptivePlanner {
             }
 
             Ok(Some(runnable))
-        } else if let Some(root) =
-            self.plan.as_any().downcast_ref::<AdaptiveDatafusionExec>()
-        {
+        } else if let Some(root) = self.plan.as_any().downcast_ref::<AdaptiveDatafusionExec>() {
             // shuffle writer has finished
             // there is no more runnable stages
             if root.shuffle_created() {
@@ -415,9 +405,7 @@ impl AdaptivePlanner {
                 exec.as_any()
                     .downcast_ref::<ExchangeExec>()
                     .ok_or_else(|| {
-                        datafusion::common::DataFusionError::Plan(
-                            "ExchangeExec expected".into(),
-                        )
+                        datafusion::common::DataFusionError::Plan("ExchangeExec expected".into())
                     })
                     .map(|e| e.stage_id().unwrap())
             })

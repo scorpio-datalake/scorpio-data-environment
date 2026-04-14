@@ -19,9 +19,7 @@
 //! Ballista configuration
 
 use crate::error::{BallistaError, Result};
-use datafusion::{
-    arrow::datatypes::DataType, common::config_err, config::ConfigExtension,
-};
+use datafusion::{arrow::datatypes::DataType, common::config_err, config::ConfigExtension};
 use std::result;
 use std::{collections::HashMap, fmt::Display};
 
@@ -35,20 +33,17 @@ pub const BALLISTA_CACHE_NOOP: &str = "ballista.cache.noop";
 pub const BALLISTA_SHUFFLE_READER_MAX_REQUESTS: &str =
     "ballista.shuffle.max_concurrent_read_requests";
 /// Configuration key to force remote reads even for local partitions.
-pub const BALLISTA_SHUFFLE_READER_FORCE_REMOTE_READ: &str =
-    "ballista.shuffle.force_remote_read";
+pub const BALLISTA_SHUFFLE_READER_FORCE_REMOTE_READ: &str = "ballista.shuffle.force_remote_read";
 /// Configuration key to prefer Flight protocol for remote shuffle reads.
 pub const BALLISTA_SHUFFLE_READER_REMOTE_PREFER_FLIGHT: &str =
     "ballista.shuffle.remote_read_prefer_flight";
 /// max message size for gRPC clients
-pub const BALLISTA_GRPC_CLIENT_MAX_MESSAGE_SIZE: &str =
-    "ballista.grpc_client_max_message_size";
+pub const BALLISTA_GRPC_CLIENT_MAX_MESSAGE_SIZE: &str = "ballista.grpc_client_max_message_size";
 /// Configuration key for gRPC client connection timeout in seconds.
 pub const BALLISTA_GRPC_CLIENT_CONNECT_TIMEOUT_SECONDS: &str =
     "ballista.grpc.client.connect_timeout_seconds";
 /// Configuration key for gRPC client request timeout in seconds.
-pub const BALLISTA_GRPC_CLIENT_TIMEOUT_SECONDS: &str =
-    "ballista.grpc.client.timeout_seconds";
+pub const BALLISTA_GRPC_CLIENT_TIMEOUT_SECONDS: &str = "ballista.grpc.client.timeout_seconds";
 /// Configuration key for TCP keep-alive interval for gRPC clients in seconds.
 pub const BALLISTA_GRPC_CLIENT_TCP_KEEPALIVE_SECONDS: &str =
     "ballista.grpc.client.tcp_keepalive_seconds";
@@ -58,14 +53,11 @@ pub const BALLISTA_GRPC_CLIENT_HTTP2_KEEPALIVE_INTERVAL_SECONDS: &str =
 /// Enables adaptive query planning
 pub const BALLISTA_ADAPTIVE_PLANNER_ENABLED: &str = "ballista.planner.adaptive.enabled";
 /// Number of times that the optimizer will attempt to optimize the plan
-pub const BALLISTA_ADAPTIVE_PLANNER_MAX_PASSES: &str =
-    "ballista.planner.adaptive.planner_pass";
+pub const BALLISTA_ADAPTIVE_PLANNER_MAX_PASSES: &str = "ballista.planner.adaptive.planner_pass";
 /// Configuration key for enabling sort-based shuffle.
-pub const BALLISTA_SHUFFLE_SORT_BASED_ENABLED: &str =
-    "ballista.shuffle.sort_based.enabled";
+pub const BALLISTA_SHUFFLE_SORT_BASED_ENABLED: &str = "ballista.shuffle.sort_based.enabled";
 /// Configuration key for sort shuffle per-partition buffer size in bytes.
-pub const BALLISTA_SHUFFLE_SORT_BASED_BUFFER_SIZE: &str =
-    "ballista.shuffle.sort_based.buffer_size";
+pub const BALLISTA_SHUFFLE_SORT_BASED_BUFFER_SIZE: &str = "ballista.shuffle.sort_based.buffer_size";
 /// Configuration key for sort shuffle total memory limit in bytes.
 pub const BALLISTA_SHUFFLE_SORT_BASED_MEMORY_LIMIT: &str =
     "ballista.shuffle.sort_based.memory_limit";
@@ -73,8 +65,7 @@ pub const BALLISTA_SHUFFLE_SORT_BASED_MEMORY_LIMIT: &str =
 pub const BALLISTA_SHUFFLE_SORT_BASED_SPILL_THRESHOLD: &str =
     "ballista.shuffle.sort_based.spill_threshold";
 /// Configuration key for sort shuffle target batch size in rows.
-pub const BALLISTA_SHUFFLE_SORT_BASED_BATCH_SIZE: &str =
-    "ballista.shuffle.sort_based.batch_size";
+pub const BALLISTA_SHUFFLE_SORT_BASED_BATCH_SIZE: &str = "ballista.shuffle.sort_based.batch_size";
 /// Should client employ pull or push job tracking strategy
 pub const BALLISTA_CLIENT_PULL: &str = "ballista.client.pull";
 /// Should client use tls connection

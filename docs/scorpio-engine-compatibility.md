@@ -23,7 +23,7 @@ This document is for **operators and contributors**. User-facing Scorpio product
    Keep **arrow** / **arrow-flight** aligned across scheduler, executor, and clients sharing IPC.
 
 4. **Object stores**  
-   Keep **`object_store`** versions aligned so URLs and auth behave the same on scheduler and executors. The Ballista **`CustomObjectStoreRegistry`** (in `ballista-core`, `build-binary`) resolves **`gs://`**, **`abfs`/`abfss`/`az`/`azure`/`adl`**, **`https://`…`blob.core.windows.net` / `dfs.core.windows.net`** (and Fabric hosts), plus **`s3`**, **`http`**, and **`file`**, and supports **`register_store`** / **`deregister_store`** for explicit bucket registration.
+   Keep **`object_store`** versions aligned so URLs and auth behave the same on scheduler and executors. The Ballista **`CustomObjectStoreRegistry`** (in `ballista-core`, `build-binary`) resolves **`gs://`**, **`abfs`/`abfss`/`az`/`azure`/`adl`**, **`https://`…`blob.core.windows.net` / `dfs.core.windows.net`** (and Fabric hosts), plus **`s3`**, **`http`**, and **`file`**, and supports **`register_store`** / **`deregister_store`** for explicit bucket registration. **S3 regression:** ignored-by-default MinIO integration test — `ballista/core/tests/s3_minio_integration.rs` (CI runs with `--ignored`; see [../engine/README.md](../engine/README.md)).
 
 ## Practical caveats
 
@@ -40,3 +40,6 @@ This document is for **operators and contributors**. User-facing Scorpio product
 
 - Fork trim and remotes: [scorpio-engine-fork.md](scorpio-engine-fork.md)
 - Engine build notes: [../engine/README.md](../engine/README.md)
+- Object store credentials (S3 / GCS / ADLS): [object-store-credentials.md](object-store-credentials.md)
+- Databases & SFTP strategy: [data-sources-databases-sftp.md](data-sources-databases-sftp.md)
+- Hive / Iceberg / Delta scope: [table-formats-metastore-scope.md](table-formats-metastore-scope.md)

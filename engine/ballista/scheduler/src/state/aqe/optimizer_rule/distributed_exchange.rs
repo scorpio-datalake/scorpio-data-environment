@@ -64,12 +64,12 @@ impl DistributedExchangeRule {
             ))
         } else if let Some(sort_preserving_merge) = execution_plan
             .as_any()
-            .downcast_ref::<SortPreservingMergeExec>(
-        ) && sort_preserving_merge
-            .input()
-            .as_any()
-            .downcast_ref::<ExchangeExec>()
-            .is_none()
+            .downcast_ref::<SortPreservingMergeExec>()
+            && sort_preserving_merge
+                .input()
+                .as_any()
+                .downcast_ref::<ExchangeExec>()
+                .is_none()
         {
             let exchange_exec = ExchangeExec::new(
                 sort_preserving_merge.input().clone(),
@@ -80,8 +80,7 @@ impl DistributedExchangeRule {
             Ok(Transformed::yes(
                 execution_plan.with_new_children(vec![Arc::new(exchange_exec)])?,
             ))
-        } else if let Some(repartition) =
-            execution_plan.as_any().downcast_ref::<RepartitionExec>()
+        } else if let Some(repartition) = execution_plan.as_any().downcast_ref::<RepartitionExec>()
         {
             match repartition.partitioning() {
                 execution_plan::Partitioning::Hash(_, _) => {
@@ -109,9 +108,8 @@ impl PhysicalOptimizerRule for DistributedExchangeRule {
         &self,
         execution_plan: std::sync::Arc<dyn datafusion::physical_plan::ExecutionPlan>,
         _config: &datafusion::config::ConfigOptions,
-    ) -> datafusion::error::Result<
-        std::sync::Arc<dyn datafusion::physical_plan::ExecutionPlan>,
-    > {
+    ) -> datafusion::error::Result<std::sync::Arc<dyn datafusion::physical_plan::ExecutionPlan>>
+    {
         let result = execution_plan.transform_up(|p| self.transform(p))?;
 
         if result

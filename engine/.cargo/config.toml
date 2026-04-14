@@ -1,0 +1,9 @@
+# Local Cargo config for the Scorpio engine workspace.
+# Cargo discovers this file when the manifest is under `engine/` (including
+# `cargo build` / `cargo test` run from `engine/` or a member crate path).
+
+[build]
+# Intentionally no `rustflags` here. Extra flags belong in this file for the
+# whole team, or stay unset everywhere. If `RUSTFLAGS` differs between the
+# terminal and rust-analyzer, Cargo invalidates incremental artifacts and
+# rebuilds more than necessary — align both or leave both unset.

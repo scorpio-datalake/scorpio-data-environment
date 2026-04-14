@@ -66,8 +66,7 @@ mod basic {
         let context = SessionContext::standalone().await?;
         let df = context.sql("SELECT 1;").await?;
         let tmp_dir = TempDir::new().unwrap();
-        let file_path =
-            format!("{}", tmp_dir.path().join("test_write_csv.csv").display());
+        let file_path = format!("{}", tmp_dir.path().join("test_write_csv.csv").display());
         df.write_csv(&file_path, DataFrameWriteOptions::default(), None)
             .await?;
         Ok(())
@@ -472,10 +471,7 @@ mod basic {
         assert_result_eq(expected, &res);
     }
 
-    fn assert_result_eq(
-        expected: Vec<&str>,
-        results: &[arrow::record_batch::RecordBatch],
-    ) {
+    fn assert_result_eq(expected: Vec<&str>, results: &[arrow::record_batch::RecordBatch]) {
         assert_eq!(
             expected,
             pretty_format_batches(results)

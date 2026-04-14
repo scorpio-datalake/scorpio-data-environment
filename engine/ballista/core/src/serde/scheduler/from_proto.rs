@@ -36,9 +36,8 @@ use crate::error::BallistaError;
 use crate::extension::SessionConfigHelperExt;
 use crate::serde::protobuf::{NamedPruningMetrics, NamedRatio};
 use crate::serde::scheduler::{
-    Action, BallistaFunctionRegistry, ExecutorData, ExecutorMetadata,
-    ExecutorSpecification, PartitionId, PartitionLocation, PartitionStats,
-    TaskDefinition,
+    Action, BallistaFunctionRegistry, ExecutorData, ExecutorMetadata, ExecutorSpecification,
+    PartitionId, PartitionLocation, PartitionStats, TaskDefinition,
 };
 
 use crate::RuntimeProducer;
@@ -342,9 +341,8 @@ pub fn get_task_definition<T: 'static + AsLogicalPlan, U: 'static + AsExecutionP
     );
 
     let encoded_plan = task.plan.as_slice();
-    let plan: Arc<dyn ExecutionPlan> = U::try_decode(encoded_plan).and_then(|proto| {
-        proto.try_into_physical_plan(&ctx, codec.physical_extension_codec())
-    })?;
+    let plan: Arc<dyn ExecutionPlan> = U::try_decode(encoded_plan)
+        .and_then(|proto| proto.try_into_physical_plan(&ctx, codec.physical_extension_codec()))?;
 
     let job_id = task.job_id;
     let stage_id = task.stage_id as usize;
@@ -374,10 +372,7 @@ pub fn get_task_definition<T: 'static + AsLogicalPlan, U: 'static + AsExecutionP
 ///
 /// This function handles batch task definitions where multiple partitions share
 /// the same execution plan, creating individual task definitions for each partition.
-pub fn get_task_definition_vec<
-    T: 'static + AsLogicalPlan,
-    U: 'static + AsExecutionPlan,
->(
+pub fn get_task_definition_vec<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan>(
     multi_task: protobuf::MultiTaskDefinition,
     runtime_producer: RuntimeProducer,
     session_config: SessionConfig,
@@ -406,9 +401,8 @@ pub fn get_task_definition_vec<
     );
 
     let encoded_plan = multi_task.plan.as_slice();
-    let plan: Arc<dyn ExecutionPlan> = U::try_decode(encoded_plan).and_then(|proto| {
-        proto.try_into_physical_plan(&ctx, codec.physical_extension_codec())
-    })?;
+    let plan: Arc<dyn ExecutionPlan> = U::try_decode(encoded_plan)
+        .and_then(|proto| proto.try_into_physical_plan(&ctx, codec.physical_extension_codec()))?;
 
     let job_id = multi_task.job_id;
     let stage_id = multi_task.stage_id as usize;
@@ -441,8 +435,7 @@ fn reset_metrics_for_execution_plan(
     plan: Arc<dyn ExecutionPlan>,
 ) -> Result<Arc<dyn ExecutionPlan>, BallistaError> {
     plan.transform(&|plan: Arc<dyn ExecutionPlan>| {
-        let children: Vec<Arc<dyn ExecutionPlan>> =
-            plan.children().into_iter().cloned().collect();
+        let children: Vec<Arc<dyn ExecutionPlan>> = plan.children().into_iter().cloned().collect();
         plan.with_new_children(children).map(Transformed::yes)
     })
     .data()

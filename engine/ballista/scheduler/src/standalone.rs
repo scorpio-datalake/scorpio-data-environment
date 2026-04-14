@@ -23,12 +23,10 @@ use ballista_core::ConfigProducer;
 use ballista_core::extension::SessionConfigExt;
 use ballista_core::serde::BallistaCodec;
 use ballista_core::utils::{
-    GrpcServerConfig, create_grpc_server, default_config_producer,
-    default_session_builder,
+    GrpcServerConfig, create_grpc_server, default_config_producer, default_session_builder,
 };
 use ballista_core::{
-    BALLISTA_VERSION, error::Result,
-    serde::protobuf::scheduler_grpc_server::SchedulerGrpcServer,
+    BALLISTA_VERSION, error::Result, serde::protobuf::scheduler_grpc_server::SchedulerGrpcServer,
 };
 use datafusion::DATAFUSION_VERSION;
 use datafusion::execution::SessionState;
@@ -81,8 +79,7 @@ pub async fn new_standalone_scheduler_with_builder(
 ) -> Result<SocketAddr> {
     let config = config_producer();
 
-    let cluster =
-        BallistaCluster::new_memory("localhost:50050", session_builder, config_producer);
+    let cluster = BallistaCluster::new_memory("localhost:50050", session_builder, config_producer);
 
     let metrics_collector = default_metrics_collector()?;
 
@@ -91,9 +88,10 @@ pub async fn new_standalone_scheduler_with_builder(
             "localhost:50050".to_owned(),
             cluster,
             codec,
-            Arc::new(SchedulerConfig::default().with_scheduler_policy(
-                ballista_core::config::TaskSchedulingPolicy::PullStaged,
-            )),
+            Arc::new(
+                SchedulerConfig::default()
+                    .with_scheduler_policy(ballista_core::config::TaskSchedulingPolicy::PullStaged),
+            ),
             metrics_collector,
         );
 
@@ -111,9 +109,7 @@ pub async fn new_standalone_scheduler_with_builder(
     tokio::spawn(
         create_grpc_server(&GrpcServerConfig::default())
             .add_service(server)
-            .serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(
-                listener,
-            )),
+            .serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(listener)),
     );
 
     Ok(addr)

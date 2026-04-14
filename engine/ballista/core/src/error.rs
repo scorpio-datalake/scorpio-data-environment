@@ -88,17 +88,11 @@ impl From<String> for BallistaError {
 impl From<ArrowError> for BallistaError {
     fn from(e: ArrowError) -> Self {
         match e {
-            ArrowError::ExternalError(e)
-                if e.downcast_ref::<BallistaError>().is_some() =>
-            {
+            ArrowError::ExternalError(e) if e.downcast_ref::<BallistaError>().is_some() => {
                 *e.downcast::<BallistaError>().unwrap()
             }
-            ArrowError::ExternalError(e)
-                if e.downcast_ref::<DataFusionError>().is_some() =>
-            {
-                BallistaError::DataFusionError(Box::new(
-                    *e.downcast::<DataFusionError>().unwrap(),
-                ))
+            ArrowError::ExternalError(e) if e.downcast_ref::<DataFusionError>().is_some() => {
+                BallistaError::DataFusionError(Box::new(*e.downcast::<DataFusionError>().unwrap()))
             }
             other => BallistaError::ArrowError(Box::new(other)),
         }
@@ -205,24 +199,17 @@ impl Display for BallistaError {
 impl From<BallistaError> for FailedTask {
     fn from(e: BallistaError) -> Self {
         match e {
-            BallistaError::FetchFailed(
-                executor_id,
-                map_stage_id,
-                map_partition_id,
-                desc,
-            ) => {
+            BallistaError::FetchFailed(executor_id, map_stage_id, map_partition_id, desc) => {
                 FailedTask {
                     error: desc,
                     // fetch partition error is considered to be non-retryable
                     retryable: false,
                     count_to_failures: false,
-                    failed_reason: Some(FailedReason::FetchPartitionError(
-                        FetchPartitionError {
-                            executor_id,
-                            map_stage_id: map_stage_id as u32,
-                            map_partition_id: map_partition_id as u32,
-                        },
-                    )),
+                    failed_reason: Some(FailedReason::FetchPartitionError(FetchPartitionError {
+                        executor_id,
+                        map_stage_id: map_stage_id as u32,
+                        map_partition_id: map_partition_id as u32,
+                    })),
                 }
             }
             BallistaError::IoError(io) => {
@@ -234,9 +221,7 @@ impl From<BallistaError> for FailedTask {
                     failed_reason: Some(FailedReason::IoError(IoError {})),
                 }
             }
-            BallistaError::DataFusionError(e)
-                if matches!(*e, DataFusionError::IoError(_)) =>
-            {
+            BallistaError::DataFusionError(e) if matches!(*e, DataFusionError::IoError(_)) => {
                 FailedTask {
                     error: format!("Task failed due to DataFusion IO error: {e:?}"),
                     // IO error is considered to be temporary and retryable

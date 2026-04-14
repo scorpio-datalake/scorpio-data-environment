@@ -108,8 +108,7 @@ impl SortShuffleWriteMetrics {
     fn new(partition: usize, metrics: &ExecutionPlanMetricsSet) -> Self {
         Self {
             write_time: MetricBuilder::new(metrics).subset_time("write_time", partition),
-            repart_time: MetricBuilder::new(metrics)
-                .subset_time("repart_time", partition),
+            repart_time: MetricBuilder::new(metrics).subset_time("repart_time", partition),
             spill_time: MetricBuilder::new(metrics).subset_time("spill_time", partition),
             input_rows: MetricBuilder::new(metrics).counter("input_rows", partition),
             output_rows: MetricBuilder::new(metrics).output_rows(partition),
@@ -239,13 +238,10 @@ impl SortShuffleWriterExec {
                 metrics.input_rows.add(input_batch.num_rows());
 
                 // Partition the batch
-                partitioner.partition(
-                    input_batch,
-                    |output_partition, output_batch| {
-                        buffers[output_partition].append(output_batch);
-                        Ok(())
-                    },
-                )?;
+                partitioner.partition(input_batch, |output_partition, output_batch| {
+                    buffers[output_partition].append(output_batch);
+                    Ok(())
+                })?;
 
                 // Check if we need to spill
                 let total_memory: usize = buffers.iter().map(|b| b.memory_used()).sum();
@@ -395,8 +391,7 @@ fn finalize_output(
     let file = File::create(&data_path)?;
     let mut buffered = BufWriter::new(file);
 
-    let options =
-        IpcWriteOptions::default().try_with_compression(Some(config.compression))?;
+    let options = IpcWriteOptions::default().try_with_compression(Some(config.compression))?;
     let mut writer = FileWriter::try_new_with_options(&mut buffered, schema, options)?;
 
     // Track cumulative batch counts - index stores the starting batch index for each partition
@@ -460,11 +455,7 @@ fn finalize_output(
 }
 
 impl DisplayAs for SortShuffleWriterExec {
-    fn fmt_as(
-        &self,
-        t: DisplayFormatType,
-        f: &mut std::fmt::Formatter,
-    ) -> std::fmt::Result {
+    fn fmt_as(&self, t: DisplayFormatType, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match t {
             DisplayFormatType::Default | DisplayFormatType::Verbose => {
                 write!(
@@ -507,9 +498,7 @@ impl ExecutionPlan for SortShuffleWriterExec {
     ) -> Result<Arc<dyn ExecutionPlan>> {
         if children.len() == 1 {
             let input = children.pop().ok_or_else(|| {
-                DataFusionError::Plan(
-                    "SortShuffleWriterExec expects single child".to_owned(),
-                )
+                DataFusionError::Plan("SortShuffleWriterExec expects single child".to_owned())
             })?;
 
             Ok(Arc::new(SortShuffleWriterExec::try_new(
@@ -542,8 +531,7 @@ impl ExecutionPlan for SortShuffleWriterExec {
                 // Build metadata result batch
                 let num_writers = part_loc.len();
                 let mut partition_builder = UInt32Builder::with_capacity(num_writers);
-                let mut path_builder =
-                    StringBuilder::with_capacity(num_writers, num_writers * 100);
+                let mut path_builder = StringBuilder::with_capacity(num_writers, num_writers * 100);
                 let mut num_rows_builder = UInt64Builder::with_capacity(num_writers);
                 let mut num_batches_builder = UInt64Builder::with_capacity(num_writers);
                 let mut num_bytes_builder = UInt64Builder::with_capacity(num_writers);
@@ -678,8 +666,7 @@ mod tests {
         let partition = vec![batch.clone(), batch];
         let partitions = vec![partition.clone(), partition];
 
-        let memory_data_source =
-            Arc::new(MemorySourceConfig::try_new(&partitions, schema, None)?);
+        let memory_data_source = Arc::new(MemorySourceConfig::try_new(&partitions, schema, None)?);
 
         Ok(Arc::new(DataSourceExec::new(memory_data_source)))
     }

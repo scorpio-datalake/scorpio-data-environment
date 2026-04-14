@@ -37,12 +37,10 @@ use crate::state::task_manager::TaskLauncher;
 
 use ballista_core::serde::protobuf::job_status::Status;
 use ballista_core::serde::protobuf::{
-    FailedTask, JobStatus, MultiTaskDefinition, ShuffleWritePartition, SuccessfulTask,
-    TaskId, TaskStatus, task_status,
+    FailedTask, JobStatus, MultiTaskDefinition, ShuffleWritePartition, SuccessfulTask, TaskId,
+    TaskStatus, task_status,
 };
-use ballista_core::serde::scheduler::{
-    ExecutorData, ExecutorMetadata, ExecutorSpecification,
-};
+use ballista_core::serde::scheduler::{ExecutorData, ExecutorMetadata, ExecutorSpecification};
 use ballista_core::serde::{BallistaCodec, protobuf};
 use datafusion::arrow::datatypes::{DataType, Field, Schema, SchemaRef};
 use datafusion::common::DataFusionError;
@@ -371,10 +369,7 @@ impl TaskLauncher for VirtualTaskLauncher {
         _executor_manager: &ExecutorManager,
     ) -> Result<()> {
         let virtual_executor = self.executors.get(&executor.id).ok_or_else(|| {
-            BallistaError::Internal(format!(
-                "No virtual executor with ID {} found",
-                executor.id
-            ))
+            BallistaError::Internal(format!("No virtual executor with ID {} found", executor.id))
         })?;
 
         let status = tasks
@@ -385,9 +380,7 @@ impl TaskLauncher for VirtualTaskLauncher {
         self.sender
             .send((executor.id.clone(), status))
             .await
-            .map_err(|e| {
-                BallistaError::Internal(format!("Error sending task status: {e:?}"))
-            })
+            .map_err(|e| BallistaError::Internal(format!("Error sending task status: {e:?}")))
     }
 }
 
@@ -514,10 +507,7 @@ impl SchedulerTest {
     }
 
     /// Posts a scheduler event to the event loop.
-    pub async fn post_scheduler_event(
-        &self,
-        event: QueryStageSchedulerEvent,
-    ) -> Result<()> {
+    pub async fn post_scheduler_event(&self, event: QueryStageSchedulerEvent) -> Result<()> {
         self.scheduler
             .query_stage_event_loop
             .get_sender()?
@@ -624,11 +614,7 @@ impl SchedulerTest {
     }
 
     /// Returns job status and job_id
-    pub async fn run(
-        &mut self,
-        job_name: &str,
-        plan: &LogicalPlan,
-    ) -> Result<(JobStatus, String)> {
+    pub async fn run(&mut self, job_name: &str, plan: &LogicalPlan) -> Result<(JobStatus, String)> {
         self.run_with_subscriber(job_name, plan, None).await
     }
     /// Returns job status and job_id, with provided subscriber
@@ -827,9 +813,7 @@ pub fn assert_failed_event(job_id: &str, collector: &TestMetricsCollector) {
 }
 
 /// Revives the execution graph and completes all tasks in the next stage.
-pub fn revive_graph_and_complete_next_stage(
-    graph: &mut dyn ExecutionGraph,
-) -> Result<usize> {
+pub fn revive_graph_and_complete_next_stage(graph: &mut dyn ExecutionGraph) -> Result<usize> {
     let executor = mock_executor("executor-id1".to_string());
     revive_graph_and_complete_next_stage_with_executor(graph, &executor)
 }
@@ -1194,9 +1178,7 @@ pub fn mock_completed_task(task: TaskDescription, executor_id: &str) -> TaskStat
             partition_id: partition_id as u64,
             path: format!(
                 "/{}/{}/{}",
-                task.partition.job_id,
-                task.partition.stage_id,
-                task.partition.partition_id
+                task.partition.job_id, task.partition.stage_id, task.partition.partition_id
             ),
             num_batches: 1,
             num_rows: 1,
@@ -1233,9 +1215,7 @@ pub fn mock_failed_task(task: TaskDescription, failed_task: FailedTask) -> TaskS
             partition_id: partition_id as u64,
             path: format!(
                 "/{}/{}/{}",
-                task.partition.job_id,
-                task.partition.stage_id,
-                task.partition.partition_id
+                task.partition.job_id, task.partition.stage_id, task.partition.partition_id
             ),
             num_batches: 1,
             num_rows: 1,

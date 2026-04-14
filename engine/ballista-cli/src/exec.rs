@@ -116,16 +116,11 @@ pub async fn exec_from_repl(ctx: &SessionContext, print_options: &mut PrintOptio
                         Command::OutputFormat(subcommand) => {
                             if let Some(subcommand) = subcommand {
                                 if let Ok(command) = subcommand.parse::<OutputFormat>() {
-                                    if let Err(e) =
-                                        command.execute(&mut print_options).await
-                                    {
+                                    if let Err(e) = command.execute(&mut print_options).await {
                                         eprintln!("{e}")
                                     }
                                 } else {
-                                    eprintln!(
-                                        "'\\{}' is not a valid command",
-                                        &line[1..]
-                                    );
+                                    eprintln!("'\\{}' is not a valid command", &line[1..]);
                                 }
                             } else {
                                 println!("Output format is {:?}.", print_options.format);
@@ -175,9 +170,7 @@ async fn exec_and_print(
     let df = ctx.sql(&sql).await?;
     let df = match print_options.maxrows {
         datafusion_cli::print_options::MaxRows::Unlimited => df,
-        datafusion_cli::print_options::MaxRows::Limited(max_rows) => {
-            df.limit(0, Some(max_rows))?
-        }
+        datafusion_cli::print_options::MaxRows::Limited(max_rows) => df.limit(0, Some(max_rows))?,
     };
     let schema = Arc::new(df.schema().as_arrow().clone());
     let results = df.collect().await?;

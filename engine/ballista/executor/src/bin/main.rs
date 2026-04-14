@@ -18,13 +18,9 @@
 //! Ballista Rust executor binary.
 
 use ballista_core::config::LogRotationPolicy;
-use ballista_core::object_store::{
-    runtime_env_with_s3_support, session_config_with_s3_support,
-};
+use ballista_core::object_store::{runtime_env_with_s3_support, session_config_with_s3_support};
 use ballista_executor::config::Config;
-use ballista_executor::executor_process::{
-    ExecutorProcessConfig, start_executor_process,
-};
+use ballista_executor::executor_process::{ExecutorProcessConfig, start_executor_process};
 use clap::Parser;
 use std::env;
 use std::sync::Arc;
@@ -44,8 +40,7 @@ async fn main() -> ballista_core::error::Result<()> {
     config.override_runtime_producer = Some(Arc::new(runtime_env_with_s3_support));
 
     let rust_log = env::var(EnvFilter::DEFAULT_ENV);
-    let log_filter =
-        EnvFilter::new(rust_log.unwrap_or(config.special_mod_log_level.clone()));
+    let log_filter = EnvFilter::new(rust_log.unwrap_or(config.special_mod_log_level.clone()));
 
     let tracing = tracing_subscriber::fmt()
         .with_ansi(false)
@@ -56,10 +51,9 @@ async fn main() -> ballista_core::error::Result<()> {
     // File layer
     if let Some(log_dir) = &config.log_dir {
         let log_file = match config.log_rotation_policy {
-            LogRotationPolicy::Minutely => tracing_appender::rolling::minutely(
-                log_dir,
-                config.log_file_name_prefix(),
-            ),
+            LogRotationPolicy::Minutely => {
+                tracing_appender::rolling::minutely(log_dir, config.log_file_name_prefix())
+            }
             LogRotationPolicy::Hourly => {
                 tracing_appender::rolling::hourly(log_dir, config.log_file_name_prefix())
             }

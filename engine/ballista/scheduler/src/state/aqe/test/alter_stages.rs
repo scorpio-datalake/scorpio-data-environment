@@ -17,12 +17,9 @@
 
 use crate::assert_plan;
 use crate::state::aqe::planner::AdaptivePlanner;
-use crate::state::aqe::test::{
-    mock_batch, mock_context, mock_partitions_with_statistics_no_data,
-};
+use crate::state::aqe::test::{mock_batch, mock_context, mock_partitions_with_statistics_no_data};
 use ballista_core::serde::scheduler::{
-    ExecutorMetadata, ExecutorSpecification, PartitionId, PartitionLocation,
-    PartitionStats,
+    ExecutorMetadata, ExecutorSpecification, PartitionId, PartitionLocation, PartitionStats,
 };
 use datafusion::arrow::datatypes::{DataType, Field, Schema};
 use datafusion::common::stats::Precision;
@@ -34,9 +31,7 @@ use datafusion::physical_expr::{EquivalenceProperties, Partitioning};
 use datafusion::physical_plan::joins::CrossJoinExec;
 use datafusion::physical_plan::repartition::RepartitionExec;
 use datafusion::physical_plan::test::exec::StatisticsExec;
-use datafusion::physical_plan::{
-    DisplayAs, DisplayFormatType, ExecutionPlan, PlanProperties,
-};
+use datafusion::physical_plan::{DisplayAs, DisplayFormatType, ExecutionPlan, PlanProperties};
 use std::any::Any;
 use std::collections::HashSet;
 use std::fmt::Formatter;
@@ -54,8 +49,7 @@ async fn should_propagate_empty_stage() -> datafusion::error::Result<()> {
         "#;
 
     let plan = ctx.sql(q).await?.create_physical_plan().await?;
-    let mut planner =
-        AdaptivePlanner::try_new(ctx.state().config(), plan, "test_job".to_string())?;
+    let mut planner = AdaptivePlanner::try_new(ctx.state().config(), plan, "test_job".to_string())?;
 
     let stages = planner.runnable_stages()?.unwrap();
     assert_eq!(1, stages.len());
@@ -117,8 +111,7 @@ async fn should_propagate_empty_stage_and_remove() -> datafusion::error::Result<
         "#;
 
     let plan = ctx.sql(q).await?.create_physical_plan().await?;
-    let mut planner =
-        AdaptivePlanner::try_new(ctx.state().config(), plan, "test_job".to_string())?;
+    let mut planner = AdaptivePlanner::try_new(ctx.state().config(), plan, "test_job".to_string())?;
 
     assert_plan!(planner.current_plan(),  @ r"
     AdaptiveDatafusionExec: is_final=false, plan_id=2, stage_id=pending
@@ -165,8 +158,7 @@ async fn should_insert_new_stage() -> datafusion::error::Result<()> {
     let ctx = mock_context();
 
     let join = create_plan_with_scan()?;
-    let mut planner =
-        AdaptivePlanner::try_new(ctx.state().config(), join, "test_job".to_string())?;
+    let mut planner = AdaptivePlanner::try_new(ctx.state().config(), join, "test_job".to_string())?;
 
     assert_plan!(planner.current_plan(),  @ r"
     AdaptiveDatafusionExec: is_final=false, plan_id=1, stage_id=pending
@@ -255,8 +247,7 @@ async fn should_cancel_the_stage() -> datafusion::error::Result<()> {
         .create_physical_plan()
         .await?;
 
-    let mut planner =
-        AdaptivePlanner::try_new(ctx.state().config(), join, "test_job".to_string())?;
+    let mut planner = AdaptivePlanner::try_new(ctx.state().config(), join, "test_job".to_string())?;
 
     let (stages, cancellable) = planner.actionable_stages()?;
     assert_eq!(2, stages.unwrap().len());
@@ -311,13 +302,11 @@ fn create_plan_with_scan() -> Result<Arc<dyn ExecutionPlan>, DataFusionError> {
         big,
         Partitioning::Hash(vec![column_big], 2),
     )?);
-    let join =
-        Arc::new(CrossJoinExec::new(exchange_big, small_scan)) as Arc<dyn ExecutionPlan>;
+    let join = Arc::new(CrossJoinExec::new(exchange_big, small_scan)) as Arc<dyn ExecutionPlan>;
     Ok(join)
 }
 
-fn create_big_and_small_statistic_scan()
--> (Arc<dyn ExecutionPlan>, Arc<dyn ExecutionPlan>) {
+fn create_big_and_small_statistic_scan() -> (Arc<dyn ExecutionPlan>, Arc<dyn ExecutionPlan>) {
     let big = Arc::new(StatisticsExec::new(
         big_statistics(),
         Schema::new(vec![Field::new("big_col", DataType::Int32, false)]),
@@ -426,11 +415,7 @@ struct MockPartitionedScan {
 }
 
 impl MockPartitionedScan {
-    pub fn new(
-        schema: Arc<Schema>,
-        num_partitions: usize,
-        statistics: Statistics,
-    ) -> Self {
+    pub fn new(schema: Arc<Schema>, num_partitions: usize, statistics: Statistics) -> Self {
         let plan_properties = Arc::new(PlanProperties::new(
             EquivalenceProperties::new(schema.clone()),
             Partitioning::UnknownPartitioning(num_partitions),

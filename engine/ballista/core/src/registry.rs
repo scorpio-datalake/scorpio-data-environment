@@ -56,11 +56,10 @@ impl Default for BallistaFunctionRegistry {
                 .map(|f| (f.name().to_string(), f))
                 .collect();
 
-        let window_functions: HashMap<String, Arc<WindowUDF>> =
-            all_default_window_functions()
-                .into_iter()
-                .map(|f| (f.name().to_string(), f))
-                .collect();
+        let window_functions: HashMap<String, Arc<WindowUDF>> = all_default_window_functions()
+            .into_iter()
+            .map(|f| (f.name().to_string(), f))
+            .collect();
 
         #[cfg(feature = "spark-compat")]
         let (scalar_functions, aggregate_functions, window_functions) = {

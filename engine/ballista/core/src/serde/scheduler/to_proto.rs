@@ -25,8 +25,8 @@ use crate::serde::protobuf::{self, NamedPruningMetrics, NamedRatio};
 use datafusion_proto::protobuf as datafusion_protobuf;
 
 use crate::serde::scheduler::{
-    Action, ExecutorData, ExecutorMetadata, ExecutorSpecification, PartitionId,
-    PartitionLocation, PartitionStats,
+    Action, ExecutorData, ExecutorMetadata, ExecutorSpecification, PartitionId, PartitionLocation,
+    PartitionStats,
 };
 use datafusion::physical_plan::Partitioning;
 use protobuf::{NamedCount, NamedGauge, NamedTime, action::ActionType, operator_metric};
@@ -104,12 +104,16 @@ pub fn hash_partitioning_to_proto(
 ) -> Result<Option<datafusion_protobuf::PhysicalHashRepartition>, BallistaError> {
     match output_partitioning {
         Some(Partitioning::Hash(exprs, partition_count)) => {
-            let default_codec =
-                datafusion_proto::physical_plan::DefaultPhysicalExtensionCodec {};
+            let default_codec = datafusion_proto::physical_plan::DefaultPhysicalExtensionCodec {};
             Ok(Some(datafusion_protobuf::PhysicalHashRepartition {
                 hash_expr: exprs
                     .iter()
-                    .map(|expr|datafusion_proto::physical_plan::to_proto::serialize_physical_expr(&expr.clone(), &default_codec))
+                    .map(|expr| {
+                        datafusion_proto::physical_plan::to_proto::serialize_physical_expr(
+                            &expr.clone(),
+                            &default_codec,
+                        )
+                    })
                     .collect::<Result<Vec<_>, DataFusionError>>()?,
                 partition_count: *partition_count as u64,
             }))
@@ -206,9 +210,7 @@ impl TryInto<protobuf::OperatorMetric> for &MetricValue {
                 })),
             }),
             MetricValue::OutputBatches(count) => Ok(protobuf::OperatorMetric {
-                metric: Some(
-                    operator_metric::Metric::OutputBatches(count.value() as u64),
-                ),
+                metric: Some(operator_metric::Metric::OutputBatches(count.value() as u64)),
             }),
             // at the moment there there is no way to serialize custom metrics
             // thus at the moment we can't support it
@@ -269,9 +271,7 @@ impl Into<protobuf::ExecutorData> for ExecutorData {
         protobuf::ExecutorData {
             executor_id: self.executor_id,
             resources: vec![ExecutorResourcePair {
-                total: protobuf::executor_resource::Resource::TaskSlots(
-                    self.total_task_slots,
-                ),
+                total: protobuf::executor_resource::Resource::TaskSlots(self.total_task_slots),
                 available: protobuf::executor_resource::Resource::TaskSlots(
                     self.available_task_slots,
                 ),

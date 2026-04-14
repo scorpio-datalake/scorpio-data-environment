@@ -334,10 +334,7 @@ impl SchedulerConfig {
     }
 
     /// Sets the Flight SQL endpoint to advertise.
-    pub fn with_advertise_flight_sql_endpoint(
-        mut self,
-        endpoint: Option<String>,
-    ) -> Self {
+    pub fn with_advertise_flight_sql_endpoint(mut self, endpoint: Option<String>) -> Self {
         self.advertise_flight_sql_endpoint = endpoint;
         self
     }
@@ -481,13 +478,10 @@ impl TryFrom<Config> for SchedulerConfig {
             executor_termination_grace_period: opt.executor_termination_grace_period,
             scheduler_event_expected_processing_duration: opt
                 .scheduler_event_expected_processing_duration,
-            grpc_server_max_decoding_message_size: opt
-                .grpc_server_max_decoding_message_size,
-            grpc_server_max_encoding_message_size: opt
-                .grpc_server_max_encoding_message_size,
+            grpc_server_max_decoding_message_size: opt.grpc_server_max_decoding_message_size,
+            grpc_server_max_encoding_message_size: opt.grpc_server_max_encoding_message_size,
             executor_timeout_seconds: opt.executor_timeout_seconds,
-            expire_dead_executor_interval_seconds: opt
-                .expire_dead_executor_interval_seconds,
+            expire_dead_executor_interval_seconds: opt.expire_dead_executor_interval_seconds,
             override_config_producer: None,
             override_logical_codec: None,
             override_physical_codec: None,

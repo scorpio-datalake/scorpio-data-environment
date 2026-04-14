@@ -76,21 +76,18 @@ impl BallistaClient {
         let addr = format!("{scheme}://{host}:{port}");
         debug!("BallistaClient connecting to {addr}");
 
-        let mut endpoint = create_grpc_client_endpoint(addr.clone(), None)
-            .map_err(|e| {
+        let mut endpoint = create_grpc_client_endpoint(addr.clone(), None).map_err(|e| {
+            BallistaError::GrpcConnectionError(format!(
+                "Error creating endpoint to Ballista scheduler or executor at {addr}: {e:?}"
+            ))
+        })?;
+
+        if let Some(customize) = customize_endpoint {
+            endpoint = customize.configure_endpoint(endpoint).map_err(|e| {
                 BallistaError::GrpcConnectionError(format!(
                     "Error creating endpoint to Ballista scheduler or executor at {addr}: {e:?}"
                 ))
             })?;
-
-        if let Some(customize) = customize_endpoint {
-            endpoint = customize
-                .configure_endpoint(endpoint)
-                .map_err(|e| {
-                    BallistaError::GrpcConnectionError(format!(
-                        "Error creating endpoint to Ballista scheduler or executor at {addr}: {e:?}"
-                    ))
-                })?;
         }
 
         let connection = endpoint.connect().await.map_err(|e| {
@@ -170,27 +167,26 @@ impl BallistaClient {
             self.execute_do_action(&action).await
         };
 
-        result
-            .map_err(|error| match error {
-                // map grpc connection error to partition fetch error.
-                BallistaError::GrpcActionError(msg) => {
-                    log::warn!(
-                        "grpc client failed to fetch partition: {partition_id:?} , message: {msg:?}"
-                    );
-                    BallistaError::FetchFailed(
-                        executor_id.to_owned(),
-                        partition_id.stage_id,
-                        partition_id.partition_id,
-                        msg,
-                    )
-                }
-                error => {
-                    log::warn!(
-                        "grpc client failed to fetch partition: {partition_id:?} , error: {error:?}"
-                    );
-                    error
-                }
-            })
+        result.map_err(|error| match error {
+            // map grpc connection error to partition fetch error.
+            BallistaError::GrpcActionError(msg) => {
+                log::warn!(
+                    "grpc client failed to fetch partition: {partition_id:?} , message: {msg:?}"
+                );
+                BallistaError::FetchFailed(
+                    executor_id.to_owned(),
+                    partition_id.stage_id,
+                    partition_id.partition_id,
+                    msg,
+                )
+            }
+            error => {
+                log::warn!(
+                    "grpc client failed to fetch partition: {partition_id:?} , error: {error:?}"
+                );
+                error
+            }
+        })
     }
 
     #[allow(rustdoc::private_intra_doc_links)]
@@ -199,10 +195,7 @@ impl BallistaClient {
     /// This method establishes a [FlightDataStream] to facilitate the transfer of data
     /// using the Arrow Flight protocol. The [FlightDataStream] handles the streaming
     /// of record batches from the server to the client in an efficient and structured manner.
-    pub async fn execute_do_get(
-        &mut self,
-        action: &Action,
-    ) -> BResult<SendableRecordBatchStream> {
+    pub async fn execute_do_get(&mut self, action: &Action) -> BResult<SendableRecordBatchStream> {
         let serialized_action: protobuf::Action = action.to_owned().try_into()?;
 
         let mut buf: Vec<u8> = Vec::with_capacity(serialized_action.encoded_len());
@@ -216,10 +209,7 @@ impl BallistaClient {
                 warn!(
                     "Remote shuffle read fail, retry {i} times, sleep {IO_RETRY_WAIT_TIME_MS} ms."
                 );
-                tokio::time::sleep(std::time::Duration::from_millis(
-                    IO_RETRY_WAIT_TIME_MS,
-                ))
-                .await;
+                tokio::time::sleep(std::time::Duration::from_millis(IO_RETRY_WAIT_TIME_MS)).await;
             }
 
             let request = tonic::Request::new(Ticket {
@@ -261,11 +251,8 @@ impl BallistaClient {
                 }
                 Err(e) => {
                     if i == IO_RETRIES_TIMES - 1 || e.code() != Code::Unknown {
-                        return BallistaError::GrpcActionError(format!(
-                            "{:?}",
-                            e.to_string()
-                        ))
-                        .into();
+                        return BallistaError::GrpcActionError(format!("{:?}", e.to_string()))
+                            .into();
                     }
                     continue;
                 }
@@ -295,10 +282,7 @@ impl BallistaClient {
                 warn!(
                     "Remote shuffle read fail, retry {i} times, sleep {IO_RETRY_WAIT_TIME_MS} ms."
                 );
-                tokio::time::sleep(std::time::Duration::from_millis(
-                    IO_RETRY_WAIT_TIME_MS,
-                ))
-                .await;
+                tokio::time::sleep(std::time::Duration::from_millis(IO_RETRY_WAIT_TIME_MS)).await;
             }
 
             let request = tonic::Request::new(arrow_flight::Action {
@@ -326,10 +310,7 @@ impl BallistaClient {
             let stream = res.into_inner();
             let stream = stream.map(|m| {
                 m.map(|b| b.body).map_err(|e| {
-                    DataFusionError::ArrowError(
-                        Box::new(ArrowError::IpcError(e.to_string())),
-                        None,
-                    )
+                    DataFusionError::ArrowError(Box::new(ArrowError::IpcError(e.to_string())), None)
                 })
             });
 
@@ -424,9 +405,7 @@ impl<S: Stream<Item = Result<prost::bytes::Bytes>> + Unpin> BlockDataStream<S> {
     /// Creates a new `BlockDataStream` from the given IPC byte stream.
     ///
     /// Reads the schema from the stream header and initializes the decoder.
-    pub async fn try_new(
-        mut ipc_stream: S,
-    ) -> std::result::Result<Self, DataFusionError> {
+    pub async fn try_new(mut ipc_stream: S) -> std::result::Result<Self, DataFusionError> {
         let mut state_buffer = Buffer::default();
 
         loop {
@@ -435,13 +414,13 @@ impl<S: Stream<Item = Result<prost::bytes::Bytes>> + Unpin> BlockDataStream<S> {
                     "Schema buffer length exceeded maximum buffer size, expected {} actual: {}",
                     MAXIMUM_SCHEMA_BUFFER_SIZE,
                     state_buffer.len()
-                )).into());
+                ))
+                .into());
             }
 
             match ipc_stream.next().await {
                 Some(Ok(blob)) => {
-                    state_buffer =
-                        Self::combine_buffers(&state_buffer, &Buffer::from(blob));
+                    state_buffer = Self::combine_buffers(&state_buffer, &Buffer::from(blob));
 
                     match try_schema_from_ipc_buffer(state_buffer.as_slice()) {
                         Ok(schema) => {
@@ -495,9 +474,7 @@ impl<S: Stream<Item = Result<prost::bytes::Bytes>> + Unpin> BlockDataStream<S> {
     }
 }
 
-impl<S: Stream<Item = Result<prost::bytes::Bytes>> + Unpin> Stream
-    for BlockDataStream<S>
-{
+impl<S: Stream<Item = Result<prost::bytes::Bytes>> + Unpin> Stream for BlockDataStream<S> {
     type Item = datafusion::error::Result<RecordBatch>;
 
     fn poll_next(
@@ -514,29 +491,27 @@ impl<S: Stream<Item = Result<prost::bytes::Bytes>> + Unpin> Stream
             // from remote ipc decode it try to return next batch
             //
             Ok(None) => match self.ipc_stream.poll_next_unpin(cx) {
-                std::task::Poll::Ready(Some(flight_data_result)) => {
-                    match flight_data_result {
-                        Ok(blob) => {
-                            self.extend_bytes(blob);
+                std::task::Poll::Ready(Some(flight_data_result)) => match flight_data_result {
+                    Ok(blob) => {
+                        self.extend_bytes(blob);
 
-                            match self.decode() {
-                                Ok(Some(batch)) => {
-                                    std::task::Poll::Ready(Some(Ok(batch)))
-                                }
-                                Ok(None) => {
-                                    cx.waker().wake_by_ref();
-                                    std::task::Poll::Pending
-                                }
-                                Err(e) => std::task::Poll::Ready(Some(Err(
-                                    ArrowError::IpcError(e.to_string()).into(),
-                                ))),
+                        match self.decode() {
+                            Ok(Some(batch)) => std::task::Poll::Ready(Some(Ok(batch))),
+                            Ok(None) => {
+                                cx.waker().wake_by_ref();
+                                std::task::Poll::Pending
                             }
+                            Err(e) => std::task::Poll::Ready(Some(Err(ArrowError::IpcError(
+                                e.to_string(),
+                            )
+                            .into()))),
                         }
-                        Err(e) => std::task::Poll::Ready(Some(Err(
-                            ArrowError::IpcError(e.to_string()).into(),
-                        ))),
                     }
-                }
+                    Err(e) => std::task::Poll::Ready(Some(Err(ArrowError::IpcError(
+                        e.to_string(),
+                    )
+                    .into()))),
+                },
                 //
                 // end of IPC stream
                 //
@@ -544,10 +519,7 @@ impl<S: Stream<Item = Result<prost::bytes::Bytes>> + Unpin> Stream
                 // its expected that underlying stream will register waker callback
                 std::task::Poll::Pending => std::task::Poll::Pending,
             },
-            Err(e) => std::task::Poll::Ready(Some(Err(ArrowError::IpcError(
-                e.to_string(),
-            )
-            .into()))),
+            Err(e) => std::task::Poll::Ready(Some(Err(ArrowError::IpcError(e.to_string()).into()))),
         }
     }
 }
@@ -613,8 +585,7 @@ mod tests {
 
     fn generate_ipc_stream(batches: &[RecordBatch]) -> Vec<u8> {
         let mut result = vec![];
-        let mut writer =
-            StreamWriter::try_new(&mut result, &batches[0].schema()).unwrap();
+        let mut writer = StreamWriter::try_new(&mut result, &batches[0].schema()).unwrap();
         for b in batches {
             writer.write(b).unwrap();
         }
@@ -631,12 +602,11 @@ mod tests {
             .chunks(2)
             .map(|b| Ok(Bytes::from(b)));
 
-        let result: datafusion::error::Result<Vec<RecordBatch>> =
-            BlockDataStream::try_new(stream)
-                .await
-                .unwrap()
-                .try_collect()
-                .await;
+        let result: datafusion::error::Result<Vec<RecordBatch>> = BlockDataStream::try_new(stream)
+            .await
+            .unwrap()
+            .try_collect()
+            .await;
 
         assert_eq!(batches, result.unwrap())
     }
@@ -647,12 +617,11 @@ mod tests {
         let blob = generate_ipc_stream(&batches);
         let stream = futures::stream::iter(vec![Ok(Bytes::from(blob))]);
 
-        let result: datafusion::error::Result<Vec<RecordBatch>> =
-            BlockDataStream::try_new(stream)
-                .await
-                .unwrap()
-                .try_collect()
-                .await;
+        let result: datafusion::error::Result<Vec<RecordBatch>> = BlockDataStream::try_new(stream)
+            .await
+            .unwrap()
+            .try_collect()
+            .await;
 
         assert_eq!(batches, result.unwrap())
     }
@@ -666,12 +635,11 @@ mod tests {
             .chunks(2)
             .map(|b| Ok(Bytes::from(b)));
 
-        let result: datafusion::error::Result<Vec<RecordBatch>> =
-            BlockDataStream::try_new(stream)
-                .await
-                .unwrap()
-                .try_collect()
-                .await;
+        let result: datafusion::error::Result<Vec<RecordBatch>> = BlockDataStream::try_new(stream)
+            .await
+            .unwrap()
+            .try_collect()
+            .await;
 
         assert_eq!(batches, result.unwrap())
     }

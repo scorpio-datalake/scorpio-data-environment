@@ -50,17 +50,14 @@ pub(crate) async fn generate_distributed_explain_plan(
     let plan = session_ctx.state().create_physical_plan(&plan).await?;
 
     let mut planner = DefaultDistributedPlanner::new();
-    let shuffle_stages =
-        planner.plan_query_stages(job_id, plan, session_config.options())?;
+    let shuffle_stages = planner.plan_query_stages(job_id, plan, session_config.options())?;
     let builder = ExecutionStageBuilder::new(session_config.clone());
     let stages = builder.build(shuffle_stages)?;
 
     Ok(render_stages(stages))
 }
 
-pub(crate) fn extract_logical_and_physical_plans(
-    plans: &[StringifiedPlan],
-) -> (String, String) {
+pub(crate) fn extract_logical_and_physical_plans(plans: &[StringifiedPlan]) -> (String, String) {
     let logical_txt = plans
         .iter()
         .rev()

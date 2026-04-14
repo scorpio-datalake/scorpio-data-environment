@@ -66,9 +66,8 @@ pub mod utils;
 ///
 /// It is intended to be used with executor configuration
 ///
-pub type RuntimeProducer = Arc<
-    dyn Fn(&SessionConfig) -> datafusion::error::Result<Arc<RuntimeEnv>> + Send + Sync,
->;
+pub type RuntimeProducer =
+    Arc<dyn Fn(&SessionConfig) -> datafusion::error::Result<Arc<RuntimeEnv>> + Send + Sync>;
 ///
 /// [ConfigProducer] is a factory which can create [SessionConfig], with
 /// additional extension or configuration codecs

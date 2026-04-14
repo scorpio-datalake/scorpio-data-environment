@@ -20,9 +20,7 @@ use std::error::Error;
 use std::path::PathBuf;
 
 use ballista::prelude::{SessionConfigExt, SessionContextExt};
-use ballista_core::serde::{
-    BallistaCodec, protobuf::scheduler_grpc_client::SchedulerGrpcClient,
-};
+use ballista_core::serde::{BallistaCodec, protobuf::scheduler_grpc_client::SchedulerGrpcClient};
 use ballista_core::{ConfigProducer, RuntimeProducer};
 use ballista_scheduler::SessionBuilder;
 use datafusion::execution::{SessionState, SessionStateBuilder};
@@ -111,8 +109,7 @@ pub async fn setup_test_cluster() -> (String, u16) {
 
     let host = "localhost".to_string();
 
-    let scheduler =
-        connect_to_scheduler(format!("http://{}:{}", host, addr.port())).await;
+    let scheduler = connect_to_scheduler(format!("http://{}:{}", host, addr.port())).await;
 
     ballista_executor::new_standalone_executor(
         scheduler,
@@ -132,16 +129,13 @@ pub async fn setup_test_cluster() -> (String, u16) {
 pub async fn setup_test_cluster_with_state(session_state: SessionState) -> (String, u16) {
     let config = SessionConfig::new_with_ballista();
 
-    let addr = ballista_scheduler::standalone::new_standalone_scheduler_from_state(
-        &session_state,
-    )
-    .await
-    .expect("scheduler to be created");
+    let addr = ballista_scheduler::standalone::new_standalone_scheduler_from_state(&session_state)
+        .await
+        .expect("scheduler to be created");
 
     let host = "localhost".to_string();
 
-    let scheduler =
-        connect_to_scheduler(format!("http://{}:{}", host, addr.port())).await;
+    let scheduler = connect_to_scheduler(format!("http://{}:{}", host, addr.port())).await;
 
     ballista_executor::new_standalone_executor_from_state(
         scheduler,
@@ -181,8 +175,7 @@ pub async fn setup_test_cluster_with_builders(
 
     let host = "localhost".to_string();
 
-    let scheduler =
-        connect_to_scheduler(format!("http://{}:{}", host, addr.port())).await;
+    let scheduler = connect_to_scheduler(format!("http://{}:{}", host, addr.port())).await;
 
     ballista_executor::new_standalone_executor_from_builder(
         scheduler,

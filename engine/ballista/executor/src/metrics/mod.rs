@@ -48,8 +48,6 @@ impl ExecutorMetricsCollector for LoggingMetricsCollector {
         partition: usize,
         plan: Arc<dyn QueryStageExecutor>,
     ) {
-        info!(
-            "\n=== [{job_id}/{stage_id}/{partition}] Physical plan with metrics ===\n{plan}\n"
-        );
+        info!("\n=== [{job_id}/{stage_id}/{partition}] Physical plan with metrics ===\n{plan}\n");
     }
 }

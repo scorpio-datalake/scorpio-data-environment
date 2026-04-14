@@ -32,13 +32,11 @@ use datafusion::common::stats::Precision;
 use datafusion::error::{DataFusionError, Result};
 use datafusion::execution::context::TaskContext;
 use datafusion::physical_plan::coalesce::{LimitedBatchCoalescer, PushBatchStatus};
-use datafusion::physical_plan::metrics::{
-    BaselineMetrics, ExecutionPlanMetricsSet, MetricsSet,
-};
+use datafusion::physical_plan::metrics::{BaselineMetrics, ExecutionPlanMetricsSet, MetricsSet};
 use datafusion::physical_plan::stream::RecordBatchStreamAdapter;
 use datafusion::physical_plan::{
-    ColumnStatistics, DisplayAs, DisplayFormatType, ExecutionPlan, Partitioning,
-    PlanProperties, RecordBatchStream, SendableRecordBatchStream, Statistics,
+    ColumnStatistics, DisplayAs, DisplayFormatType, ExecutionPlan, Partitioning, PlanProperties,
+    RecordBatchStream, SendableRecordBatchStream, Statistics,
 };
 use datafusion::prelude::SessionConfig;
 use futures::{Stream, StreamExt, TryStreamExt, ready};
@@ -97,11 +95,7 @@ impl ShuffleReaderExec {
 }
 
 impl DisplayAs for ShuffleReaderExec {
-    fn fmt_as(
-        &self,
-        t: DisplayFormatType,
-        f: &mut std::fmt::Formatter,
-    ) -> std::fmt::Result {
+    fn fmt_as(&self, t: DisplayFormatType, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match t {
             DisplayFormatType::Default | DisplayFormatType::Verbose => {
                 write!(
@@ -316,10 +310,7 @@ impl LocalShuffleStream {
 impl Stream for LocalShuffleStream {
     type Item = Result<RecordBatch>;
 
-    fn poll_next(
-        mut self: Pin<&mut Self>,
-        _: &mut Context<'_>,
-    ) -> Poll<Option<Self::Item>> {
+    fn poll_next(mut self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         if let Some(batch) = self.reader.next() {
             return Poll::Ready(Some(batch.map_err(|e| e.into())));
         }
@@ -344,9 +335,7 @@ struct AbortableReceiverStream {
 impl AbortableReceiverStream {
     /// Construct a new SendableRecordBatchReceiverStream which will send batches of the specified schema from inner
     pub fn create(
-        rx: tokio::sync::mpsc::Receiver<
-            result::Result<SendableRecordBatchStream, BallistaError>,
-        >,
+        rx: tokio::sync::mpsc::Receiver<result::Result<SendableRecordBatchStream, BallistaError>>,
         spawned_tasks: Vec<SpawnedTask<()>>,
     ) -> AbortableReceiverStream {
         let inner = ReceiverStream::new(rx);
@@ -443,13 +432,8 @@ fn send_fetch_partitions(
             async move {
                 // Block if exceeds max request number.
                 let permit = semaphore.acquire_owned().await.unwrap();
-                let r = fetch_partition_remote(
-                    &p,
-                    grpc_config,
-                    prefer_flight,
-                    customize_endpoint,
-                )
-                .await;
+                let r = fetch_partition_remote(&p, grpc_config, prefer_flight, customize_endpoint)
+                    .await;
                 // Block if the channel buffer is full.
                 if let Err(e) = response_sender.send(r).await {
                     error!("Fail to send response event to the channel due to {e}");
@@ -476,8 +460,7 @@ async fn new_ballista_client(
     let max_message_size = config.max_message_size;
     let use_tls = config.use_tls;
 
-    BallistaClient::try_new(host, port, max_message_size, use_tls, customize_endpoint)
-        .await
+    BallistaClient::try_new(host, port, max_message_size, use_tls, customize_endpoint).await
 }
 
 async fn fetch_partition_remote(
@@ -493,19 +476,18 @@ async fn fetch_partition_remote(
 
     // TODO for shuffle client connections, we should avoid creating new connections again and again.
     // And we should also avoid to keep alive too many connections for long time.
-    let mut ballista_client =
-        new_ballista_client(host, port, &config, customize_endpoint)
-            .await
-            .map_err(|error| match error {
-                // map grpc connection error to partition fetch error.
-                BallistaError::GrpcConnectionError(msg) => BallistaError::FetchFailed(
-                    metadata.id.clone(),
-                    partition_id.stage_id,
-                    partition_id.partition_id,
-                    msg,
-                ),
-                other => other,
-            })?;
+    let mut ballista_client = new_ballista_client(host, port, &config, customize_endpoint)
+        .await
+        .map_err(|error| match error {
+            // map grpc connection error to partition fetch error.
+            BallistaError::GrpcConnectionError(msg) => BallistaError::FetchFailed(
+                metadata.id.clone(),
+                partition_id.stage_id,
+                partition_id.partition_id,
+                msg,
+            ),
+            other => other,
+        })?;
 
     ballista_client
         .fetch_partition(&metadata.id, partition_id, &location.path, prefer_flight)
@@ -534,19 +516,15 @@ fn fetch_partition_local(
             partition_id.partition_id, data_path
         );
         let index_path = get_index_path(data_path);
-        return stream_sort_shuffle_partition(
-            data_path,
-            &index_path,
-            partition_id.partition_id,
-        )
-        .map_err(|e| {
-            BallistaError::FetchFailed(
-                metadata.id.clone(),
-                partition_id.stage_id,
-                partition_id.partition_id,
-                e.to_string(),
-            )
-        });
+        return stream_sort_shuffle_partition(data_path, &index_path, partition_id.partition_id)
+            .map_err(|e| {
+                BallistaError::FetchFailed(
+                    metadata.id.clone(),
+                    partition_id.stage_id,
+                    partition_id.partition_id,
+                    e.to_string(),
+                )
+            });
     }
 
     // Standard hash-based shuffle - read the file directly
@@ -614,10 +592,7 @@ impl CoalescedShuffleReaderStream {
 impl Stream for CoalescedShuffleReaderStream {
     type Item = Result<RecordBatch>;
 
-    fn poll_next(
-        mut self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-    ) -> Poll<Option<Self::Item>> {
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         let elapsed_compute = self.baseline_metrics.elapsed_compute().clone();
         let _timer = elapsed_compute.timer();
 
@@ -856,8 +831,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_stats_for_partition_statistics_specific_partition_out_of_range()
-    -> Result<()> {
+    async fn test_stats_for_partition_statistics_specific_partition_out_of_range() -> Result<()> {
         let schema = Schema::new(vec![
             Field::new("a", DataType::Int32, false),
             Field::new("b", DataType::Int32, false),
@@ -1019,8 +993,7 @@ mod tests {
         let schema = get_test_partition_schema();
         let data_array = Int32Array::from(vec![1]);
         let batch =
-            RecordBatch::try_new(Arc::new(schema.clone()), vec![Arc::new(data_array)])
-                .unwrap();
+            RecordBatch::try_new(Arc::new(schema.clone()), vec![Arc::new(data_array)]).unwrap();
         let tmp_dir = tempdir().unwrap();
         let file_path = tmp_dir.path().join("shuffle_data");
         let file = File::create(&file_path).unwrap();
@@ -1046,8 +1019,7 @@ mod tests {
         let schema = get_test_partition_schema();
         let data_array = Int32Array::from(vec![1]);
         let batch =
-            RecordBatch::try_new(Arc::new(schema.clone()), vec![Arc::new(data_array)])
-                .unwrap();
+            RecordBatch::try_new(Arc::new(schema.clone()), vec![Arc::new(data_array)]).unwrap();
         let tmp_dir = tempdir().unwrap();
         let file_path = tmp_dir.path().join("shuffle_data");
         let file = File::create(&file_path).unwrap();
@@ -1055,19 +1027,15 @@ mod tests {
         writer.write(&batch).unwrap();
         writer.finish().unwrap();
 
-        let partition_locations = get_test_partition_locations(
-            partition_num,
-            file_path.to_str().unwrap().to_string(),
-        );
+        let partition_locations =
+            get_test_partition_locations(partition_num, file_path.to_str().unwrap().to_string());
         let config = SessionConfig::new_with_ballista()
             .with_ballista_shuffle_reader_maximum_concurrent_requests(max_request_num);
 
         let response_receiver = send_fetch_partitions(partition_locations, &config);
 
-        let stream = RecordBatchStreamAdapter::new(
-            Arc::new(schema),
-            response_receiver.try_flatten(),
-        );
+        let stream =
+            RecordBatchStreamAdapter::new(Arc::new(schema), response_receiver.try_flatten());
 
         let result = common::collect(Box::pin(stream)).await.unwrap();
         assert_eq!(partition_num, result.len());
@@ -1140,8 +1108,7 @@ mod tests {
         let string_vec: Vec<String> = (0..rows).map(|i| format!("s{}", i)).collect();
         let string_array = StringArray::from(string_vec);
 
-        RecordBatch::try_new(schema, vec![Arc::new(number_array), Arc::new(string_array)])
-            .unwrap()
+        RecordBatch::try_new(schema, vec![Arc::new(number_array), Arc::new(string_array)]).unwrap()
     }
 
     fn create_test_schema() -> SchemaRef {
@@ -1275,8 +1242,7 @@ mod tests {
 
         // 2. Construct a stream with error
         let stream = stream::iter(batches);
-        let input_stream =
-            Box::pin(RecordBatchStreamAdapter::new(schema.clone(), stream));
+        let input_stream = Box::pin(RecordBatchStreamAdapter::new(schema.clone(), stream));
 
         // 3. Configure Coalescer
         let target_batch_size = 10;

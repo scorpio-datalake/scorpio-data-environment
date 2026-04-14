@@ -56,8 +56,7 @@ use log::info;
 
 use crate::shutdown::Shutdown;
 use ballista_core::serde::protobuf::{
-    FailedTask, OperatorMetricsSet, ShuffleWritePartition, SuccessfulTask, TaskStatus,
-    task_status,
+    FailedTask, OperatorMetricsSet, ShuffleWritePartition, SuccessfulTask, TaskStatus, task_status,
 };
 use ballista_core::serde::scheduler::PartitionId;
 use ballista_core::utils::GrpcServerConfig;
@@ -70,11 +69,7 @@ use ballista_core::utils::GrpcServerConfig;
 /// [GrpcServerConfig] - the gRPC server configuration for timeout settings
 /// Returns a [tokio::task::JoinHandle] which will be registered as service handler
 ///
-pub type ArrowFlightServerProvider = dyn Fn(
-        SocketAddr,
-        Shutdown,
-        GrpcServerConfig,
-    ) -> tokio::task::JoinHandle<Result<(), BallistaError>>
+pub type ArrowFlightServerProvider = dyn Fn(SocketAddr, Shutdown, GrpcServerConfig) -> tokio::task::JoinHandle<Result<(), BallistaError>>
     + Send
     + Sync;
 

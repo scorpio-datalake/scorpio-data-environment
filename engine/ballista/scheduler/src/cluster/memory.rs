@@ -16,15 +16,14 @@
 // under the License.
 
 use crate::cluster::{
-    BoundTask, ClusterState, ExecutorSlot, JobState, JobStateEvent, JobStateEventStream,
-    JobStatus, TaskDistributionPolicy, bind_task_bias, bind_task_round_robin,
+    BoundTask, ClusterState, ExecutorSlot, JobState, JobStateEvent, JobStateEventStream, JobStatus,
+    TaskDistributionPolicy, bind_task_bias, bind_task_round_robin,
 };
 use crate::state::execution_graph::ExecutionGraphBox;
 use async_trait::async_trait;
 use ballista_core::error::{BallistaError, Result};
 use ballista_core::serde::protobuf::{
-    AvailableTaskSlots, ExecutorHeartbeat, ExecutorStatus, FailedJob, QueuedJob,
-    executor_status,
+    AvailableTaskSlots, ExecutorHeartbeat, ExecutorStatus, FailedJob, QueuedJob, executor_status,
 };
 use ballista_core::serde::scheduler::{ExecutorData, ExecutorMetadata};
 use ballista_core::{ConfigProducer, JobStatusSubscriber};
@@ -200,9 +199,7 @@ impl ClusterState for InMemoryClusterState {
             .get(executor_id)
             .map(|pair| pair.value().clone())
             .ok_or_else(|| {
-                BallistaError::Internal(format!(
-                    "Not executor with ID {executor_id} found"
-                ))
+                BallistaError::Internal(format!("Not executor with ID {executor_id} found"))
             })
     }
 
@@ -367,10 +364,7 @@ impl JobState for InMemoryJobState {
         Ok(None)
     }
 
-    async fn get_execution_graph(
-        &self,
-        job_id: &str,
-    ) -> Result<Option<ExecutionGraphBox>> {
+    async fn get_execution_graph(&self, job_id: &str) -> Result<Option<ExecutionGraphBox>> {
         Ok(self
             .completed_jobs
             .get(job_id)
@@ -513,9 +507,7 @@ mod test {
     use crate::cluster::memory::{InMemoryClusterState, InMemoryJobState};
     use crate::cluster::test_util::{test_job_lifecycle, test_job_planning_failure};
     use crate::cluster::{ClusterState, ClusterStateEvent, JobState, JobStateEvent};
-    use crate::test_utils::{
-        test_aggregation_plan, test_join_plan, test_two_aggregations_plan,
-    };
+    use crate::test_utils::{test_aggregation_plan, test_join_plan, test_two_aggregations_plan};
     use ballista_core::error::Result;
     use ballista_core::serde::protobuf::JobStatus;
     use ballista_core::serde::scheduler::{ExecutorMetadata, ExecutorSpecification};
@@ -617,7 +609,8 @@ mod test {
             JobStateEvent::JobUpdated {
                 status:
                     JobStatus {
-                        status: Some(ballista_core::serde::protobuf::job_status::Status::Successful(_)),
+                        status:
+                            Some(ballista_core::serde::protobuf::job_status::Status::Successful(_)),
                         ..
                     },
                 ..

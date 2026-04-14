@@ -35,9 +35,7 @@ use ballista_core::serde::protobuf::{
 };
 use ballista_core::serde::scheduler::{ExecutorData, ExecutorMetadata};
 
-use ballista_core::utils::{
-    GrpcClientConfig, create_grpc_client_endpoint, get_time_before,
-};
+use ballista_core::utils::{GrpcClientConfig, create_grpc_client_endpoint, get_time_before};
 
 use dashmap::DashMap;
 use log::{debug, error, info, warn};
@@ -71,18 +69,14 @@ pub struct ExecutorManager {
 
 impl ExecutorManager {
     /// Creates a new `ExecutorManager` with the given cluster state and configuration.
-    pub(crate) fn new(
-        cluster_state: Arc<dyn ClusterState>,
-        config: Arc<SchedulerConfig>,
-    ) -> Self {
-        let grpc_client_config =
-            if let Some(config_producer) = &config.override_config_producer {
-                let session_config = config_producer();
-                let ballista_config = session_config.ballista_config();
-                GrpcClientConfig::from(&ballista_config)
-            } else {
-                GrpcClientConfig::default()
-            };
+    pub(crate) fn new(cluster_state: Arc<dyn ClusterState>, config: Arc<SchedulerConfig>) -> Self {
+        let grpc_client_config = if let Some(config_producer) = &config.override_config_producer {
+            let session_config = config_producer();
+            let ballista_config = session_config.ballista_config();
+            GrpcClientConfig::from(&ballista_config)
+        } else {
+            GrpcClientConfig::default()
+        };
         Self {
             cluster_state,
             config,
@@ -157,14 +151,10 @@ impl ExecutorManager {
                         .cancel_tasks(CancelTasksParams { task_infos: infos })
                         .await
                     {
-                        error!(
-                            "Fail to cancel tasks for executor ID {executor_id} due to {e:?}"
-                        );
+                        error!("Fail to cancel tasks for executor ID {executor_id} due to {e:?}");
                     }
                 } else {
-                    error!(
-                        "Failed to get client for executor ID {executor_id} to cancel tasks"
-                    )
+                    error!("Failed to get client for executor ID {executor_id} to cancel tasks")
                 }
             }
         });
@@ -173,15 +163,9 @@ impl ExecutorManager {
     }
 
     /// Send rpc to Executors to clean up the job data by delayed clean_up_interval seconds
-    pub(crate) fn clean_up_job_data_delayed(
-        &self,
-        job_id: String,
-        clean_up_interval: u64,
-    ) {
+    pub(crate) fn clean_up_job_data_delayed(&self, job_id: String, clean_up_interval: u64) {
         if clean_up_interval == 0 {
-            info!(
-                "The interval is 0 and the clean up for job data {job_id} will not triggered"
-            );
+            info!("The interval is 0 and the clean up for job data {job_id} will not triggered");
             return;
         }
 
@@ -209,9 +193,7 @@ impl ExecutorManager {
             let job_id_clone = job_id.to_owned();
 
             if self.config.is_push_staged_scheduling() {
-                if let Ok(mut client) =
-                    self.get_client(&executor, &self.grpc_client_config).await
-                {
+                if let Ok(mut client) = self.get_client(&executor, &self.grpc_client_config).await {
                     tokio::spawn(async move {
                         if let Err(err) = client
                             .remove_job_data(RemoveJobDataParams {
@@ -237,9 +219,7 @@ impl ExecutorManager {
     }
 
     /// Returns a list of all executors along with the timestamp of their last recorded heartbeat.
-    pub async fn get_executor_state(
-        &self,
-    ) -> Result<Vec<(ExecutorMetadata, Option<Duration>)>> {
+    pub async fn get_executor_state(&self) -> Result<Vec<(ExecutorMetadata, Option<Duration>)>> {
         let mut state: Vec<(ExecutorMetadata, Option<Duration>)> = vec![];
         for metadata in self.cluster_state.registered_executor_metadata().await {
             let duration = self
@@ -256,10 +236,7 @@ impl ExecutorManager {
     /// Returns executor metadata for the provided executor ID.
     ///
     /// Returns an error if the executor does not exist.
-    pub async fn get_executor_metadata(
-        &self,
-        executor_id: &str,
-    ) -> Result<ExecutorMetadata> {
+    pub async fn get_executor_metadata(&self, executor_id: &str) -> Result<ExecutorMetadata> {
         self.cluster_state.get_executor_metadata(executor_id).await
     }
 
@@ -298,11 +275,7 @@ impl ExecutorManager {
     }
 
     /// Removes the executor from the cluster state.
-    pub async fn remove_executor(
-        &self,
-        executor_id: &str,
-        reason: Option<String>,
-    ) -> Result<()> {
+    pub async fn remove_executor(&self, executor_id: &str, reason: Option<String>) -> Result<()> {
         info!("Removing executor {executor_id}: {reason:?}");
         self.cluster_state.remove_executor(executor_id).await
     }
@@ -332,9 +305,7 @@ impl ExecutorManager {
                 });
             }
             Err(_) => {
-                warn!(
-                    "Executor is already dead, failed to connect to Executor {executor_id}"
-                );
+                warn!("Executor is already dead, failed to connect to Executor {executor_id}");
             }
         }
     }
@@ -364,20 +335,14 @@ impl ExecutorManager {
         Ok(())
     }
 
-    pub(crate) fn drain_pending_cleanup_jobs(
-        &self,
-        executor_id: &str,
-    ) -> HashSet<String> {
+    pub(crate) fn drain_pending_cleanup_jobs(&self, executor_id: &str) -> HashSet<String> {
         self.pending_cleanup_jobs
             .remove(executor_id)
             .map(|(_, jobs)| jobs)
             .unwrap_or_default()
     }
 
-    pub(crate) async fn save_executor_heartbeat(
-        &self,
-        heartbeat: ExecutorHeartbeat,
-    ) -> Result<()> {
+    pub(crate) async fn save_executor_heartbeat(&self, heartbeat: ExecutorHeartbeat) -> Result<()> {
         self.cluster_state
             .save_executor_heartbeat(heartbeat.clone())
             .await?;
@@ -401,8 +366,7 @@ impl ExecutorManager {
     /// Retrieve the set of all executor IDs where the executor has been observed in the last
     /// `last_seen_ts_threshold` seconds.
     pub(crate) fn get_alive_executors(&self) -> HashSet<String> {
-        let last_seen_ts_threshold =
-            get_time_before(self.config.executor_timeout_seconds);
+        let last_seen_ts_threshold = get_time_before(self.config.executor_timeout_seconds);
         self.cluster_state
             .executor_heartbeats()
             .iter()
@@ -449,13 +413,11 @@ impl ExecutorManager {
                     Some(executor_status::Status::Terminating(_))
                 );
 
-                let grace_period_expired =
-                    heartbeat.timestamp <= termination_wait_threshold;
+                let grace_period_expired = heartbeat.timestamp <= termination_wait_threshold;
 
                 let expired = heartbeat.timestamp <= last_seen_threshold;
 
-                ((terminating && grace_period_expired) || expired)
-                    .then(|| heartbeat.clone())
+                ((terminating && grace_period_expired) || expired).then(|| heartbeat.clone())
             })
             .collect::<Vec<_>>()
     }
@@ -475,12 +437,9 @@ impl ExecutorManager {
                 "http://{}:{}",
                 executor_metadata.host, executor_metadata.grpc_port
             );
-            let mut endpoint =
-                create_grpc_client_endpoint(executor_url, Some(grpc_client_config))?;
+            let mut endpoint = create_grpc_client_endpoint(executor_url, Some(grpc_client_config))?;
 
-            if let Some(ref override_fn) =
-                self.config.override_create_grpc_client_endpoint
-            {
+            if let Some(ref override_fn) = self.config.override_create_grpc_client_endpoint {
                 endpoint = override_fn(endpoint).map_err(|e| {
                     BallistaError::GrpcConnectionError(format!(
                         "Failed to customize endpoint for executor {executor_id}: {e}"

@@ -124,8 +124,7 @@ struct ShuffleWriteMetrics {
 impl ShuffleWriteMetrics {
     fn new(partition: usize, metrics: &ExecutionPlanMetricsSet) -> Self {
         let write_time = MetricBuilder::new(metrics).subset_time("write_time", partition);
-        let repart_time =
-            MetricBuilder::new(metrics).subset_time("repart_time", partition);
+        let repart_time = MetricBuilder::new(metrics).subset_time("repart_time", partition);
 
         let input_rows = MetricBuilder::new(metrics).counter("input_rows", partition);
 
@@ -222,13 +221,10 @@ impl ShuffleWriterExec {
                     debug!("Writing results to {path}");
 
                     // stream results to disk
-                    let stats = utils::write_stream_to_disk(
-                        &mut stream,
-                        path,
-                        &write_metrics.write_time,
-                    )
-                    .await
-                    .map_err(|e| DataFusionError::Execution(format!("{e:?}")))?;
+                    let stats =
+                        utils::write_stream_to_disk(&mut stream, path, &write_metrics.write_time)
+                            .await
+                            .map_err(|e| DataFusionError::Execution(format!("{e:?}")))?;
 
                     write_metrics
                         .input_rows
@@ -273,55 +269,46 @@ impl ShuffleWriterExec {
 
                         write_metrics.input_rows.add(input_batch.num_rows());
 
-                        partitioner.partition(
-                            input_batch,
-                            |output_partition, output_batch| {
-                                // partition func in datafusion make sure not write empty output_batch.
-                                let timer = write_metrics.write_time.timer();
-                                match &mut writers[output_partition] {
-                                    Some(w) => {
-                                        w.num_batches += 1;
-                                        w.num_rows += output_batch.num_rows();
-                                        w.writer.write(&output_batch)?;
-                                    }
-                                    None => {
-                                        let mut path = path.clone();
-                                        path.push(format!("{output_partition}"));
-                                        std::fs::create_dir_all(&path)?;
-
-                                        path.push(format!(
-                                            "data-{input_partition}.arrow"
-                                        ));
-                                        debug!("Writing results to {path:?}");
-
-                                        let options = IpcWriteOptions::default()
-                                            .try_with_compression(Some(
-                                                CompressionType::LZ4_FRAME,
-                                            ))?;
-
-                                        let file =
-                                            BufWriter::new(File::create(path.clone())?);
-                                        let mut writer =
-                                            StreamWriter::try_new_with_options(
-                                                file,
-                                                stream.schema().as_ref(),
-                                                options,
-                                            )?;
-
-                                        writer.write(&output_batch)?;
-                                        writers[output_partition] = Some(WriteTracker {
-                                            num_batches: 1,
-                                            num_rows: output_batch.num_rows(),
-                                            writer,
-                                            path,
-                                        });
-                                    }
+                        partitioner.partition(input_batch, |output_partition, output_batch| {
+                            // partition func in datafusion make sure not write empty output_batch.
+                            let timer = write_metrics.write_time.timer();
+                            match &mut writers[output_partition] {
+                                Some(w) => {
+                                    w.num_batches += 1;
+                                    w.num_rows += output_batch.num_rows();
+                                    w.writer.write(&output_batch)?;
                                 }
-                                write_metrics.output_rows.add(output_batch.num_rows());
-                                timer.done();
-                                Ok(())
-                            },
-                        )?;
+                                None => {
+                                    let mut path = path.clone();
+                                    path.push(format!("{output_partition}"));
+                                    std::fs::create_dir_all(&path)?;
+
+                                    path.push(format!("data-{input_partition}.arrow"));
+                                    debug!("Writing results to {path:?}");
+
+                                    let options = IpcWriteOptions::default()
+                                        .try_with_compression(Some(CompressionType::LZ4_FRAME))?;
+
+                                    let file = BufWriter::new(File::create(path.clone())?);
+                                    let mut writer = StreamWriter::try_new_with_options(
+                                        file,
+                                        stream.schema().as_ref(),
+                                        options,
+                                    )?;
+
+                                    writer.write(&output_batch)?;
+                                    writers[output_partition] = Some(WriteTracker {
+                                        num_batches: 1,
+                                        num_rows: output_batch.num_rows(),
+                                        writer,
+                                        path,
+                                    });
+                                }
+                            }
+                            write_metrics.output_rows.add(output_batch.num_rows());
+                            timer.done();
+                            Ok(())
+                        })?;
                     }
 
                     let mut part_locs = vec![];
@@ -356,11 +343,7 @@ impl ShuffleWriterExec {
 }
 
 impl DisplayAs for ShuffleWriterExec {
-    fn fmt_as(
-        &self,
-        t: DisplayFormatType,
-        f: &mut std::fmt::Formatter,
-    ) -> std::fmt::Result {
+    fn fmt_as(&self, t: DisplayFormatType, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match t {
             DisplayFormatType::Default | DisplayFormatType::Verbose => {
                 write!(
@@ -413,9 +396,7 @@ impl ExecutionPlan for ShuffleWriterExec {
     ) -> Result<Arc<dyn ExecutionPlan>> {
         if children.len() == 1 {
             let input = children.pop().ok_or_else(|| {
-                DataFusionError::Plan(
-                    "Ballista ShuffleWriterExec expects single child".to_owned(),
-                )
+                DataFusionError::Plan("Ballista ShuffleWriterExec expects single child".to_owned())
             })?;
 
             Ok(Arc::new(ShuffleWriterExec::try_new(
@@ -447,8 +428,7 @@ impl ExecutionPlan for ShuffleWriterExec {
                 // build metadata result batch
                 let num_writers = part_loc.len();
                 let mut partition_builder = UInt32Builder::with_capacity(num_writers);
-                let mut path_builder =
-                    StringBuilder::with_capacity(num_writers, num_writers * 100);
+                let mut path_builder = StringBuilder::with_capacity(num_writers, num_writers * 100);
                 let mut num_rows_builder = UInt64Builder::with_capacity(num_writers);
                 let mut num_batches_builder = UInt64Builder::with_capacity(num_writers);
                 let mut num_bytes_builder = UInt64Builder::with_capacity(num_writers);
@@ -665,8 +645,7 @@ mod tests {
         let partition = vec![batch.clone(), batch];
         let partitions = vec![partition.clone(), partition];
 
-        let memory_data_source =
-            Arc::new(MemorySourceConfig::try_new(&partitions, schema, None)?);
+        let memory_data_source = Arc::new(MemorySourceConfig::try_new(&partitions, schema, None)?);
 
         Ok(Arc::new(DataSourceExec::new(memory_data_source)))
     }

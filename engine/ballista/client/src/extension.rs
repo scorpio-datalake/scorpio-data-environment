@@ -17,9 +17,7 @@
 
 pub use ballista_core::extension::{SessionConfigExt, SessionStateExt};
 use ballista_core::serde::protobuf::scheduler_grpc_client::SchedulerGrpcClient;
-use datafusion::{
-    error::DataFusionError, execution::SessionState, prelude::SessionContext,
-};
+use datafusion::{error::DataFusionError, execution::SessionState, prelude::SessionContext};
 use url::Url;
 
 const DEFAULT_SCHEDULER_PORT: u16 = 50050;
@@ -163,8 +161,7 @@ struct Extension {}
 
 impl Extension {
     fn parse_url(url: &str) -> datafusion::error::Result<String> {
-        let url =
-            Url::parse(url).map_err(|e| DataFusionError::Configuration(e.to_string()))?;
+        let url = Url::parse(url).map_err(|e| DataFusionError::Configuration(e.to_string()))?;
         let host = url.host().ok_or(DataFusionError::Configuration(
             "hostname should be provided".to_string(),
         ))?;
@@ -185,11 +182,9 @@ impl Extension {
                 .await
                 .map_err(|e| DataFusionError::Configuration(e.to_string()))?,
             Some(session_state) => {
-                ballista_scheduler::standalone::new_standalone_scheduler_from_state(
-                    session_state,
-                )
-                .await
-                .map_err(|e| DataFusionError::Configuration(e.to_string()))?
+                ballista_scheduler::standalone::new_standalone_scheduler_from_state(session_state)
+                    .await
+                    .map_err(|e| DataFusionError::Configuration(e.to_string()))?
             }
         };
         let config = session_state

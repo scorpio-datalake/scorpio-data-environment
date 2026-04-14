@@ -138,9 +138,7 @@ pub async fn new_standalone_executor_from_builder(
     tokio::spawn(
         create_grpc_server(&GrpcServerConfig::default())
             .add_service(server)
-            .serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(
-                listener,
-            )),
+            .serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(listener)),
     );
 
     tokio::spawn(execution_loop::poll_loop(scheduler, executor, codec));
@@ -155,8 +153,7 @@ pub async fn new_standalone_executor(
     codec: BallistaCodec,
 ) -> Result<()> {
     use ballista_core::extension::{
-        ballista_aggregate_functions, ballista_scalar_functions,
-        ballista_window_functions,
+        ballista_aggregate_functions, ballista_scalar_functions, ballista_window_functions,
     };
 
     let session_state = SessionStateBuilder::new()

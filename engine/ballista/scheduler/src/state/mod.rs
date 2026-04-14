@@ -70,11 +70,7 @@ pub mod task_manager;
 /// Decodes a protobuf message from bytes.
 pub fn decode_protobuf<T: Message + Default>(bytes: &[u8]) -> Result<T> {
     T::decode(bytes).map_err(|e| {
-        BallistaError::Internal(format!(
-            "Could not deserialize {}: {}",
-            type_name::<T>(),
-            e
-        ))
+        BallistaError::Internal(format!("Could not deserialize {}: {}", type_name::<T>(), e))
     })
 }
 
@@ -82,11 +78,7 @@ pub fn decode_protobuf<T: Message + Default>(bytes: &[u8]) -> Result<T> {
 pub fn decode_into<T: Message + Default + Into<U>, U>(bytes: &[u8]) -> Result<U> {
     T::decode(bytes)
         .map_err(|e| {
-            BallistaError::Internal(format!(
-                "Could not deserialize {}: {}",
-                type_name::<T>(),
-                e
-            ))
+            BallistaError::Internal(format!("Could not deserialize {}: {}", type_name::<T>(), e))
         })
         .map(|t| t.into())
 }
@@ -95,11 +87,7 @@ pub fn decode_into<T: Message + Default + Into<U>, U>(bytes: &[u8]) -> Result<U>
 pub fn encode_protobuf<T: Message + Default>(msg: &T) -> Result<Vec<u8>> {
     let mut value: Vec<u8> = Vec::with_capacity(msg.encoded_len());
     msg.encode(&mut value).map_err(|e| {
-        BallistaError::Internal(format!(
-            "Could not serialize {}: {}",
-            type_name::<T>(),
-            e
-        ))
+        BallistaError::Internal(format!("Could not serialize {}: {}", type_name::<T>(), e))
     })?;
     Ok(value)
 }
@@ -130,15 +118,8 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerState<T,
         config: Arc<SchedulerConfig>,
     ) -> Self {
         Self {
-            executor_manager: ExecutorManager::new(
-                cluster.cluster_state(),
-                config.clone(),
-            ),
-            task_manager: TaskManager::new(
-                cluster.job_state(),
-                codec.clone(),
-                scheduler_name,
-            ),
+            executor_manager: ExecutorManager::new(cluster.cluster_state(), config.clone()),
+            task_manager: TaskManager::new(cluster.job_state(), codec.clone(), scheduler_name),
             session_manager: SessionManager::new(cluster.job_state()),
             codec,
             config,
@@ -164,10 +145,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerState<T,
         dispatcher: Arc<dyn TaskLauncher>,
     ) -> Self {
         Self {
-            executor_manager: ExecutorManager::new(
-                cluster.cluster_state(),
-                config.clone(),
-            ),
+            executor_manager: ExecutorManager::new(cluster.cluster_state(), config.clone()),
             task_manager: TaskManager::with_launcher(
                 cluster.job_state(),
                 codec.clone(),
@@ -235,11 +213,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerState<T,
     /// 1. The executor related info will be removed from [`ExecutorManager`]
     /// 2. All of affected running execution graph will be rolled backed
     /// 3. All of the running tasks of the affected running stages will be cancelled
-    pub(crate) async fn remove_executor(
-        &self,
-        executor_id: &str,
-        reason: Option<String>,
-    ) {
+    pub(crate) async fn remove_executor(&self, executor_id: &str, reason: Option<String>) {
         if let Err(e) = self
             .executor_manager
             .remove_executor(executor_id, reason)
@@ -251,8 +225,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerState<T,
         match self.task_manager.executor_lost(executor_id).await {
             Ok(tasks) => {
                 if !tasks.is_empty()
-                    && let Err(e) =
-                        self.executor_manager.cancel_running_tasks(tasks).await
+                    && let Err(e) = self.executor_manager.cancel_running_tasks(tasks).await
                 {
                     warn!("Fail to cancel running tasks due to {e:?}");
                 }
@@ -268,10 +241,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerState<T,
     /// 2. Then launch the task set vector to each executor one by one.
     ///
     /// If it fails to launch a task set, the related [`ExecutorSlot`] will be returned.
-    async fn launch_tasks(
-        &self,
-        bound_tasks: Vec<BoundTask>,
-    ) -> Result<Vec<ExecutorSlot>> {
+    async fn launch_tasks(&self, bound_tasks: Vec<BoundTask>) -> Result<Vec<ExecutorSlot>> {
         // Put tasks to the same executor together
         // And put tasks belonging to the same stage together for creating MultiTaskDefinition
         let mut executor_stage_assignments: HashMap<
@@ -287,10 +257,8 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerState<T,
                     tasks.insert(stage_key, vec![task]);
                 }
             } else {
-                let mut executor_stage_tasks: HashMap<
-                    (String, usize),
-                    Vec<TaskDescription>,
-                > = HashMap::new();
+                let mut executor_stage_tasks: HashMap<(String, usize), Vec<TaskDescription>> =
+                    HashMap::new();
                 executor_stage_tasks.insert(stage_key, vec![task]);
                 executor_stage_assignments.insert(executor_id, executor_stage_tasks);
             }
@@ -328,9 +296,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerState<T,
                         }
                     }
                     Err(e) => {
-                        error!(
-                            "Failed to launch new task, could not get executor metadata: {e}"
-                        );
+                        error!("Failed to launch new task, could not get executor metadata: {e}");
                         false
                     }
                 };
@@ -347,10 +313,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerState<T,
             futures::future::join_all(join_handles)
                 .await
                 .into_iter()
-                .collect::<std::result::Result<
-                    Vec<Vec<ExecutorSlot>>,
-                    tokio::task::JoinError,
-                >>()?;
+                .collect::<std::result::Result<Vec<Vec<ExecutorSlot>>, tokio::task::JoinError>>()?;
 
         Ok(unassigned_executor_slots
             .into_iter()
@@ -412,9 +375,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerState<T,
                         // we need to check both versions here to support Linux & Windows
                         ListingTableUrl::parse(url.strip_prefix("file://").unwrap())
                             .or_else(|_| {
-                                ListingTableUrl::parse(
-                                    url.strip_prefix("file:///").unwrap(),
-                                )
+                                ListingTableUrl::parse(url.strip_prefix("file:///").unwrap())
                             })
                             .map_err(|e| {
                                 DataFusionError::External(
@@ -422,7 +383,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerState<T,
                                         "logical plan refers to path on local file system \
                                 that is not accessible in the scheduler: {url}: {e:?}"
                                     )
-                                        .into(),
+                                    .into(),
                                 )
                             })?;
                     }
@@ -433,12 +394,8 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerState<T,
             Ok(TreeNodeRecursion::Continue)
         })?;
 
-        let explain_distributed_plan = if let Some(inner_lp) = explain_inner_logical_plan
-        {
-            Some(
-                generate_distributed_explain_plan(job_id, session_ctx.clone(), inner_lp)
-                    .await?,
-            )
+        let explain_distributed_plan = if let Some(inner_lp) = explain_inner_logical_plan {
+            Some(generate_distributed_explain_plan(job_id, session_ctx.clone(), inner_lp).await?)
         } else {
             None
         };
@@ -456,8 +413,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerState<T,
 
         let plan = plan.transform_down(&|node: Arc<dyn ExecutionPlan>| {
             if node.output_partitioning().partition_count() == 0 {
-                let empty: Arc<dyn ExecutionPlan> =
-                    Arc::new(EmptyExec::new(node.schema()));
+                let empty: Arc<dyn ExecutionPlan> = Arc::new(EmptyExec::new(node.schema()));
                 Ok(Transformed::yes(empty))
             } else if let (Some(explain), Some(explain_distributed_plan)) = (
                 node.as_any()
@@ -465,17 +421,12 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerState<T,
                 &explain_distributed_plan,
             ) {
                 let plans = explain.stringified_plans();
-                let (logical_txt, physical_txt) =
-                    extract_logical_and_physical_plans(plans);
+                let (logical_txt, physical_txt) = extract_logical_and_physical_plans(plans);
                 let distributed_txt = explain_distributed_plan.clone();
 
                 let replaced: Arc<dyn ExecutionPlan> =
-                    construct_distributed_explain_exec(
-                        logical_txt,
-                        physical_txt,
-                        distributed_txt,
-                    )
-                    .map_err(|e| DataFusionError::External(Box::new(e)))?;
+                    construct_distributed_explain_exec(logical_txt, physical_txt, distributed_txt)
+                        .map_err(|e| DataFusionError::External(Box::new(e)))?;
                 Ok(Transformed::yes(replaced))
             } else {
                 Ok(Transformed::no(node))

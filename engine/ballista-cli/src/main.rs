@@ -115,8 +115,7 @@ pub async fn main() -> Result<()> {
         env::set_current_dir(p).unwrap();
     };
 
-    let mut ballista_config =
-        SessionConfig::new_with_ballista().with_information_schema(true);
+    let mut ballista_config = SessionConfig::new_with_ballista().with_information_schema(true);
 
     if let Some(batch_size) = args.batch_size {
         ballista_config = ballista_config.with_batch_size(batch_size);
@@ -135,8 +134,7 @@ pub async fn main() -> Result<()> {
         }
         _ => {
             if let Some(concurrent_tasks) = args.concurrent_tasks {
-                ballista_config =
-                    ballista_config.with_target_partitions(concurrent_tasks);
+                ballista_config = ballista_config.with_target_partitions(concurrent_tasks);
             };
             let state = SessionStateBuilder::new()
                 .with_config(ballista_config)

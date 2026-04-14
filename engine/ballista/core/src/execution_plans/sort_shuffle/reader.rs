@@ -133,10 +133,7 @@ impl SortShufflePartitionStream {
 impl futures::Stream for SortShufflePartitionStream {
     type Item = std::result::Result<RecordBatch, DataFusionError>;
 
-    fn poll_next(
-        mut self: Pin<&mut Self>,
-        _cx: &mut Context<'_>,
-    ) -> Poll<Option<Self::Item>> {
+    fn poll_next(mut self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         if self.remaining == 0 {
             return Poll::Ready(None);
         }
@@ -293,8 +290,7 @@ mod tests {
         let options = IpcWriteOptions::default()
             .try_with_compression(Some(CompressionType::LZ4_FRAME))
             .unwrap();
-        let mut writer =
-            FileWriter::try_new_with_options(&mut buffered, &schema, options).unwrap();
+        let mut writer = FileWriter::try_new_with_options(&mut buffered, &schema, options).unwrap();
 
         writer
             .write(&create_test_batch(&schema, vec![1, 2, 3]))

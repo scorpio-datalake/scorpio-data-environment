@@ -37,10 +37,10 @@ use ballista_core::error::BallistaError;
 use ballista_core::extension::EndpointOverrideFn;
 use ballista_core::serde::BallistaCodec;
 use ballista_core::serde::protobuf::{
-    CancelTasksParams, CancelTasksResult, ExecutorMetric, ExecutorStatus,
-    HeartBeatParams, LaunchMultiTaskParams, LaunchMultiTaskResult, LaunchTaskParams,
-    LaunchTaskResult, RegisterExecutorParams, RemoveJobDataParams, RemoveJobDataResult,
-    StopExecutorParams, StopExecutorResult, TaskStatus, UpdateTaskStatusParams,
+    CancelTasksParams, CancelTasksResult, ExecutorMetric, ExecutorStatus, HeartBeatParams,
+    LaunchMultiTaskParams, LaunchMultiTaskResult, LaunchTaskParams, LaunchTaskResult,
+    RegisterExecutorParams, RemoveJobDataParams, RemoveJobDataResult, StopExecutorParams,
+    StopExecutorResult, TaskStatus, UpdateTaskStatusParams,
     executor_grpc_server::{ExecutorGrpc, ExecutorGrpcServer},
     executor_metric, executor_status,
     scheduler_grpc_client::SchedulerGrpcClient,
@@ -48,9 +48,7 @@ use ballista_core::serde::protobuf::{
 use ballista_core::serde::scheduler::PartitionId;
 use ballista_core::serde::scheduler::TaskDefinition;
 
-use ballista_core::serde::scheduler::from_proto::{
-    get_task_definition, get_task_definition_vec,
-};
+use ballista_core::serde::scheduler::from_proto::{get_task_definition, get_task_definition_vec};
 use ballista_core::utils::{create_grpc_client_endpoint, create_grpc_server};
 
 use dashmap::DashMap;
@@ -101,8 +99,7 @@ pub async fn startup<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan>(
 ) -> Result<ServerHandle, BallistaError> {
     let channel_buf_size = executor.concurrent_tasks * 50;
     let (tx_task, rx_task) = mpsc::channel::<CuratorTaskDefinition>(channel_buf_size);
-    let (tx_task_status, rx_task_status) =
-        mpsc::channel::<CuratorTaskStatus>(channel_buf_size);
+    let (tx_task_status, rx_task_status) = mpsc::channel::<CuratorTaskStatus>(channel_buf_size);
 
     let executor_server = ExecutorServer::new(
         scheduler.clone(),
@@ -125,9 +122,7 @@ pub async fn startup<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan>(
         let addr = addr.parse().unwrap();
         let grpc_server_config = config.grpc_server_config.clone();
 
-        info!(
-            "Ballista v{BALLISTA_VERSION} Rust Executor Grpc Server listening on {addr:?}"
-        );
+        info!("Ballista v{BALLISTA_VERSION} Rust Executor Grpc Server listening on {addr:?}");
         let server = ExecutorGrpcServer::new(executor_server.clone())
             .max_encoding_message_size(config.grpc_max_encoding_message_size as usize)
             .max_decoding_message_size(config.grpc_max_decoding_message_size as usize);
@@ -320,9 +315,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> ExecutorServer<T,
                 return;
             }
             Err(e) => {
-                warn!(
-                    "Fail to update heartbeat to its registration scheduler due to {e:?}"
-                );
+                warn!("Fail to update heartbeat to its registration scheduler due to {e:?}");
             }
         };
 
@@ -338,9 +331,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> ExecutorServer<T,
                     break;
                 }
                 Err(e) => {
-                    warn!(
-                        "Fail to update heartbeat to scheduler {scheduler_id} due to {e:?}"
-                    );
+                    warn!("Fail to update heartbeat to scheduler {scheduler_id} due to {e:?}");
                 }
             }
         }
@@ -397,12 +388,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> ExecutorServer<T,
 
                 let execution_result = self
                     .executor
-                    .execute_query_stage(
-                        task_id,
-                        part.clone(),
-                        exec.clone(),
-                        task_context,
-                    )
+                    .execute_query_stage(task_id, part.clone(), exec.clone(), task_context)
                     .await;
                 info!("Done with task {task_identity}");
                 debug!("Task {task_identity} statistics: {execution_result:?}");
@@ -495,11 +481,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> Heartbeater<T, U>
         Self { executor_server }
     }
 
-    fn start(
-        &self,
-        shutdown_noti: &ShutdownNotifier,
-        executor_heartbeat_interval_seconds: u64,
-    ) {
+    fn start(&self, shutdown_noti: &ShutdownNotifier, executor_heartbeat_interval_seconds: u64) {
         let executor_server = self.executor_server.clone();
         let mut heartbeat_shutdown = shutdown_noti.subscribe_for_shutdown();
         let heartbeat_complete = shutdown_noti.shutdown_complete_tx.clone();
@@ -548,8 +530,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> TaskRunnerPool<T,
             info!("Starting the task status reporter");
             // As long as the shutdown notification has not been received
             while !tasks_status_shutdown.is_shutdown() {
-                let mut curator_task_status_map: HashMap<String, Vec<TaskStatus>> =
-                    HashMap::new();
+                let mut curator_task_status_map: HashMap<String, Vec<TaskStatus>> = HashMap::new();
                 // First try to fetch task status from the channel in *blocking* mode
                 let maybe_task_status: Option<CuratorTaskStatus> = tokio::select! {
                      task_status = rx_task_status.recv() => task_status,
@@ -588,9 +569,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> TaskRunnerPool<T,
                             break;
                         }
                         Err(TryRecvError::Disconnected) => {
-                            info!(
-                                "Channel is closed and will exit the task status report loop"
-                            );
+                            info!("Channel is closed and will exit the task status report loop");
                             drop(tasks_status_complete);
                             return;
                         }
@@ -602,24 +581,16 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> TaskRunnerPool<T,
                         Ok(mut scheduler) => {
                             if let Err(e) = scheduler
                                 .update_task_status(UpdateTaskStatusParams {
-                                    executor_id: executor_server
-                                        .executor
-                                        .metadata
-                                        .id
-                                        .clone(),
+                                    executor_id: executor_server.executor.metadata.id.clone(),
                                     task_status: tasks_status.clone(),
                                 })
                                 .await
                             {
-                                error!(
-                                    "Fail to update tasks {tasks_status:?} due to {e:?}"
-                                );
+                                error!("Fail to update tasks {tasks_status:?} due to {e:?}");
                             }
                         }
                         Err(e) => {
-                            error!(
-                                "Fail to connect to scheduler {scheduler_id} due to {e:?}"
-                            );
+                            error!("Fail to connect to scheduler {scheduler_id} due to {e:?}");
                         }
                     }
                 }
@@ -635,10 +606,8 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> TaskRunnerPool<T,
 
             // Use a dedicated executor for CPU bound tasks so that the main tokio
             // executor can still answer requests even when under load
-            let dedicated_executor = DedicatedExecutor::new(
-                "task_runner",
-                executor_server.executor.concurrent_tasks,
-            );
+            let dedicated_executor =
+                DedicatedExecutor::new("task_runner", executor_server.executor.concurrent_tasks);
 
             // As long as the shutdown notification has not been received
             while !task_runner_shutdown.is_shutdown() {

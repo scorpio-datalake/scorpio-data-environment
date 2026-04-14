@@ -64,8 +64,7 @@ impl BallistaFlightProxyService {
     }
 }
 
-type BoxedFlightStream<T> =
-    Pin<Box<dyn Stream<Item = Result<T, Status>> + Send + 'static>>;
+type BoxedFlightStream<T> = Pin<Box<dyn Stream<Item = Result<T, Status>> + Send + 'static>>;
 
 #[tonic::async_trait]
 impl FlightService for BallistaFlightProxyService {
@@ -117,8 +116,7 @@ impl FlightService for BallistaFlightProxyService {
     ) -> Result<Response<Self::DoGetStream>, Status> {
         let ticket = request.into_inner();
 
-        let action =
-            decode_protobuf(&ticket.ticket).map_err(|e| from_ballista_err(&e))?;
+        let action = decode_protobuf(&ticket.ticket).map_err(|e| from_ballista_err(&e))?;
 
         match &action {
             BallistaAction::FetchPartition {
@@ -188,8 +186,8 @@ async fn get_flight_client(
     let addr = format!("{scheme}://{host}:{port}");
     let grpc_config = GrpcClientConfig::default();
 
-    let mut endpoint = create_grpc_client_endpoint(addr.clone(), Some(&grpc_config))
-        .map_err(|e| {
+    let mut endpoint =
+        create_grpc_client_endpoint(addr.clone(), Some(&grpc_config)).map_err(|e| {
             BallistaError::GrpcConnectionError(format!(
                 "Error creating endpoint for Ballista executor at {addr}: {e:?}"
             ))

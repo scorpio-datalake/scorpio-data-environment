@@ -38,10 +38,7 @@ use crate::scheduler_server::event::QueryStageSchedulerEvent;
 
 use crate::state::SchedulerState;
 
-pub(crate) struct QueryStageScheduler<
-    T: 'static + AsLogicalPlan,
-    U: 'static + AsExecutionPlan,
-> {
+pub(crate) struct QueryStageScheduler<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> {
     state: Arc<SchedulerState<T, U>>,
     metrics_collector: Arc<dyn SchedulerMetricsCollector>,
     config: Arc<SchedulerConfig>,
@@ -66,8 +63,8 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> QueryStageSchedul
 }
 
 #[async_trait]
-impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan>
-    EventAction<QueryStageSchedulerEvent> for QueryStageScheduler<T, U>
+impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> EventAction<QueryStageSchedulerEvent>
+    for QueryStageScheduler<T, U>
 {
     fn on_start(&self) {
         info!("Starting QueryStageScheduler");
@@ -131,15 +128,20 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan>
                             let job_status = JobStatus {
                                 job_id: job_id.clone(),
                                 job_name,
-                                status: Some(ballista_core::serde::protobuf::job_status::Status::Failed(
-                                    FailedJob { error, queued_at, started_at: timestamp, ended_at: timestamp }
-                                ))
+                                status: Some(
+                                    ballista_core::serde::protobuf::job_status::Status::Failed(
+                                        FailedJob {
+                                            error,
+                                            queued_at,
+                                            started_at: timestamp,
+                                            ended_at: timestamp,
+                                        },
+                                    ),
+                                ),
                             };
 
-                            if matches!(
-                                subscriber.try_send(job_status),
-                                Err(TrySendError::Full(_))
-                            ) {
+                            if matches!(subscriber.try_send(job_status), Err(TrySendError::Full(_)))
+                            {
                                 error!(
                                     "jobs notification subscriber for job {} is blocked, can't deliver status update, job notification will be missed",
                                     job_id
@@ -198,9 +200,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan>
                     .fail_unscheduled_job(&job_id, fail_message)
                     .await
                 {
-                    error!(
-                        "Fail to invoke fail_unscheduled_job for job {job_id} due to {e:?}"
-                    );
+                    error!("Fail to invoke fail_unscheduled_job for job {job_id} due to {e:?}");
                 }
             }
             QueryStageSchedulerEvent::JobFinished {
@@ -236,9 +236,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan>
                     Ok((running_tasks, _pending_tasks)) => {
                         if !running_tasks.is_empty() {
                             event_sender
-                                .post_event(QueryStageSchedulerEvent::CancelTasks(
-                                    running_tasks,
-                                ))
+                                .post_event(QueryStageSchedulerEvent::CancelTasks(running_tasks))
                                 .await?;
                         }
                     }
@@ -261,9 +259,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan>
                 match self.state.task_manager.cancel_job(&job_id).await {
                     Ok((running_tasks, _pending_tasks)) => {
                         event_sender
-                            .post_event(QueryStageSchedulerEvent::CancelTasks(
-                                running_tasks,
-                            ))
+                            .post_event(QueryStageSchedulerEvent::CancelTasks(running_tasks))
                             .await?;
                     }
                     Err(e) => {
@@ -273,9 +269,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan>
                 self.state.clean_up_failed_job(job_id);
             }
             QueryStageSchedulerEvent::TaskUpdating(executor_id, tasks_status) => {
-                trace!(
-                    "processing task status updates from {executor_id}: {tasks_status:?}"
-                );
+                trace!("processing task status updates from {executor_id}: {tasks_status:?}");
 
                 let num_status = tasks_status.len();
                 if self.state.config.is_push_staged_scheduling() {
@@ -325,9 +319,8 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan>
                         }
                     }
                     Err(e) => {
-                        let msg = format!(
-                            "TaskManager error to handle Executor {executor_id} lost: {e}"
-                        );
+                        let msg =
+                            format!("TaskManager error to handle Executor {executor_id} lost: {e}");
                         error!("{msg}");
                     }
                 }
@@ -386,8 +379,7 @@ mod tests {
         let metrics_collector = Arc::new(TestMetricsCollector::default());
 
         let mut test = SchedulerTest::new(
-            SchedulerConfig::default()
-                .with_scheduler_policy(TaskSchedulingPolicy::PushStaged),
+            SchedulerConfig::default().with_scheduler_policy(TaskSchedulingPolicy::PushStaged),
             metrics_collector.clone(),
             1,
             1,

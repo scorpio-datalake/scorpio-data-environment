@@ -19,9 +19,7 @@
 
 use ballista_core::config::LogRotationPolicy;
 use ballista_core::error::BallistaError;
-use ballista_core::object_store::{
-    session_config_with_s3_support, session_state_with_s3_support,
-};
+use ballista_core::object_store::{session_config_with_s3_support, session_state_with_s3_support};
 use ballista_scheduler::cluster::BallistaCluster;
 use ballista_scheduler::config::{Config, SchedulerConfig};
 use ballista_scheduler::scheduler_process::start_server;
@@ -81,9 +79,9 @@ async fn inner() -> ballista_core::error::Result<()> {
         tracing.init();
     }
     let addr = format!("{}:{}", opt.bind_host, opt.bind_port);
-    let addr = addr.parse().map_err(|e: std::net::AddrParseError| {
-        BallistaError::Configuration(e.to_string())
-    })?;
+    let addr = addr
+        .parse()
+        .map_err(|e: std::net::AddrParseError| BallistaError::Configuration(e.to_string()))?;
 
     let config: SchedulerConfig = opt.try_into()?;
     let config = config

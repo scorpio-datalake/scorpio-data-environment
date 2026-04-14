@@ -21,8 +21,7 @@ mod alter_stages;
 mod plan_to_stages;
 
 use ballista_core::serde::scheduler::{
-    ExecutorMetadata, ExecutorSpecification, PartitionId, PartitionLocation,
-    PartitionStats,
+    ExecutorMetadata, ExecutorSpecification, PartitionId, PartitionLocation, PartitionStats,
 };
 use datafusion::arrow::array::{Int32Array, RecordBatch};
 use datafusion::arrow::datatypes::{DataType, Field, Schema, SchemaRef};

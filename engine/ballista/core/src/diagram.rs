@@ -147,8 +147,7 @@ fn build_exec_plan_diagram(
             }
         } else {
             // relationships within same entity
-            let child_id =
-                build_exec_plan_diagram(w, child.as_ref(), stage_id, id, draw_entity)?;
+            let child_id = build_exec_plan_diagram(w, child.as_ref(), stage_id, id, draw_entity)?;
             if draw_entity {
                 writeln!(
                     w,

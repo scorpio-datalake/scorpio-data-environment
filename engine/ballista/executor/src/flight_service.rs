@@ -73,8 +73,7 @@ impl Default for BallistaFlightService {
     }
 }
 
-type BoxedFlightStream<T> =
-    Pin<Box<dyn Stream<Item = Result<T, Status>> + Send + 'static>>;
+type BoxedFlightStream<T> = Pin<Box<dyn Stream<Item = Result<T, Status>> + Send + 'static>>;
 
 /// shuffle file block transfer size    
 const BLOCK_BUFFER_CAPACITY: usize = 8 * 1024 * 1024;
@@ -95,8 +94,7 @@ impl FlightService for BallistaFlightService {
     ) -> Result<Response<Self::DoGetStream>, Status> {
         let ticket = request.into_inner();
 
-        let action =
-            decode_protobuf(&ticket.ticket).map_err(|e| from_ballista_err(&e))?;
+        let action = decode_protobuf(&ticket.ticket).map_err(|e| from_ballista_err(&e))?;
 
         match &action {
             BallistaAction::FetchPartition {
@@ -109,17 +107,13 @@ impl FlightService for BallistaFlightService {
                 if is_sort_shuffle_output(data_path) {
                     debug!("Detected sort-based shuffle format for {path}");
                     let index_path = get_index_path(data_path);
-                    let stream = stream_sort_shuffle_partition(
-                        data_path,
-                        &index_path,
-                        *partition_id,
-                    )
-                    .map_err(|e| from_ballista_err(&e))?;
+                    let stream =
+                        stream_sort_shuffle_partition(data_path, &index_path, *partition_id)
+                            .map_err(|e| from_ballista_err(&e))?;
 
                     let schema = stream.schema();
                     // Map DataFusionError to FlightError
-                    let stream =
-                        stream.map_err(|e| FlightError::from(ArrowError::from(e)));
+                    let stream = stream.map_err(|e| FlightError::from(ArrowError::from(e)));
 
                     let write_options: IpcWriteOptions = IpcWriteOptions::default()
                         .try_with_compression(Some(CompressionType::LZ4_FRAME))
@@ -203,9 +197,8 @@ impl FlightService for BallistaFlightService {
         let result = Ok(result);
         let output = futures::stream::iter(vec![result]);
         let str = format!("Bearer {token}");
-        let mut resp: Response<
-            Pin<Box<dyn Stream<Item = Result<_, Status>> + Send + 'static>>,
-        > = Response::new(Box::pin(output));
+        let mut resp: Response<Pin<Box<dyn Stream<Item = Result<_, Status>> + Send + 'static>>> =
+            Response::new(Box::pin(output));
         let md = MetadataValue::try_from(str)
             .map_err(|_| Status::invalid_argument("authorization not parsable"))?;
         resp.metadata_mut().insert("authorization", md);
@@ -247,8 +240,7 @@ impl FlightService for BallistaFlightService {
             // For further discussion regarding performance implications, refer to:
             // https://github.com/apache/datafusion-ballista/issues/1315
             "IO_BLOCK_TRANSPORT" => {
-                let action =
-                    decode_protobuf(&action.body).map_err(|e| from_ballista_err(&e))?;
+                let action = decode_protobuf(&action.body).map_err(|e| from_ballista_err(&e))?;
 
                 match &action {
                     BallistaAction::FetchPartition { path, .. } => {
@@ -266,19 +258,17 @@ impl FlightService for BallistaFlightService {
                             ));
                         }
 
-                        let file = tokio::fs::File::open(&path).await.map_err(|e| {
-                            Status::internal(format!("Failed to open file: {e}"))
-                        })?;
+                        let file = tokio::fs::File::open(&path)
+                            .await
+                            .map_err(|e| Status::internal(format!("Failed to open file: {e}")))?;
 
                         debug!(
                             "streaming file: {} with size: {}",
                             path,
                             file.metadata().await?.len()
                         );
-                        let reader = tokio::io::BufReader::with_capacity(
-                            BLOCK_BUFFER_CAPACITY,
-                            file,
-                        );
+                        let reader =
+                            tokio::io::BufReader::with_capacity(BLOCK_BUFFER_CAPACITY, file);
                         let file_stream =
                             ReaderStream::with_capacity(reader, BLOCK_BUFFER_CAPACITY);
 

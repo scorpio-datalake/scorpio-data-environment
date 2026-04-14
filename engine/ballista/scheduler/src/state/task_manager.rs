@@ -219,11 +219,7 @@ pub struct UpdatedStages {
 
 impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> TaskManager<T, U> {
     /// Creates a new `TaskManager` with the default task launcher.
-    pub fn new(
-        state: Arc<dyn JobState>,
-        codec: BallistaCodec<T, U>,
-        scheduler_id: String,
-    ) -> Self {
+    pub fn new(state: Arc<dyn JobState>, codec: BallistaCodec<T, U>, scheduler_id: String) -> Self {
         Self {
             state,
             codec,
@@ -354,10 +350,15 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> TaskManager<T, U>
                 let graph = cached.read().await;
                 jobs.push(graph.deref().into());
             } else {
-                let graph = self.state
+                let graph = self
+                    .state
                     .get_execution_graph(job_id)
                     .await?
-                    .ok_or_else(|| BallistaError::Internal(format!("Error getting job overview, no execution graph found for job {job_id}")))?;
+                    .ok_or_else(|| {
+                        BallistaError::Internal(format!(
+                            "Error getting job overview, no execution graph found for job {job_id}"
+                        ))
+                    })?;
                 jobs.push((&graph).into());
             }
         }
@@ -416,9 +417,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> TaskManager<T, U>
             debug!("Updating {num_tasks} tasks in job {job_id}");
 
             // let graph = self.get_active_execution_graph(&job_id).await;
-            let job_events = if let Some(cached) =
-                self.get_active_execution_graph(&job_id)
-            {
+            let job_events = if let Some(cached) = self.get_active_execution_graph(&job_id) {
                 let mut graph = cached.write().await;
                 graph.update_task_status(
                     executor,
@@ -463,10 +462,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> TaskManager<T, U>
     }
 
     /// Cancel the job and return a Vec of running tasks need to cancel
-    pub(crate) async fn cancel_job(
-        &self,
-        job_id: &str,
-    ) -> Result<(Vec<RunningTaskInfo>, usize)> {
+    pub(crate) async fn cancel_job(&self, job_id: &str) -> Result<(Vec<RunningTaskInfo>, usize)> {
         self.abort_job(job_id, "Cancelled".to_owned()).await
     }
 
@@ -508,11 +504,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> TaskManager<T, U>
 
     /// Mark a unscheduled job as failed. This will create a key under the FailedJobs keyspace
     /// and remove the job from ActiveJobs or QueuedJobs
-    pub async fn fail_unscheduled_job(
-        &self,
-        job_id: &str,
-        failure_reason: String,
-    ) -> Result<()> {
+    pub async fn fail_unscheduled_job(&self, job_id: &str, failure_reason: String) -> Result<()> {
         self.state
             .fail_unscheduled_job(job_id, failure_reason)
             .await
@@ -578,10 +570,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> TaskManager<T, U>
 
     /// Prepares a task definition for a single task to be sent to an executor.
     #[allow(dead_code)]
-    pub fn prepare_task_definition(
-        &self,
-        task: TaskDescription,
-    ) -> Result<TaskDefinition> {
+    pub fn prepare_task_definition(&self, task: TaskDescription) -> Result<TaskDefinition> {
         debug!("Preparing task definition for {task:?}");
 
         let job_id = task.partition.job_id.clone();

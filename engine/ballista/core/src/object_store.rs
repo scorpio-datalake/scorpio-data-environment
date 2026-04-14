@@ -19,18 +19,26 @@
 //!
 //! [`CustomObjectStoreRegistry`] resolves stores for **`file`**, **`http`/`https`** (generic HTTP or
 //! Azure Blob/DFS HTTPS hosts), **`s3`**, **`gs`**, and **`adl` / `azure` / `az` / `abfs` / `abfss`**
-//! using [`object_store`]. Credentials follow each backend’s usual environment variables (e.g. GCP
-//! ADC, `AZURE_STORAGE_*`, AWS keys for S3).
+//! using [`object_store`].
+//!
+//! **Credential contract (no secrets in images):** inject keys and tokens at runtime via
+//! **environment variables** and/or **Kubernetes/Docker secrets** mounted as env (operators: see
+//! `docs/object-store-credentials.md` in the monorepo). GCS and Azure use `object_store` builders with
+//! `from_env` (ADC, `AZURE_STORAGE_*`, workload identity, etc.). For **S3**, if `s3.access_key_id` /
+//! `s3.secret_access_key` are unset, the registry uses `AmazonS3Builder::from_env` (IAM roles, IRSA,
+//! `AWS_ACCESS_KEY_ID`, MinIO via `AWS_ENDPOINT_URL`, etc.); when both SQL keys are set, they override
+//! the env-based chain for that session.
 //!
 //! Dynamic registration via [`ObjectStoreRegistry::register_store`] uses the same URL keys as
 //! DataFusion’s default registry (scheme + `://` + host/port, excluding userinfo).
 //!
 //! S3-specific SQL `SET` options are defined on [`S3Options`].
+//!
+//! **Integration:** MinIO (S3-compatible) round-trip tests live in `ballista/core/tests/s3_minio_integration.rs`
+//! (`#[ignore]` by default; CI runs them with `--ignored` after starting MinIO — see `engine/README.md`).
 
 use datafusion::common::{config_err, exec_err, internal_datafusion_err};
-use datafusion::config::{
-    ConfigEntry, ConfigExtension, ConfigField, ExtensionOptions, Visit,
-};
+use datafusion::config::{ConfigEntry, ConfigExtension, ConfigField, ExtensionOptions, Visit};
 use datafusion::error::Result;
 use datafusion::execution::object_store::ObjectStoreRegistry;
 
@@ -69,9 +77,7 @@ pub fn session_config_with_s3_support() -> SessionConfig {
 /// It will register [CustomObjectStoreRegistry] which will
 /// use configuration extension [S3Options] to configure
 /// and created [ObjectStore]s
-pub fn runtime_env_with_s3_support(
-    session_config: &SessionConfig,
-) -> Result<Arc<RuntimeEnv>> {
+pub fn runtime_env_with_s3_support(session_config: &SessionConfig) -> Result<Arc<RuntimeEnv>> {
     let s3options = session_config
         .options()
         .extensions
@@ -81,9 +87,7 @@ pub fn runtime_env_with_s3_support(
         ))?;
 
     let runtime_env = RuntimeEnvBuilder::new()
-        .with_object_store_registry(Arc::new(CustomObjectStoreRegistry::new(
-            s3options.clone(),
-        )))
+        .with_object_store_registry(Arc::new(CustomObjectStoreRegistry::new(s3options.clone())))
         .build()?;
 
     Ok(Arc::new(runtime_env))
@@ -97,8 +101,7 @@ pub fn session_state_with_s3_support(
     session_config: SessionConfig,
 ) -> datafusion::common::Result<SessionState> {
     use crate::extension::{
-        ballista_aggregate_functions, ballista_scalar_functions,
-        ballista_window_functions,
+        ballista_aggregate_functions, ballista_scalar_functions, ballista_window_functions,
     };
 
     let runtime_env = runtime_env_with_s3_support(&session_config)?;
@@ -176,14 +179,11 @@ impl ObjectStoreRegistry for CustomObjectStoreRegistry {
 
     fn deregister_store(&self, url: &Url) -> Result<Arc<dyn ObjectStore>> {
         let key = Self::object_store_registry_key(url);
-        self.dynamic_stores
-            .write()
-            .remove(&key)
-            .ok_or_else(|| {
-                internal_datafusion_err!(
-                    "Failed to deregister object store. No store registered for {url}."
-                )
-            })
+        self.dynamic_stores.write().remove(&key).ok_or_else(|| {
+            internal_datafusion_err!(
+                "Failed to deregister object store. No store registered for {url}."
+            )
+        })
     }
 
     fn get_store(&self, url: &Url) -> Result<Arc<dyn ObjectStore>> {
@@ -215,8 +215,7 @@ impl ObjectStoreRegistry for CustomObjectStoreRegistry {
             }
             "s3" => {
                 let s3store =
-                    Self::s3_object_store_builder(url, &self.s3options.config.read())?
-                        .build()?;
+                    Self::s3_object_store_builder(url, &self.s3options.config.read())?.build()?;
 
                 Ok(Arc::new(s3store))
             }
@@ -257,20 +256,24 @@ impl CustomObjectStoreRegistry {
         let bucket_name = Self::get_bucket_name(url)?;
         let mut builder = AmazonS3Builder::from_env().with_bucket_name(bucket_name);
 
-        if let (Some(access_key_id), Some(secret_access_key)) =
-            (access_key_id, secret_access_key)
-        {
-            builder = builder
-                .with_access_key_id(access_key_id)
-                .with_secret_access_key(secret_access_key);
+        match (access_key_id.as_ref(), secret_access_key.as_ref()) {
+            (Some(access_key_id), Some(secret_access_key)) => {
+                builder = builder
+                    .with_access_key_id(access_key_id)
+                    .with_secret_access_key(secret_access_key);
 
-            if let Some(session_token) = session_token {
-                builder = builder.with_token(session_token);
+                if let Some(session_token) = session_token {
+                    builder = builder.with_token(session_token);
+                }
             }
-        } else {
-            return config_err!(
-                "'s3.access_key_id' & 's3.secret_access_key' must be configured"
-            );
+            (None, None) => {
+                // Rely on `from_env`: IAM / IRSA / IMDS, `AWS_ACCESS_KEY_ID`, MinIO, etc.
+            }
+            _ => {
+                return config_err!(
+                    "Set both 's3.access_key_id' and 's3.secret_access_key', or neither (use AWS environment or instance credentials)"
+                );
+            }
         }
 
         if let Some(region) = region {
@@ -367,12 +370,7 @@ impl ExtensionOptions for S3Options {
         struct Visitor(Vec<ConfigEntry>);
 
         impl Visit for Visitor {
-            fn some<V: Display>(
-                &mut self,
-                key: &str,
-                value: V,
-                description: &'static str,
-            ) {
+            fn some<V: Display>(&mut self, key: &str, value: V, description: &'static str) {
                 self.0.push(ConfigEntry {
                     key: format!("{}.{}", S3Options::PREFIX, key),
                     value: Some(value.to_string()),
@@ -391,10 +389,16 @@ impl ExtensionOptions for S3Options {
         let c = self.config.read();
 
         let mut v = Visitor(vec![]);
-        c.access_key_id
-            .visit(&mut v, "access_key_id", "S3 Access Key");
-        c.secret_access_key
-            .visit(&mut v, "secret_access_key", "S3 Secret Key");
+        c.access_key_id.visit(
+            &mut v,
+            "access_key_id",
+            "S3 access key (optional if AWS credentials are in the environment)",
+        );
+        c.secret_access_key.visit(
+            &mut v,
+            "secret_access_key",
+            "S3 secret key (optional if AWS credentials are in the environment)",
+        );
         c.session_token
             .visit(&mut v, "session_token", "S3 Session token");
         c.region.visit(&mut v, "region", "S3 region");
@@ -427,7 +431,42 @@ struct S3RegistryConfiguration {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
     use url::Url;
+
+    /// Serialize tests that mutate process environment variables.
+    static S3_ENV_TEST_MUTEX: Mutex<()> = Mutex::new(());
+
+    struct EnvVarGuard {
+        key: &'static str,
+        previous: Option<String>,
+    }
+
+    impl EnvVarGuard {
+        fn set(key: &'static str, value: &str) -> Self {
+            let previous = std::env::var(key).ok();
+            // SAFETY: mutating the process environment is only sound if no other thread
+            // reads these keys concurrently. These tests hold `S3_ENV_TEST_MUTEX` for the
+            // whole test body including `Drop`.
+            unsafe {
+                std::env::set_var(key, value);
+            }
+            Self { key, previous }
+        }
+    }
+
+    impl Drop for EnvVarGuard {
+        fn drop(&mut self) {
+            // SAFETY: same as `set` — serialized by `S3_ENV_TEST_MUTEX`.
+            unsafe {
+                if let Some(ref prev) = self.previous {
+                    std::env::set_var(self.key, prev);
+                } else {
+                    std::env::remove_var(self.key);
+                }
+            }
+        }
+    }
 
     #[test]
     fn register_store_replaces_and_returns_previous() {
@@ -436,7 +475,9 @@ mod tests {
         let s1: Arc<dyn ObjectStore> = Arc::new(LocalFileSystem::new());
         let s2: Arc<dyn ObjectStore> = Arc::new(LocalFileSystem::new());
         assert!(reg.register_store(&key_url, s1.clone()).is_none());
-        let prev = reg.register_store(&key_url, s2.clone()).expect("second register");
+        let prev = reg
+            .register_store(&key_url, s2.clone())
+            .expect("second register");
         assert!(Arc::ptr_eq(&prev, &s1));
         let got = reg
             .get_store(&Url::parse("myscheme://bucket/path").unwrap())
@@ -469,6 +510,33 @@ mod tests {
         let u = Url::parse("https://acct.blob.core.windows.net/container").unwrap();
         assert!(CustomObjectStoreRegistry::url_host_is_azure_blob_or_dfs(&u));
         let u2 = Url::parse("https://example.com/").unwrap();
-        assert!(!CustomObjectStoreRegistry::url_host_is_azure_blob_or_dfs(&u2));
+        assert!(!CustomObjectStoreRegistry::url_host_is_azure_blob_or_dfs(
+            &u2
+        ));
+    }
+
+    #[test]
+    fn s3_builder_accepts_env_credentials_without_sql_keys() {
+        let _env_lock = S3_ENV_TEST_MUTEX.lock().expect("s3 env test mutex");
+        let _ec2_off = EnvVarGuard::set("AWS_EC2_METADATA_DISABLED", "true");
+        let _ak = EnvVarGuard::set("AWS_ACCESS_KEY_ID", "scorpio_test_access");
+        let _sk = EnvVarGuard::set("AWS_SECRET_ACCESS_KEY", "scorpio_test_secret");
+        let _reg = EnvVarGuard::set("AWS_DEFAULT_REGION", "us-east-1");
+
+        let opts = S3RegistryConfiguration::default();
+        let url = Url::parse("s3://any-bucket/prefix").unwrap();
+        let built =
+            CustomObjectStoreRegistry::s3_object_store_builder(&url, &opts).expect("builder");
+        let _store = built
+            .build()
+            .expect("S3 store builds from env-only credentials");
+    }
+
+    #[test]
+    fn s3_builder_rejects_only_one_sql_key() {
+        let mut opts = S3RegistryConfiguration::default();
+        opts.access_key_id = Some("id-only".into());
+        let url = Url::parse("s3://bucket/p").unwrap();
+        assert!(CustomObjectStoreRegistry::s3_object_store_builder(&url, &opts).is_err());
     }
 }

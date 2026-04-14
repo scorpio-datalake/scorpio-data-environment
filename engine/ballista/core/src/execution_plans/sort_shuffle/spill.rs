@@ -117,8 +117,8 @@ impl SpillManager {
             let file = File::create(&spill_path).map_err(BallistaError::IoError)?;
             let buffered = BufWriter::new(file);
 
-            let options = IpcWriteOptions::default()
-                .try_with_compression(Some(self.compression))?;
+            let options =
+                IpcWriteOptions::default().try_with_compression(Some(self.compression))?;
 
             let writer = StreamWriter::try_new_with_options(buffered, schema, options)?;
 
@@ -156,10 +156,7 @@ impl SpillManager {
 
     /// Opens the spill file for a partition and returns a streaming
     /// reader. `finish_writers` must be called before this method.
-    pub fn open_spill_reader(
-        &self,
-        partition_id: usize,
-    ) -> Result<Option<StreamReader<File>>> {
+    pub fn open_spill_reader(&self, partition_id: usize) -> Result<Option<StreamReader<File>>> {
         match self.spill_files.get(&partition_id) {
             Some(spill_path) => {
                 let file = File::open(spill_path).map_err(BallistaError::IoError)?;
@@ -267,8 +264,7 @@ mod tests {
 
         // Read back via streaming reader
         let reader = manager.open_spill_reader(0)?.unwrap();
-        let read_batches: Vec<_> =
-            reader.into_iter().collect::<std::result::Result<_, _>>()?;
+        let read_batches: Vec<_> = reader.into_iter().collect::<std::result::Result<_, _>>()?;
         assert_eq!(read_batches.len(), 2);
         assert_eq!(read_batches[0].num_rows(), 3);
         assert_eq!(read_batches[1].num_rows(), 2);
@@ -301,8 +297,7 @@ mod tests {
 
         // Read all back - both batches from single file
         let reader = manager.open_spill_reader(0)?.unwrap();
-        let batches: Vec<_> =
-            reader.into_iter().collect::<std::result::Result<_, _>>()?;
+        let batches: Vec<_> = reader.into_iter().collect::<std::result::Result<_, _>>()?;
         assert_eq!(batches.len(), 2);
 
         Ok(())

@@ -57,6 +57,13 @@ serde = { version = "1.0" }
 tokio-stream = { version = "0.1" }
 url = { version = "2.5" }
 
+# Default for `cargo build` and `cargo test` (unless `--release` / another `--profile`).
+# Keeps rebuild scope small: incremental codegen, no LTO, parallel codegen units.
+[profile.dev]
+codegen-units = 256
+incremental = true
+lto = false
+
 # cargo build --profile release-lto
 [profile.release-lto]
 codegen-units = 1

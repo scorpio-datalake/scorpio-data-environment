@@ -49,9 +49,7 @@ impl BallistaAdapter {
                 )
             })?;
             let stage_id = exchange.stage_id().ok_or_else(|| {
-                DataFusionError::Execution(
-                    "stage ID has to be generated at this point".to_string(),
-                )
+                DataFusionError::Execution("stage ID has to be generated at this point".to_string())
             })?;
             self.inputs.push(stage_id);
             let partitioning = exchange.properties().partitioning.clone();
@@ -96,8 +94,7 @@ impl BallistaAdapter {
                 )?),
                 inputs: adapter.inputs,
             })
-        } else if let Some(root) = plan.as_any().downcast_ref::<AdaptiveDatafusionExec>()
-        {
+        } else if let Some(root) = plan.as_any().downcast_ref::<AdaptiveDatafusionExec>() {
             let mut adapter = BallistaAdapter::default();
             let plan = root
                 .input()
@@ -123,9 +120,7 @@ impl BallistaAdapter {
                 inputs: adapter.inputs,
             })
         } else {
-            exec_err!(
-                "Root exec expected to be either ExchangeExec or AdaptiveDatafusionExec"
-            )
+            exec_err!("Root exec expected to be either ExchangeExec or AdaptiveDatafusionExec")
         }
     }
 }

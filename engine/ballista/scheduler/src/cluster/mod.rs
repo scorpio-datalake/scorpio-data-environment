@@ -18,9 +18,7 @@
 use crate::cluster::memory::{InMemoryClusterState, InMemoryJobState};
 use crate::config::{SchedulerConfig, TaskDistributionPolicy};
 use crate::scheduler_server::SessionBuilder;
-use crate::state::execution_graph::{
-    ExecutionGraphBox, TaskDescription, create_task_info,
-};
+use crate::state::execution_graph::{ExecutionGraphBox, TaskDescription, create_task_info};
 use crate::state::task_manager::JobInfoCache;
 use ballista_core::error::Result;
 use ballista_core::serde::protobuf::{
@@ -78,10 +76,7 @@ pub struct BallistaCluster {
 
 impl BallistaCluster {
     /// Creates a new `BallistaCluster` with the given state backends.
-    pub fn new(
-        cluster_state: Arc<dyn ClusterState>,
-        job_state: Arc<dyn JobState>,
-    ) -> Self {
+    pub fn new(cluster_state: Arc<dyn ClusterState>, job_state: Arc<dyn JobState>) -> Self {
         Self {
             cluster_state,
             job_state,
@@ -179,11 +174,8 @@ pub trait ClusterState: Send + Sync + 'static {
     async fn unbind_tasks(&self, executor_slots: Vec<ExecutorSlot>) -> Result<()>;
 
     /// Registers a new executor in the cluster.
-    async fn register_executor(
-        &self,
-        metadata: ExecutorMetadata,
-        spec: ExecutorData,
-    ) -> Result<()>;
+    async fn register_executor(&self, metadata: ExecutorMetadata, spec: ExecutorData)
+    -> Result<()>;
 
     /// Saves executor metadata, overwriting any existing metadata for the executor ID.
     async fn save_executor_metadata(&self, metadata: ExecutorMetadata) -> Result<()>;
@@ -307,10 +299,7 @@ pub trait JobState: Send + Sync {
     ///
     /// The job may not belong to the caller, and the graph may be updated
     /// by another scheduler after this call returns.
-    async fn get_execution_graph(
-        &self,
-        job_id: &str,
-    ) -> Result<Option<ExecutionGraphBox>>;
+    async fn get_execution_graph(&self, job_id: &str) -> Result<Option<ExecutionGraphBox>>;
 
     /// Persists the current state of an owned job.
     ///
@@ -374,9 +363,7 @@ pub(crate) async fn bind_task_bias(
         let mut graph = job_info.execution_graph.write().await;
         let session_id = graph.session_id().to_string();
         let mut black_list = vec![];
-        while let Some((running_stage, task_id_gen)) =
-            graph.fetch_running_stage(&black_list)
-        {
+        while let Some((running_stage, task_id_gen)) = graph.fetch_running_stage(&black_list) {
             if if_skip(running_stage.plan.clone()) {
                 debug!(
                     "Will skip stage {}/{} for bias task binding",
@@ -458,9 +445,7 @@ pub(crate) async fn bind_task_round_robin(
         let mut graph = job_info.execution_graph.write().await;
         let session_id = graph.session_id().to_string();
         let mut black_list = vec![];
-        while let Some((running_stage, task_id_gen)) =
-            graph.fetch_running_stage(&black_list)
-        {
+        while let Some((running_stage, task_id_gen)) = graph.fetch_running_stage(&black_list) {
             if if_skip(running_stage.plan.clone()) {
                 debug!(
                     "Will skip stage {}/{} for round robin task binding",
@@ -630,8 +615,7 @@ mod test {
         let available_slots_ref: Vec<&mut AvailableTaskSlots> =
             available_slots.iter_mut().collect();
         let bound_tasks =
-            bind_task_round_robin(available_slots_ref, Arc::new(active_jobs), |_| false)
-                .await;
+            bind_task_round_robin(available_slots_ref, Arc::new(active_jobs), |_| false).await;
         assert_eq!(9, bound_tasks.len());
 
         let result = get_result(bound_tasks);
@@ -678,9 +662,7 @@ mod test {
         Ok(())
     }
 
-    fn get_result(
-        bound_tasks: Vec<BoundTask>,
-    ) -> HashMap<String, HashMap<String, usize>> {
+    fn get_result(bound_tasks: Vec<BoundTask>) -> HashMap<String, HashMap<String, usize>> {
         let mut result = HashMap::new();
 
         for bound_task in bound_tasks {
@@ -694,9 +676,7 @@ mod test {
         result
     }
 
-    async fn mock_active_jobs(
-        num_partition: usize,
-    ) -> Result<HashMap<String, JobInfoCache>> {
+    async fn mock_active_jobs(num_partition: usize) -> Result<HashMap<String, JobInfoCache>> {
         let graph_a = mock_graph("job_a", num_partition, 2).await?;
 
         let graph_b = mock_graph("job_b", num_partition, 7).await?;
@@ -719,8 +699,7 @@ mod test {
         num_target_partitions: usize,
         num_pending_task: usize,
     ) -> Result<StaticExecutionGraph> {
-        let mut graph =
-            test_aggregation_plan_with_job_id(num_target_partitions, job_id).await;
+        let mut graph = test_aggregation_plan_with_job_id(num_target_partitions, job_id).await;
         let executor = ExecutorMetadata {
             id: "executor_0".to_string(),
             host: "localhost".to_string(),

@@ -22,15 +22,14 @@ use ballista_core::extension::SessionConfigHelperExt;
 use ballista_core::serde::protobuf::execute_query_params::Query;
 use ballista_core::serde::protobuf::scheduler_grpc_server::SchedulerGrpc;
 use ballista_core::serde::protobuf::{
-    AvailableTaskSlots, CancelJobParams, CancelJobResult, CleanJobDataParams,
-    CleanJobDataResult, CreateUpdateSessionParams, CreateUpdateSessionResult,
-    ExecuteQueryFailureResult, ExecuteQueryParams, ExecuteQueryResult,
-    ExecuteQuerySuccessResult, ExecutorHeartbeat, ExecutorStoppedParams,
-    ExecutorStoppedResult, GetJobStatusParams, GetJobStatusResult, HeartBeatParams,
-    HeartBeatResult, JobStatus, KeyValuePair, PollWorkParams, PollWorkResult,
-    RegisterExecutorParams, RegisterExecutorResult, RemoveSessionParams,
-    RemoveSessionResult, UpdateTaskStatusParams, UpdateTaskStatusResult,
-    execute_query_failure_result, execute_query_result,
+    AvailableTaskSlots, CancelJobParams, CancelJobResult, CleanJobDataParams, CleanJobDataResult,
+    CreateUpdateSessionParams, CreateUpdateSessionResult, ExecuteQueryFailureResult,
+    ExecuteQueryParams, ExecuteQueryResult, ExecuteQuerySuccessResult, ExecutorHeartbeat,
+    ExecutorStoppedParams, ExecutorStoppedResult, GetJobStatusParams, GetJobStatusResult,
+    HeartBeatParams, HeartBeatResult, JobStatus, KeyValuePair, PollWorkParams, PollWorkResult,
+    RegisterExecutorParams, RegisterExecutorResult, RemoveSessionParams, RemoveSessionResult,
+    UpdateTaskStatusParams, UpdateTaskStatusResult, execute_query_failure_result,
+    execute_query_result,
 };
 use ballista_core::serde::scheduler::ExecutorMetadata;
 use datafusion_proto::logical_plan::AsLogicalPlan;
@@ -305,8 +304,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerGrpc
         let session_params = request.into_inner();
 
         let session_config = self.state.session_manager.produce_config();
-        let session_config =
-            session_config.update_from_key_value_pair(&session_params.settings);
+        let session_config = session_config.update_from_key_value_pair(&session_params.settings);
 
         let _ = self
             .state
@@ -341,8 +339,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerGrpc
     async fn execute_query_push(
         &self,
         request: tonic::Request<ExecuteQueryParams>,
-    ) -> std::result::Result<tonic::Response<Self::ExecuteQueryPushStream>, tonic::Status>
-    {
+    ) -> std::result::Result<tonic::Response<Self::ExecuteQueryPushStream>, tonic::Status> {
         let query_params = request.into_inner();
         if let ExecuteQueryParams {
             query: Some(query),
@@ -364,9 +361,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerGrpc
             let (session_id, session_ctx) = self
                 .create_context(&settings, session_id)
                 .await
-                .map_err(|e| {
-                    Status::internal(format!("Failed to create SessionContext: {e:?}"))
-                })?;
+                .map_err(|e| Status::internal(format!("Failed to create SessionContext: {e:?}")))?;
 
             let plan = self.parse_plan(query, &session_ctx).await.map_err(|e| {
                 let msg = format!("Could not parse plan: {e}");
@@ -395,8 +390,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerGrpc
                 .submit_job(&job_name, session_ctx, &plan, Some(subscriber))
                 .await
                 .map_err(|e| {
-                    let msg =
-                        format!("Failed to send JobQueued event for {job_name}: {e:?}");
+                    let msg = format!("Failed to send JobQueued event for {job_name}: {e:?}");
 
                     error!("{msg}");
 
@@ -440,9 +434,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerGrpc
             let (session_id, session_ctx) = self
                 .create_context(&settings, session_id)
                 .await
-                .map_err(|e| {
-                    Status::internal(format!("Failed to create SessionContext: {e:?}"))
-                })?;
+                .map_err(|e| Status::internal(format!("Failed to create SessionContext: {e:?}")))?;
 
             let plan = match self.parse_plan(query, &session_ctx).await {
                 Ok(plan) => plan,
@@ -450,13 +442,15 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerGrpc
                     let msg = format!("Could not parse plan: {e}");
                     error!("{msg}");
                     return Ok(Response::new(ExecuteQueryResult {
-                                operation_id,
-                                result: Some(execute_query_result::Result::Failure(
-                                    ExecuteQueryFailureResult {
-                                        failure: Some(execute_query_failure_result::Failure::PlanParsingFailure(msg)),
-                                    },
-                                )),
-                            }));
+                        operation_id,
+                        result: Some(execute_query_result::Result::Failure(
+                            ExecuteQueryFailureResult {
+                                failure: Some(
+                                    execute_query_failure_result::Failure::PlanParsingFailure(msg),
+                                ),
+                            },
+                        )),
+                    }));
                 }
             };
 
@@ -470,8 +464,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerGrpc
                 .submit_job(&job_name, session_ctx, &plan, None)
                 .await
                 .map_err(|e| {
-                    let msg =
-                        format!("Failed to send JobQueued event for {job_name}: {e:?}");
+                    let msg = format!("Failed to send JobQueued event for {job_name}: {e:?}");
                     error!("{msg}");
 
                     Status::internal(msg)
@@ -612,11 +605,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerServer<T
         Ok((session_id, ctx))
     }
 
-    async fn parse_plan(
-        &self,
-        query: Query,
-        session_ctx: &SessionContext,
-    ) -> BResult<LogicalPlan> {
+    async fn parse_plan(&self, query: Query, session_ctx: &SessionContext) -> BResult<LogicalPlan> {
         match query {
             Query::LogicalPlan(message) => T::try_decode(message.as_slice())
                 .and_then(|m| {
@@ -692,9 +681,8 @@ mod test {
     async fn test_pull_work() -> Result<(), BallistaError> {
         let cluster = test_cluster_context();
 
-        let config = SchedulerConfig::default().with_scheduler_policy(
-            ballista_core::config::TaskSchedulingPolicy::PullStaged,
-        );
+        let config = SchedulerConfig::default()
+            .with_scheduler_policy(ballista_core::config::TaskSchedulingPolicy::PullStaged);
         let mut scheduler: SchedulerServer<LogicalPlanNode, PhysicalPlanNode> =
             SchedulerServer::new(
                 "localhost:50050".to_owned(),
@@ -800,10 +788,9 @@ mod test {
             specification: Some(ExecutorSpecification { task_slots: 2 }.into()),
         };
 
-        let request: Request<RegisterExecutorParams> =
-            Request::new(RegisterExecutorParams {
-                metadata: Some(exec_meta.clone()),
-            });
+        let request: Request<RegisterExecutorParams> = Request::new(RegisterExecutorParams {
+            metadata: Some(exec_meta.clone()),
+        });
         let response = scheduler
             .register_executor(request)
             .await
@@ -826,11 +813,10 @@ mod test {
         assert_eq!(stored_executor.specification.task_slots, 2);
         assert_eq!(stored_executor.host, "http://localhost:8080".to_owned());
 
-        let request: Request<ExecutorStoppedParams> =
-            Request::new(ExecutorStoppedParams {
-                executor_id: "abc".to_owned(),
-                reason: "test_stop".to_owned(),
-            });
+        let request: Request<ExecutorStoppedParams> = Request::new(ExecutorStoppedParams {
+            executor_id: "abc".to_owned(),
+            reason: "test_stop".to_owned(),
+        });
 
         let _response = scheduler
             .executor_stopped(request)
@@ -938,10 +924,9 @@ mod test {
             specification: Some(ExecutorSpecification { task_slots: 2 }.into()),
         };
 
-        let request: Request<RegisterExecutorParams> =
-            Request::new(RegisterExecutorParams {
-                metadata: Some(exec_meta.clone()),
-            });
+        let request: Request<RegisterExecutorParams> = Request::new(RegisterExecutorParams {
+            metadata: Some(exec_meta.clone()),
+        });
         let response = scheduler
             .register_executor(request)
             .await
@@ -1024,10 +1009,9 @@ mod test {
             specification: Some(ExecutorSpecification { task_slots: 2 }.into()),
         };
 
-        let request: Request<RegisterExecutorParams> =
-            Request::new(RegisterExecutorParams {
-                metadata: Some(exec_meta.clone()),
-            });
+        let request: Request<RegisterExecutorParams> = Request::new(RegisterExecutorParams {
+            metadata: Some(exec_meta.clone()),
+        });
         let response = scheduler
             .register_executor(request)
             .await

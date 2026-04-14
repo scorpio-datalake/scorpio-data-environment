@@ -61,11 +61,7 @@ pub struct EventLoop<E> {
 
 impl<E: Send + 'static> EventLoop<E> {
     /// Creates a new event loop with the specified name, buffer size, and action handler.
-    pub fn new(
-        name: String,
-        buffer_size: usize,
-        action: Arc<dyn EventAction<E>>,
-    ) -> Self {
+    pub fn new(name: String, buffer_size: usize, action: Arc<dyn EventAction<E>>) -> Self {
         Self {
             name,
             buffer_size,
@@ -130,9 +126,11 @@ impl<E: Send + 'static> EventLoop<E> {
     /// Returns an event sender for posting events to this loop.
     pub fn get_sender(&self) -> Result<EventSender<E>> {
         Ok(EventSender {
-            tx_event: self.tx_event.as_ref().cloned().ok_or_else(|| {
-                BallistaError::General("Event sender not exist!!!".to_string())
-            })?,
+            tx_event: self
+                .tx_event
+                .as_ref()
+                .cloned()
+                .ok_or_else(|| BallistaError::General("Event sender not exist!!!".to_string()))?,
         })
     }
 }

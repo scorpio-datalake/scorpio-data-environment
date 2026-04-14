@@ -27,8 +27,7 @@ mod remote {
     };
 
     #[tokio::test]
-    async fn should_execute_sql_show_with_custom_state() -> datafusion::error::Result<()>
-    {
+    async fn should_execute_sql_show_with_custom_state() -> datafusion::error::Result<()> {
         let (host, port) = crate::common::setup_test_cluster().await;
         let url = format!("df://{host}:{port}");
         let state = SessionStateBuilder::new().with_default_features().build();
@@ -110,9 +109,7 @@ mod standalone {
     use datafusion::{
         assert_batches_eq,
         common::exec_err,
-        execution::{
-            SessionState, SessionStateBuilder, TaskContext, context::QueryPlanner,
-        },
+        execution::{SessionState, SessionStateBuilder, TaskContext, context::QueryPlanner},
         logical_expr::LogicalPlan,
         physical_plan::ExecutionPlan,
         prelude::{SessionConfig, SessionContext},
@@ -252,8 +249,7 @@ mod standalone {
 
         assert!(result.is_err());
 
-        let session_config =
-            SessionConfig::new_with_ballista().with_information_schema(true);
+        let session_config = SessionConfig::new_with_ballista().with_information_schema(true);
 
         let state = SessionStateBuilder::new()
             .with_default_features()
@@ -302,9 +298,8 @@ mod standalone {
             _table_ref: &datafusion::sql::TableReference,
             _schema: datafusion::arrow::datatypes::SchemaRef,
             _ctx: &TaskContext,
-        ) -> datafusion::error::Result<
-            std::sync::Arc<dyn datafusion::catalog::TableProvider>,
-        > {
+        ) -> datafusion::error::Result<std::sync::Arc<dyn datafusion::catalog::TableProvider>>
+        {
             self.invoked
                 .store(true, std::sync::atomic::Ordering::Relaxed);
             exec_err!("this codec does not work")
@@ -366,8 +361,7 @@ mod standalone {
             buf: &[u8],
             inputs: &[Arc<dyn datafusion::physical_plan::ExecutionPlan>],
             ctx: &TaskContext,
-        ) -> datafusion::error::Result<Arc<dyn datafusion::physical_plan::ExecutionPlan>>
-        {
+        ) -> datafusion::error::Result<Arc<dyn datafusion::physical_plan::ExecutionPlan>> {
             self.invoked
                 .store(true, std::sync::atomic::Ordering::Relaxed);
             self.codec.try_decode(buf, inputs, ctx)

@@ -220,7 +220,9 @@ mod test {
     #[tokio::test]
     async fn should_detect_select_from_information_schema_as_local_plan() -> Result<()> {
         let ctx = context();
-        let df = ctx.sql("SELECT * FROM information_schema.df_settings WHERE NAME LIKE 'ballista%'").await?;
+        let df = ctx
+            .sql("SELECT * FROM information_schema.df_settings WHERE NAME LIKE 'ballista%'")
+            .await?;
         let lp = df.logical_plan();
         let mut local_run = LocalRun::default();
 

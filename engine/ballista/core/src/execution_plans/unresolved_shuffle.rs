@@ -63,11 +63,7 @@ impl UnresolvedShuffleExec {
 }
 
 impl DisplayAs for UnresolvedShuffleExec {
-    fn fmt_as(
-        &self,
-        t: DisplayFormatType,
-        f: &mut std::fmt::Formatter,
-    ) -> std::fmt::Result {
+    fn fmt_as(&self, t: DisplayFormatType, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match t {
             DisplayFormatType::Default | DisplayFormatType::Verbose => {
                 write!(
@@ -116,8 +112,7 @@ impl ExecutionPlan for UnresolvedShuffleExec {
             Ok(self)
         } else {
             Err(DataFusionError::Plan(
-                "Ballista UnresolvedShuffleExec does not support children plans"
-                    .to_owned(),
+                "Ballista UnresolvedShuffleExec does not support children plans".to_owned(),
             ))
         }
     }

@@ -76,25 +76,13 @@ impl Command {
                 let df = ctx.sql("SHOW TABLES").await?;
                 let schema = Arc::new(df.schema().as_arrow().clone());
                 let batches = df.collect().await?;
-                print_options.print_batches(
-                    schema,
-                    &batches,
-                    now,
-                    max_rows,
-                    &Default::default(),
-                )
+                print_options.print_batches(schema, &batches, now, max_rows, &Default::default())
             }
             Self::DescribeTable(name) => {
                 let df = ctx.sql(&format!("SHOW COLUMNS FROM {name}")).await?;
                 let schema = Arc::new(df.schema().as_arrow().clone());
                 let batches = df.collect().await?;
-                print_options.print_batches(
-                    schema,
-                    &batches,
-                    now,
-                    max_rows,
-                    &Default::default(),
-                )
+                print_options.print_batches(schema, &batches, now, max_rows, &Default::default())
             }
             Self::QuietMode(quiet) => {
                 if let Some(quiet) = quiet {
@@ -126,8 +114,7 @@ impl Command {
                 }
             }
             Self::OutputFormat(_) => Err(DataFusionError::Internal(
-                "Unexpected change output format, this should be handled outside"
-                    .to_string(),
+                "Unexpected change output format, this should be handled outside".to_string(),
             )),
         }
     }
@@ -141,9 +128,7 @@ impl Command {
             Self::ListFunctions => ("\\h", "function list"),
             Self::SearchFunctions(_) => ("\\h function", "search function"),
             Self::QuietMode(_) => ("\\quiet (true|false)?", "print or set quiet mode"),
-            Self::OutputFormat(_) => {
-                ("\\pset [NAME [VALUE]]", "set table output option\n(format)")
-            }
+            Self::OutputFormat(_) => ("\\pset [NAME [VALUE]]", "set table output option\n(format)"),
         }
     }
 }
@@ -194,16 +179,10 @@ impl FromStr for Command {
             ("?", None) => Self::Help,
             ("h", None) => Self::ListFunctions,
             ("h", Some(function)) => Self::SearchFunctions(function.into()),
-            ("quiet", Some("true" | "t" | "yes" | "y" | "on")) => {
-                Self::QuietMode(Some(true))
-            }
-            ("quiet", Some("false" | "f" | "no" | "n" | "off")) => {
-                Self::QuietMode(Some(false))
-            }
+            ("quiet", Some("true" | "t" | "yes" | "y" | "on")) => Self::QuietMode(Some(true)),
+            ("quiet", Some("false" | "f" | "no" | "n" | "off")) => Self::QuietMode(Some(false)),
             ("quiet", None) => Self::QuietMode(None),
-            ("pset", Some(subcommand)) => {
-                Self::OutputFormat(Some(subcommand.to_string()))
-            }
+            ("pset", Some(subcommand)) => Self::OutputFormat(Some(subcommand.to_string())),
             ("pset", None) => Self::OutputFormat(None),
             _ => return Err(()),
         })

@@ -267,8 +267,7 @@ mod supported {
         ctx: SessionContext,
     ) -> datafusion::error::Result<()> {
         let state = ctx.state();
-        let ballista_config_extension =
-            state.config().options().extensions.get::<BallistaConfig>();
+        let ballista_config_extension = state.config().options().extensions.get::<BallistaConfig>();
 
         // ballista configuration should be registered with
         // session state
@@ -975,16 +974,60 @@ mod supported {
             .await?
             .show()
             .await?;
-        let result = ctx.sql(
-            "select t0.id from t0 join t1 on t0.id = t1.id order by t0.id desc limit 5",
-        )
-        .await?
-        .collect()
-        .await?;
+        let result = ctx
+            .sql("select t0.id from t0 join t1 on t0.id = t1.id order by t0.id desc limit 5")
+            .await?
+            .collect()
+            .await?;
 
         let expected = [
-            "+----+", "| id |", "+----+", "| 7  |", "| 6  |", "| 5  |", "| 4  |",
-            "| 3  |", "+----+",
+            "+----+", "| id |", "+----+", "| 7  |", "| 6  |", "| 5  |", "| 4  |", "| 3  |",
+            "+----+",
+        ];
+        assert_batches_eq!(expected, &result);
+
+        Ok(())
+    }
+
+    /// Hash join + grouped aggregation on Parquet (partitioned scan + shuffle stages as planned).
+    /// Runs in both in-process standalone and scheduler-backed remote `SessionContext` modes.
+    #[rstest]
+    #[case::standalone(standalone_context())]
+    #[case::remote(remote_context())]
+    #[tokio::test]
+    async fn should_execute_join_and_aggregate_standalone_and_remote(
+        #[future(awt)]
+        #[case]
+        ctx: SessionContext,
+        test_data: String,
+    ) -> datafusion::error::Result<()> {
+        ctx.register_parquet(
+            "test",
+            &format!("{test_data}/alltypes_plain.parquet"),
+            Default::default(),
+        )
+        .await?;
+
+        let result = ctx
+            .sql(
+                "SELECT t0.string_col, COUNT(*) AS cnt \
+                 FROM test t0 \
+                 INNER JOIN test t1 ON t0.id = t1.id \
+                 WHERE t0.id > 4 \
+                 GROUP BY t0.string_col \
+                 ORDER BY t0.string_col",
+            )
+            .await?
+            .collect()
+            .await?;
+
+        let expected = [
+            "+------------+-----+",
+            "| string_col | cnt |",
+            "+------------+-----+",
+            "| 30         | 1   |",
+            "| 31         | 2   |",
+            "+------------+-----+",
         ];
         assert_batches_eq!(expected, &result);
 

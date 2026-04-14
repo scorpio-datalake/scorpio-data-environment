@@ -264,10 +264,7 @@ mod test {
     impl Stream for NeverendingRecordBatchStream {
         type Item = Result<RecordBatch, DataFusionError>;
 
-        fn poll_next(
-            self: Pin<&mut Self>,
-            _cx: &mut Context<'_>,
-        ) -> Poll<Option<Self::Item>> {
+        fn poll_next(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
             Poll::Pending
         }
     }
@@ -282,9 +279,9 @@ mod test {
         fn new() -> Self {
             NeverendingOperator {
                 properties: Arc::new(PlanProperties::new(
-                    datafusion::physical_expr::EquivalenceProperties::new(Arc::new(
-                        Schema::empty(),
-                    )),
+                    datafusion::physical_expr::EquivalenceProperties::new(
+                        Arc::new(Schema::empty()),
+                    ),
                     Partitioning::UnknownPartitioning(1),
                     datafusion::physical_plan::execution_plan::EmissionType::Incremental,
                     datafusion::physical_plan::execution_plan::Boundedness::Bounded,
@@ -294,11 +291,7 @@ mod test {
     }
 
     impl DisplayAs for NeverendingOperator {
-        fn fmt_as(
-            &self,
-            t: DisplayFormatType,
-            f: &mut std::fmt::Formatter,
-        ) -> std::fmt::Result {
+        fn fmt_as(&self, t: DisplayFormatType, f: &mut std::fmt::Formatter) -> std::fmt::Result {
             match t {
                 DisplayFormatType::Default
                 | DisplayFormatType::Verbose
@@ -372,8 +365,7 @@ mod test {
         let config_producer = Arc::new(default_config_producer);
         let ctx = SessionContext::new();
         let runtime_env = ctx.runtime_env().clone();
-        let runtime_producer: RuntimeProducer =
-            Arc::new(move |_| Ok(runtime_env.clone()));
+        let runtime_producer: RuntimeProducer = Arc::new(move |_| Ok(runtime_env.clone()));
 
         let executor = Executor::new_basic(
             executor_registration,

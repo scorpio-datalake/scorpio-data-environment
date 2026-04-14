@@ -224,8 +224,7 @@ pub async fn get_job<
 
     let num_stages = job.stage_count();
     let completed_stages = job.completed_stages();
-    let percent_complete =
-        ((completed_stages as f32 / num_stages as f32) * 100_f32) as u8;
+    let percent_complete = ((completed_stages as f32 / num_stages as f32) * 100_f32) as u8;
 
     Ok(Json(JobResponse {
         job_id: job.job_id().to_string(),
@@ -271,16 +270,12 @@ pub async fn cancel_job<
                 .query_stage_event_loop
                 .get_sender()
                 .map_err(|err| {
-                    tracing::error!(
-                        "Error getting query stage event loop sender: {err:?}"
-                    );
+                    tracing::error!("Error getting query stage event loop sender: {err:?}");
                     SchedulerErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
                 })?
                 .post_event(QueryStageSchedulerEvent::JobCancel(job_id))
                 .await
-                .map_err(|_| {
-                    SchedulerErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
-                })?;
+                .map_err(|_| SchedulerErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR))?;
 
             Ok((
                 StatusCode::OK,
@@ -328,7 +323,9 @@ pub async fn get_query_stages<
         .get_job_execution_graph(&job_id)
         .await
         .map_err(|e| {
-            tracing::error!("Error occurred while getting the query stages for job '{job_id}' reason: {e:?}");
+            tracing::error!(
+                "Error occurred while getting the query stages for job '{job_id}' reason: {e:?}"
+            );
             SchedulerErrorResponse::with_error(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Error occurred while getting the query stages for job '{job_id}'"),
@@ -366,14 +363,10 @@ pub async fn get_query_stages<
                             .unwrap_or_default();
                     }
                     ExecutionStage::Successful(completed_stage) => {
-                        summary.input_rows = get_combined_count(
-                            &completed_stage.stage_metrics,
-                            "input_rows",
-                        );
-                        summary.output_rows = get_combined_count(
-                            &completed_stage.stage_metrics,
-                            "output_rows",
-                        );
+                        summary.input_rows =
+                            get_combined_count(&completed_stage.stage_metrics, "input_rows");
+                        summary.output_rows =
+                            get_combined_count(&completed_stage.stage_metrics, "output_rows");
                         summary.elapsed_compute =
                             get_elapsed_compute_nanos(&completed_stage.stage_metrics);
                     }
@@ -393,9 +386,7 @@ fn format_job_status(status: &Option<Status>, elapsed_ms: u64) -> (String, Strin
     match status {
         Some(Status::Queued(_)) => ("Queued".to_string(), "Queued".to_string()),
         Some(Status::Running(_)) => ("Running".to_string(), "Running".to_string()),
-        Some(Status::Failed(error)) => {
-            ("Failed".to_string(), format!("Failed: {}", error.error))
-        }
+        Some(Status::Failed(error)) => ("Failed".to_string(), format!("Failed: {}", error.error)),
         Some(Status::Successful(completed)) => {
             let num_rows = completed
                 .partition_location
@@ -413,11 +404,7 @@ fn format_job_status(status: &Option<Status>, elapsed_ms: u64) -> (String, Strin
                 "Completed".to_string(),
                 format!(
                     "Completed. Produced {} {} containing {} {}. Elapsed time: {} ms.",
-                    num_partitions,
-                    num_partitions_term,
-                    num_rows,
-                    num_rows_term,
-                    elapsed_ms
+                    num_partitions, num_partitions_term, num_rows, num_rows_term, elapsed_ms
                 ),
             )
         }
@@ -469,15 +456,18 @@ pub async fn get_job_dot_graph<
         .get_job_execution_graph(&job_id)
         .await
         .map_err(|e| {
-            tracing::error!("Error occurred while getting the dot graph for job '{job_id}' reason: {e:?}");
+            tracing::error!(
+                "Error occurred while getting the dot graph for job '{job_id}' reason: {e:?}"
+            );
             SchedulerErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
         })?
     {
-        ExecutionGraphDot::generate(graph.as_ref())
-            .map_err(|e|  {
-                tracing::error!("Error occurred while getting the dot graph for job '{job_id}' reason: {e:?}");
-                SchedulerErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
-            })
+        ExecutionGraphDot::generate(graph.as_ref()).map_err(|e| {
+            tracing::error!(
+                "Error occurred while getting the dot graph for job '{job_id}' reason: {e:?}"
+            );
+            SchedulerErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
+        })
     } else {
         Err(SchedulerErrorResponse::new(StatusCode::NOT_FOUND))
     }
@@ -520,7 +510,9 @@ pub async fn get_job_svg_graph<
                 vec![CommandArg::Format(Format::Svg)],
             )
             .map_err(|e| {
-                tracing::error!("Error occurred while getting job svg graph for job '{job_id}' reason: {e:?}");
+                tracing::error!(
+                    "Error occurred while getting job svg graph for job '{job_id}' reason: {e:?}"
+                );
                 SchedulerErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
             })?;
 

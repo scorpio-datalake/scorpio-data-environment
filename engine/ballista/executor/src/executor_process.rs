@@ -196,9 +196,9 @@ pub async fn start_executor_process(
     opt: Arc<ExecutorProcessConfig>,
 ) -> ballista_core::error::Result<()> {
     let addr = format!("{}:{}", opt.bind_host, opt.port);
-    let address = addr.parse().map_err(|e: std::net::AddrParseError| {
-        BallistaError::Configuration(e.to_string())
-    })?;
+    let address = addr
+        .parse()
+        .map_err(|e: std::net::AddrParseError| BallistaError::Configuration(e.to_string()))?;
 
     let scheduler_host = opt.scheduler_host.clone();
     let scheduler_port = opt.scheduler_port;
@@ -206,8 +206,7 @@ pub async fn start_executor_process(
 
     let work_dir = if let Some(work_dir) = opt.work_dir.clone() {
         work_dir
-    } else if let Some(temp_dir) = TempDir::new()?.path().to_str().map(ToOwned::to_owned)
-    {
+    } else if let Some(temp_dir) = TempDir::new()?.path().to_str().map(ToOwned::to_owned) {
         temp_dir
     } else {
         return Err(BallistaError::Configuration(
@@ -224,9 +223,7 @@ pub async fn start_executor_process(
     let task_scheduling_policy = opt.task_scheduling_policy;
     // assign this executor an unique ID
     let executor_id = Uuid::new_v4().to_string();
-    info!(
-        "Ballista Executor v{BALLISTA_VERSION} (DataFusion v{DATAFUSION_VERSION}) starting ..."
-    );
+    info!("Ballista Executor v{BALLISTA_VERSION} (DataFusion v{DATAFUSION_VERSION}) starting ...");
     info!("Executor id: {executor_id}");
     info!("Executor working directory: {work_dir}");
     info!("Executor number of concurrent tasks: {concurrent_tasks}");
@@ -293,8 +290,8 @@ pub async fn start_executor_process(
     let ballista_config = session_config.ballista_config();
     let grpc_config = GrpcClientConfig::from(&ballista_config);
     let connection = if connect_timeout == 0 {
-        let mut endpoint = create_grpc_client_endpoint(scheduler_url, Some(&grpc_config))
-            .map_err(|_| {
+        let mut endpoint =
+            create_grpc_client_endpoint(scheduler_url, Some(&grpc_config)).map_err(|_| {
                 BallistaError::GrpcConnectionError(
                     "Could not create endpoint to scheduler".to_string(),
                 )
@@ -302,16 +299,12 @@ pub async fn start_executor_process(
 
         if let Some(ref override_fn) = opt.override_create_grpc_client_endpoint {
             endpoint = override_fn(endpoint).map_err(|_| {
-                BallistaError::GrpcConnectionError(
-                    "Failed to apply endpoint override".to_string(),
-                )
+                BallistaError::GrpcConnectionError("Failed to apply endpoint override".to_string())
             })?;
         }
 
         endpoint.connect().await.map_err(|_| {
-            BallistaError::GrpcConnectionError(
-                "Could not connect to scheduler".to_string(),
-            )
+            BallistaError::GrpcConnectionError("Could not connect to scheduler".to_string())
         })
     } else {
         // this feature was added to support docker-compose so that we can have the executor
@@ -319,22 +312,17 @@ pub async fn start_executor_process(
         // that docker-compose's restart policy will restart the container.
         let start_time = Instant::now().elapsed().as_secs();
         let mut x = None;
-        while x.is_none()
-            && Instant::now().elapsed().as_secs() - start_time < connect_timeout
-        {
+        while x.is_none() && Instant::now().elapsed().as_secs() - start_time < connect_timeout {
             match create_grpc_client_endpoint(scheduler_url.clone(), Some(&grpc_config)) {
                 Ok(mut endpoint) => {
-                    if let Some(ref override_fn) =
-                        opt.override_create_grpc_client_endpoint
-                    {
+                    if let Some(ref override_fn) = opt.override_create_grpc_client_endpoint {
                         match override_fn(endpoint) {
                             Ok(overridden_endpoint) => endpoint = overridden_endpoint,
                             Err(e) => {
                                 warn!(
                                     "Failed to apply endpoint override to scheduler at {scheduler_url} ({e}); retrying ..."
                                 );
-                                tokio::time::sleep(time::Duration::from_millis(500))
-                                    .await;
+                                tokio::time::sleep(time::Duration::from_millis(500)).await;
                                 continue;
                             }
                         }
@@ -608,10 +596,7 @@ async fn check_services(
 
 /// This function will be scheduled periodically for cleanup the job shuffle data left on the executor.
 /// Only directories will be checked cleaned.
-async fn clean_shuffle_data_loop(
-    work_dir: &str,
-    seconds: u64,
-) -> ballista_core::error::Result<()> {
+async fn clean_shuffle_data_loop(work_dir: &str, seconds: u64) -> ballista_core::error::Result<()> {
     let mut dir = fs::read_dir(work_dir).await?;
     let mut to_deleted = Vec::new();
     while let Some(child) = dir.next_entry().await? {
@@ -621,9 +606,7 @@ async fn clean_shuffle_data_loop(
             if metadata.is_dir() {
                 match satisfy_dir_ttl(child, seconds).await {
                     Err(e) => {
-                        error!(
-                            "Fail to check ttl for the directory {child_path:?} due to {e:?}"
-                        )
+                        error!("Fail to check ttl for the directory {child_path:?} due to {e:?}")
                     }
                     Ok(false) => to_deleted.push(child_path),
                     Ok(_) => {}
@@ -698,9 +681,9 @@ pub(crate) async fn remove_job_dir(
 
     info!("Remove data for job {:?}", job_id);
 
-    tokio::fs::remove_dir_all(&job_path).await.map_err(|e| {
-        BallistaError::General(format!("Failed to remove {job_path:?} due to {e}"))
-    })?;
+    tokio::fs::remove_dir_all(&job_path)
+        .await
+        .map_err(|e| BallistaError::General(format!("Failed to remove {job_path:?} due to {e}")))?;
 
     Ok(())
 }
@@ -813,19 +796,16 @@ mod tests {
             override_arrow_flight_service: Some(std::sync::Arc::new(
                 move |address, mut grpc_shutdown, ballista_config| {
                     tokio::spawn(async move {
-                        log::info!(
-                            "custom arrow flight server listening on: {address:?}"
-                        );
+                        log::info!("custom arrow flight server listening on: {address:?}");
 
-                        let server_future = ballista_core::utils::create_grpc_server(
-                            &ballista_config,
-                        )
-                        .add_service(
-                            arrow_flight::flight_service_server::FlightServiceServer::new(
-                                crate::flight_service::BallistaFlightService::new(),
-                            ),
-                        )
-                        .serve_with_shutdown(address, grpc_shutdown.recv());
+                        let server_future =
+                            ballista_core::utils::create_grpc_server(&ballista_config)
+                                .add_service(
+                                    arrow_flight::flight_service_server::FlightServiceServer::new(
+                                        crate::flight_service::BallistaFlightService::new(),
+                                    ),
+                                )
+                                .serve_with_shutdown(address, grpc_shutdown.recv());
 
                         server_future.await.map_err(|e| {
                             log::error!("Could not start built-in arrow flight server.");

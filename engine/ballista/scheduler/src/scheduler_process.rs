@@ -45,10 +45,7 @@ use std::{net::SocketAddr, sync::Arc};
 use tonic::service::RoutesBuilder;
 /// Creates as initialized scheduler service
 /// without exposing it as a grpc service
-pub async fn create_scheduler<
-    T: 'static + AsLogicalPlan,
-    U: 'static + AsExecutionPlan,
->(
+pub async fn create_scheduler<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan>(
     cluster: BallistaCluster,
     config: Arc<SchedulerConfig>,
 ) -> ballista_core::error::Result<SchedulerServer<T, U>> {
@@ -85,10 +82,7 @@ pub async fn create_scheduler<
 }
 
 /// Exposes scheduler grpc service
-pub async fn start_grpc_service<
-    T: 'static + AsLogicalPlan,
-    U: 'static + AsExecutionPlan,
->(
+pub async fn start_grpc_service<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan>(
     address: SocketAddr,
     scheduler: SchedulerServer<T, U>,
 ) -> ballista_core::error::Result<()> {
@@ -115,12 +109,8 @@ pub async fn start_grpc_service<
                 config.use_tls,
                 customize_endpoint,
             ))
-            .max_decoding_message_size(
-                config.grpc_server_max_decoding_message_size as usize,
-            )
-            .max_encoding_message_size(
-                config.grpc_server_max_encoding_message_size as usize,
-            );
+            .max_decoding_message_size(config.grpc_server_max_decoding_message_size as usize)
+            .max_encoding_message_size(config.grpc_server_max_encoding_message_size as usize);
             tonic_builder.add_service(flight_proxy);
         }
         _ => {}
@@ -132,8 +122,7 @@ pub async fn start_grpc_service<
     let tonic = tonic_builder.routes().into_axum_router();
 
     // registering default handler for unmatched requests
-    let tonic =
-        tonic.fallback(|| async { SchedulerErrorResponse::new(StatusCode::NOT_FOUND) });
+    let tonic = tonic.fallback(|| async { SchedulerErrorResponse::new(StatusCode::NOT_FOUND) });
 
     #[cfg(feature = "rest-api")]
     let final_route = if config.disable_rest_api {
@@ -175,8 +164,7 @@ pub async fn start_server(
     info!(
         "Ballista Scheduler v{BALLISTA_VERSION} (DataFusion v{DATAFUSION_VERSION}) listening on {address:?}"
     );
-    let scheduler =
-        create_scheduler::<LogicalPlanNode, PhysicalPlanNode>(cluster, config).await?;
+    let scheduler = create_scheduler::<LogicalPlanNode, PhysicalPlanNode>(cluster, config).await?;
 
     start_grpc_service(address, scheduler).await
 }

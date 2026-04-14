@@ -18,8 +18,7 @@
 use crate::config::{
     BALLISTA_CLIENT_USE_TLS, BALLISTA_GRPC_CLIENT_MAX_MESSAGE_SIZE, BALLISTA_JOB_NAME,
     BALLISTA_SHUFFLE_READER_FORCE_REMOTE_READ, BALLISTA_SHUFFLE_READER_MAX_REQUESTS,
-    BALLISTA_SHUFFLE_READER_REMOTE_PREFER_FLIGHT, BALLISTA_STANDALONE_PARALLELISM,
-    BallistaConfig,
+    BALLISTA_SHUFFLE_READER_REMOTE_PREFER_FLIGHT, BALLISTA_STANDALONE_PARALLELISM, BallistaConfig,
 };
 use crate::planner::BallistaQueryPlanner;
 use crate::serde::protobuf::KeyValuePair;
@@ -99,16 +98,12 @@ pub trait SessionStateExt {
     /// Setups new [SessionState] for ballista usage
     ///
     /// State will be created with appropriate [SessionConfig] configured
-    fn new_ballista_state(
-        scheduler_url: String,
-    ) -> datafusion::error::Result<SessionState>;
+    fn new_ballista_state(scheduler_url: String) -> datafusion::error::Result<SessionState>;
     /// Upgrades [SessionState] for ballista usage
     ///
     /// State will be upgraded to appropriate [SessionConfig]
-    fn upgrade_for_ballista(
-        self,
-        scheduler_url: String,
-    ) -> datafusion::error::Result<SessionState>;
+    fn upgrade_for_ballista(self, scheduler_url: String)
+    -> datafusion::error::Result<SessionState>;
 }
 
 /// [SessionConfig] extension with methods needed
@@ -152,9 +147,7 @@ pub trait SessionConfigExt {
     ) -> SessionConfig;
 
     /// Returns ballista's [QueryPlanner] if overridden
-    fn ballista_query_planner(
-        &self,
-    ) -> Option<Arc<dyn QueryPlanner + Send + Sync + 'static>>;
+    fn ballista_query_planner(&self) -> Option<Arc<dyn QueryPlanner + Send + Sync + 'static>>;
 
     /// Returns parallelism of standalone cluster
     fn ballista_standalone_parallelism(&self) -> usize;
@@ -168,10 +161,7 @@ pub trait SessionConfigExt {
     /// Enabling forced remote read may significantly reduce performance,
     /// as all partition reads will go through the Arrow Flight client even for local data.
     /// Use only when necessary, like in tests
-    fn with_ballista_shuffle_reader_force_remote_read(
-        self,
-        force_remote_read: bool,
-    ) -> Self;
+    fn with_ballista_shuffle_reader_force_remote_read(self, force_remote_read: bool) -> Self;
 
     /// Sets parallelism of standalone cluster
     ///
@@ -191,19 +181,13 @@ pub trait SessionConfigExt {
     fn ballista_shuffle_reader_maximum_concurrent_requests(&self) -> usize;
 
     /// Sets maximum in flight requests for shuffle reader
-    fn with_ballista_shuffle_reader_maximum_concurrent_requests(
-        self,
-        max_requests: usize,
-    ) -> Self;
+    fn with_ballista_shuffle_reader_maximum_concurrent_requests(self, max_requests: usize) -> Self;
 
     /// Returns whether to prefer Flight protocol for remote shuffle reads.
     fn ballista_shuffle_reader_remote_prefer_flight(&self) -> bool;
 
     /// Sets whether to prefer Flight protocol for remote shuffle reads.
-    fn with_ballista_shuffle_reader_remote_prefer_flight(
-        self,
-        prefer_flight: bool,
-    ) -> Self;
+    fn with_ballista_shuffle_reader_remote_prefer_flight(self, prefer_flight: bool) -> Self;
 
     /// Is adaptive query planner enabled
     fn ballista_adaptive_query_planner_enabled(&self) -> bool;
@@ -253,14 +237,10 @@ pub trait SessionConfigHelperExt {
 }
 
 impl SessionStateExt for SessionState {
-    fn new_ballista_state(
-        scheduler_url: String,
-    ) -> datafusion::error::Result<SessionState> {
+    fn new_ballista_state(scheduler_url: String) -> datafusion::error::Result<SessionState> {
         let session_config = SessionConfig::new_with_ballista();
-        let planner = BallistaQueryPlanner::<LogicalPlanNode>::new(
-            scheduler_url,
-            BallistaConfig::default(),
-        );
+        let planner =
+            BallistaQueryPlanner::<LogicalPlanNode>::new(scheduler_url, BallistaConfig::default());
 
         let runtime_env = RuntimeEnvBuilder::new().build()?;
         let session_state = SessionStateBuilder::new()
@@ -376,9 +356,7 @@ impl SessionConfigExt for SessionConfig {
         self.with_extension(Arc::new(extension))
     }
 
-    fn ballista_query_planner(
-        &self,
-    ) -> Option<Arc<dyn QueryPlanner + Send + Sync + 'static>> {
+    fn ballista_query_planner(&self) -> Option<Arc<dyn QueryPlanner + Send + Sync + 'static>> {
         self.get_extension::<BallistaQueryPlannerExtension>()
             .map(|c| c.planner())
     }
@@ -444,10 +422,7 @@ impl SessionConfigExt for SessionConfig {
             .unwrap_or_else(|| BallistaConfig::default().shuffle_sort_based_enabled())
     }
 
-    fn with_ballista_shuffle_reader_maximum_concurrent_requests(
-        self,
-        max_requests: usize,
-    ) -> Self {
+    fn with_ballista_shuffle_reader_maximum_concurrent_requests(self, max_requests: usize) -> Self {
         if self.options().extensions.get::<BallistaConfig>().is_some() {
             self.set_usize(BALLISTA_SHUFFLE_READER_MAX_REQUESTS, max_requests)
         } else {
@@ -461,15 +436,10 @@ impl SessionConfigExt for SessionConfig {
             .extensions
             .get::<BallistaConfig>()
             .map(|c| c.shuffle_reader_force_remote_read())
-            .unwrap_or_else(|| {
-                BallistaConfig::default().shuffle_reader_force_remote_read()
-            })
+            .unwrap_or_else(|| BallistaConfig::default().shuffle_reader_force_remote_read())
     }
 
-    fn with_ballista_shuffle_reader_force_remote_read(
-        self,
-        force_remote_read: bool,
-    ) -> Self {
+    fn with_ballista_shuffle_reader_force_remote_read(self, force_remote_read: bool) -> Self {
         if self.options().extensions.get::<BallistaConfig>().is_some() {
             self.set_bool(BALLISTA_SHUFFLE_READER_FORCE_REMOTE_READ, force_remote_read)
         } else {
@@ -483,15 +453,10 @@ impl SessionConfigExt for SessionConfig {
             .extensions
             .get::<BallistaConfig>()
             .map(|c| c.shuffle_reader_remote_prefer_flight())
-            .unwrap_or_else(|| {
-                BallistaConfig::default().shuffle_reader_remote_prefer_flight()
-            })
+            .unwrap_or_else(|| BallistaConfig::default().shuffle_reader_remote_prefer_flight())
     }
 
-    fn with_ballista_shuffle_reader_remote_prefer_flight(
-        self,
-        prefer_flight: bool,
-    ) -> Self {
+    fn with_ballista_shuffle_reader_remote_prefer_flight(self, prefer_flight: bool) -> Self {
         if self.options().extensions.get::<BallistaConfig>().is_some() {
             self.set_bool(BALLISTA_SHUFFLE_READER_REMOTE_PREFER_FLIGHT, prefer_flight)
         } else {
@@ -513,9 +478,7 @@ impl SessionConfigExt for SessionConfig {
             .extensions
             .get::<BallistaConfig>()
             .map(|c| c.adaptive_query_planner_max_passes())
-            .unwrap_or_else(|| {
-                BallistaConfig::default().adaptive_query_planner_max_passes()
-            })
+            .unwrap_or_else(|| BallistaConfig::default().adaptive_query_planner_max_passes())
     }
 
     fn with_ballista_grpc_metadata(self, metadata: HashMap<String, String>) -> Self {
@@ -531,9 +494,7 @@ impl SessionConfigExt for SessionConfig {
     fn with_ballista_override_create_grpc_client_endpoint(
         self,
         override_f: Arc<
-            dyn Fn(Endpoint) -> Result<Endpoint, Box<dyn Error + Send + Sync>>
-                + Send
-                + Sync,
+            dyn Fn(Endpoint) -> Result<Endpoint, Box<dyn Error + Send + Sync>> + Send + Sync,
         >,
     ) -> Self {
         let extension = BallistaConfigGrpcEndpoint::new(override_f);
@@ -573,9 +534,7 @@ impl SessionConfigHelperExt for SessionConfig {
             //
             // filtering this key as it's creating a lot of warning logs
             // at the executor side.
-            .filter(|c| {
-                c.key != "datafusion.sql_parser.enable_options_value_normalization"
-            })
+            .filter(|c| c.key != "datafusion.sql_parser.enable_options_value_normalization")
             .map(|datafusion::config::ConfigEntry { key, value, .. }| {
                 log::trace!("sending configuration key: `{key}`, value`{value:?}`");
                 KeyValuePair {
@@ -596,9 +555,7 @@ impl SessionConfigHelperExt for SessionConfig {
         for KeyValuePair { key, value } in key_value_pairs {
             match value {
                 Some(value) => {
-                    log::trace!(
-                        "setting up configuration key: `{key}`, value: `{value:?}`"
-                    );
+                    log::trace!("setting up configuration key: `{key}`, value: `{value:?}`");
                     if let Err(e) = self.options_mut().set(key, value) {
                         // there is not much we can do about this error at the moment.
                         // it used to be warning but it gets very verbose
@@ -609,9 +566,7 @@ impl SessionConfigHelperExt for SessionConfig {
                     }
                 }
                 None => {
-                    log::trace!(
-                        "can't set up configuration key: `{key}`, as value is None",
-                    )
+                    log::trace!("can't set up configuration key: `{key}`, as value is None",)
                 }
             }
         }
@@ -728,9 +683,7 @@ impl Interceptor for BallistaGrpcMetadataInterceptor {
                     HeaderName::from_bytes(k.as_bytes())
                         .map_err(|e| Status::invalid_argument(e.to_string()))?,
                     v.parse().map_err(|_e| {
-                        Status::invalid_argument(format!(
-                            "{v} is not a valid header value"
-                        ))
+                        Status::invalid_argument(format!("{v} is not a valid header value"))
                     })?,
                 );
             }
@@ -875,8 +828,7 @@ mod test {
     // Ballista disables round robin repatriations
     #[tokio::test]
     async fn should_disable_round_robin_repartition() {
-        let state =
-            SessionState::new_ballista_state("scheduler_url".to_string()).unwrap();
+        let state = SessionState::new_ballista_state("scheduler_url".to_string()).unwrap();
 
         assert!(!state.config().round_robin_repartition());
 
@@ -893,8 +845,7 @@ mod test {
     fn should_convert_to_key_value_pairs() {
         // key value pairs should contain datafusion and ballista values
 
-        let config =
-            SessionConfig::new_with_ballista().with_ballista_job_name("job_name");
+        let config = SessionConfig::new_with_ballista().with_ballista_job_name("job_name");
         let pairs = config.to_key_value_pairs();
 
         assert!(pairs.iter().any(|p| p.key == BALLISTA_JOB_NAME));
@@ -958,8 +909,7 @@ mod test {
         let mut metadata = HashMap::new();
         metadata.insert("authorization".to_string(), "Bearer token123".to_string());
 
-        let config =
-            SessionConfig::new_with_ballista().with_ballista_grpc_metadata(metadata);
+        let config = SessionConfig::new_with_ballista().with_ballista_grpc_metadata(metadata);
 
         let interceptor = config.ballista_grpc_interceptor();
         let mut interceptor = interceptor.as_ref().clone();
@@ -1007,8 +957,7 @@ mod test {
     #[test]
     fn test_ballista_functions_include_datafusion() {
         use super::{
-            ballista_aggregate_functions, ballista_scalar_functions,
-            ballista_window_functions,
+            ballista_aggregate_functions, ballista_scalar_functions, ballista_window_functions,
         };
 
         // Test scalar functions
@@ -1034,8 +983,7 @@ mod test {
     #[cfg(not(feature = "spark-compat"))]
     fn test_ballista_functions_without_spark() {
         use super::{
-            ballista_aggregate_functions, ballista_scalar_functions,
-            ballista_window_functions,
+            ballista_aggregate_functions, ballista_scalar_functions, ballista_window_functions,
         };
 
         // Scalar functions should NOT include Spark functions
@@ -1052,8 +1000,7 @@ mod test {
     #[cfg(feature = "spark-compat")]
     fn test_ballista_functions_with_spark() {
         use super::{
-            ballista_aggregate_functions, ballista_scalar_functions,
-            ballista_window_functions,
+            ballista_aggregate_functions, ballista_scalar_functions, ballista_window_functions,
         };
 
         // Scalar functions should include Spark functions
@@ -1069,8 +1016,7 @@ mod test {
     #[tokio::test]
     async fn test_ballista_functions_with_session_state() {
         use super::{
-            ballista_aggregate_functions, ballista_scalar_functions,
-            ballista_window_functions,
+            ballista_aggregate_functions, ballista_scalar_functions, ballista_window_functions,
         };
 
         let state = SessionStateBuilder::new()
@@ -1090,8 +1036,7 @@ mod test {
     #[cfg(feature = "spark-compat")]
     async fn test_ballista_spark_functions_with_session_state() {
         use super::{
-            ballista_aggregate_functions, ballista_scalar_functions,
-            ballista_window_functions,
+            ballista_aggregate_functions, ballista_scalar_functions, ballista_window_functions,
         };
 
         let state = SessionStateBuilder::new()

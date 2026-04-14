@@ -170,10 +170,7 @@ impl<S: JobState> JobStateTest<S> {
 }
 
 /// Tests the complete job lifecycle from queued to successful.
-pub async fn test_job_lifecycle<S: JobState>(
-    state: S,
-    mut graph: ExecutionGraphBox,
-) -> Result<()> {
+pub async fn test_job_lifecycle<S: JobState>(state: S, mut graph: ExecutionGraphBox) -> Result<()> {
     let test = JobStateTest::new(state).await?;
 
     let job_id = graph.job_id().to_string();

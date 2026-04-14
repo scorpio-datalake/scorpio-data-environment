@@ -197,11 +197,7 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerServer<T
         Ok(())
     }
 
-    pub(crate) async fn fail_job(
-        &self,
-        job_id: String,
-        fail_message: String,
-    ) -> Result<()> {
+    pub(crate) async fn fail_job(&self, job_id: String, fail_message: String) -> Result<()> {
         log::debug!("Received fail job request for job {job_id}");
 
         self.query_stage_event_loop
@@ -294,7 +290,9 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> SchedulerServer<T
                             .status
                             .as_ref()
                             .and_then(|status| status.status.as_ref()),
-                        Some(ballista_core::serde::protobuf::executor_status::Status::Terminating(_))
+                        Some(
+                            ballista_core::serde::protobuf::executor_status::Status::Terminating(_)
+                        )
                     );
 
                     let stop_reason = if terminating {
@@ -429,13 +427,10 @@ mod test {
 
     use ballista_core::serde::BallistaCodec;
     use ballista_core::serde::protobuf::{
-        ExecutionError, FailedTask, JobStatus, MultiTaskDefinition,
-        ShuffleWritePartition, SuccessfulJob, SuccessfulTask, TaskId, TaskStatus,
-        failed_task, job_status, task_status,
+        ExecutionError, FailedTask, JobStatus, MultiTaskDefinition, ShuffleWritePartition,
+        SuccessfulJob, SuccessfulTask, TaskId, TaskStatus, failed_task, job_status, task_status,
     };
-    use ballista_core::serde::scheduler::{
-        ExecutorData, ExecutorMetadata, ExecutorSpecification,
-    };
+    use ballista_core::serde::scheduler::{ExecutorData, ExecutorMetadata, ExecutorSpecification};
 
     use crate::scheduler_server::{SchedulerServer, timestamp_millis};
 
@@ -463,8 +458,7 @@ mod test {
                 .await?;
         }
 
-        let config =
-            SessionConfig::new_with_ballista().with_target_partitions(task_slots);
+        let config = SessionConfig::new_with_ballista().with_target_partitions(task_slots);
 
         let ctx = scheduler
             .state
@@ -564,8 +558,7 @@ mod test {
         let metrics_collector = Arc::new(TestMetricsCollector::default());
 
         let mut test = SchedulerTest::new(
-            SchedulerConfig::default()
-                .with_scheduler_policy(TaskSchedulingPolicy::PushStaged),
+            SchedulerConfig::default().with_scheduler_policy(TaskSchedulingPolicy::PushStaged),
             metrics_collector.clone(),
             4,
             1,
@@ -577,8 +570,7 @@ mod test {
 
         match status.status {
             Some(job_status::Status::Successful(SuccessfulJob {
-                partition_location,
-                ..
+                partition_location, ..
             })) => {
                 assert_eq!(partition_location.len(), 4);
             }
@@ -602,8 +594,7 @@ mod test {
         let metrics_collector = Arc::new(TestMetricsCollector::default());
 
         let mut test = SchedulerTest::new(
-            SchedulerConfig::default()
-                .with_scheduler_policy(TaskSchedulingPolicy::PushStaged),
+            SchedulerConfig::default().with_scheduler_policy(TaskSchedulingPolicy::PushStaged),
             metrics_collector.clone(),
             4,
             1,
@@ -619,8 +610,7 @@ mod test {
 
         match status.status {
             Some(job_status::Status::Successful(SuccessfulJob {
-                partition_location,
-                ..
+                partition_location, ..
             })) => {
                 assert_eq!(partition_location.len(), 4);
             }
@@ -681,11 +671,9 @@ mod test {
                             error: "ERROR".to_string(),
                             retryable: false,
                             count_to_failures: false,
-                            failed_reason: Some(
-                                failed_task::FailedReason::ExecutionError(
-                                    ExecutionError {},
-                                ),
-                            ),
+                            failed_reason: Some(failed_task::FailedReason::ExecutionError(
+                                ExecutionError {},
+                            )),
                         })),
                     });
                 }
@@ -697,8 +685,7 @@ mod test {
         let metrics_collector = Arc::new(TestMetricsCollector::default());
 
         let mut test = SchedulerTest::new(
-            SchedulerConfig::default()
-                .with_scheduler_policy(TaskSchedulingPolicy::PushStaged),
+            SchedulerConfig::default().with_scheduler_policy(TaskSchedulingPolicy::PushStaged),
             metrics_collector.clone(),
             4,
             1,
@@ -757,11 +744,9 @@ mod test {
                             error: "ERROR".to_string(),
                             retryable: false,
                             count_to_failures: false,
-                            failed_reason: Some(
-                                failed_task::FailedReason::ExecutionError(
-                                    ExecutionError {},
-                                ),
-                            ),
+                            failed_reason: Some(failed_task::FailedReason::ExecutionError(
+                                ExecutionError {},
+                            )),
                         })),
                     });
                 }
@@ -773,8 +758,7 @@ mod test {
         let metrics_collector = Arc::new(TestMetricsCollector::default());
 
         let mut test = SchedulerTest::new(
-            SchedulerConfig::default()
-                .with_scheduler_policy(TaskSchedulingPolicy::PushStaged),
+            SchedulerConfig::default().with_scheduler_policy(TaskSchedulingPolicy::PushStaged),
             metrics_collector.clone(),
             4,
             1,
@@ -828,8 +812,7 @@ mod test {
     async fn test_planning_failure() -> Result<()> {
         let metrics_collector = Arc::new(TestMetricsCollector::default());
         let mut test = SchedulerTest::new(
-            SchedulerConfig::default()
-                .with_scheduler_policy(TaskSchedulingPolicy::PushStaged),
+            SchedulerConfig::default().with_scheduler_policy(TaskSchedulingPolicy::PushStaged),
             metrics_collector.clone(),
             4,
             1,
@@ -874,8 +857,7 @@ mod test {
     async fn test_planning_failure_with_subscriber() -> Result<()> {
         let metrics_collector = Arc::new(TestMetricsCollector::default());
         let mut test = SchedulerTest::new(
-            SchedulerConfig::default()
-                .with_scheduler_policy(TaskSchedulingPolicy::PushStaged),
+            SchedulerConfig::default().with_scheduler_policy(TaskSchedulingPolicy::PushStaged),
             metrics_collector.clone(),
             4,
             1,

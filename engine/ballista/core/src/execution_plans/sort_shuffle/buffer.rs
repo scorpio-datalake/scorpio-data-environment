@@ -123,10 +123,7 @@ impl PartitionBuffer {
 
     /// Takes all batches, coalescing small batches into larger ones
     /// up to `target_batch_size` rows each.
-    pub fn take_batches_coalesced(
-        &mut self,
-        target_batch_size: usize,
-    ) -> Vec<RecordBatch> {
+    pub fn take_batches_coalesced(&mut self, target_batch_size: usize) -> Vec<RecordBatch> {
         let batches = std::mem::take(&mut self.batches);
         coalesce_batches(batches, &self.schema, target_batch_size)
     }
@@ -143,8 +140,7 @@ fn coalesce_batches(
         return batches;
     }
 
-    let mut coalescer =
-        LimitedBatchCoalescer::new(schema.clone(), target_batch_size, None);
+    let mut coalescer = LimitedBatchCoalescer::new(schema.clone(), target_batch_size, None);
     let mut result = Vec::new();
 
     for batch in batches {

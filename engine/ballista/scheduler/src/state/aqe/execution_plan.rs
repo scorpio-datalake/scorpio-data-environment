@@ -40,8 +40,8 @@ use datafusion::physical_plan::Statistics;
 use datafusion::{
     error::{DataFusionError, Result},
     physical_plan::{
-        DisplayAs, DisplayFormatType, ExecutionPlan, ExecutionPlanProperties,
-        Partitioning, PlanProperties,
+        DisplayAs, DisplayFormatType, ExecutionPlan, ExecutionPlanProperties, Partitioning,
+        PlanProperties,
     },
 };
 use log::trace;
@@ -192,11 +192,7 @@ impl ExchangeExec {
 }
 
 impl DisplayAs for ExchangeExec {
-    fn fmt_as(
-        &self,
-        t: DisplayFormatType,
-        f: &mut std::fmt::Formatter,
-    ) -> std::fmt::Result {
+    fn fmt_as(&self, t: DisplayFormatType, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match t {
             DisplayFormatType::Default | DisplayFormatType::Verbose => {
                 write!(
@@ -302,8 +298,7 @@ impl ExecutionPlan for ExchangeExec {
             //
             Some(partition_locations) => {
                 if let Some(idx) = partition {
-                    let partition_count =
-                        self.properties().partitioning.partition_count();
+                    let partition_count = self.properties().partitioning.partition_count();
                     if idx >= partition_count {
                         return datafusion::common::internal_err!(
                             "Invalid partition index: {}, the partition count is {}",
@@ -311,11 +306,8 @@ impl ExecutionPlan for ExchangeExec {
                             partition_count
                         );
                     }
-                    let stat_for_partition = stats_for_partition(
-                        idx,
-                        schema.fields().len(),
-                        partition_locations,
-                    );
+                    let stat_for_partition =
+                        stats_for_partition(idx, schema.fields().len(), partition_locations);
 
                     trace!(
                         "shuffle reader at stage: {:?} and partition {} returned statistics: {:?}",

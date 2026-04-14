@@ -74,11 +74,9 @@ where
         .unwrap()
         .clone()
         .into();
-    let available_task_slots =
-        Arc::new(Semaphore::new(executor_specification.task_slots as usize));
+    let available_task_slots = Arc::new(Semaphore::new(executor_specification.task_slots as usize));
 
-    let (task_status_sender, mut task_status_receiver) =
-        std::sync::mpsc::channel::<TaskStatus>();
+    let (task_status_sender, mut task_status_receiver) = std::sync::mpsc::channel::<TaskStatus>();
     info!("Starting poll work loop with scheduler");
 
     let dedicated_executor =
@@ -94,17 +92,15 @@ where
         // to avoid going in sleep mode between polling
         let mut active_job = false;
 
-        let task_status: Vec<TaskStatus> =
-            sample_tasks_status(&mut task_status_receiver).await;
+        let task_status: Vec<TaskStatus> = sample_tasks_status(&mut task_status_receiver).await;
 
-        let poll_work_result: Result<tonic::Response<PollWorkResult>, tonic::Status> =
-            scheduler
-                .poll_work(PollWorkParams {
-                    metadata: Some(executor.metadata.clone()),
-                    num_free_slots: available_task_slots.available_permits() as u32,
-                    task_status,
-                })
-                .await;
+        let poll_work_result: Result<tonic::Response<PollWorkResult>, tonic::Status> = scheduler
+            .poll_work(PollWorkParams {
+                metadata: Some(executor.metadata.clone()),
+                num_free_slots: available_task_slots.available_permits() as u32,
+                task_status,
+            })
+            .await;
 
         match poll_work_result {
             Ok(result) => {
@@ -132,8 +128,7 @@ where
                     let task_status_sender = task_status_sender.clone();
 
                     // Acquire a permit/slot for the task
-                    let permit =
-                        available_task_slots.clone().acquire_owned().await.unwrap();
+                    let permit = available_task_slots.clone().acquire_owned().await.unwrap();
 
                     let start_exec_time = SystemTime::now()
                         .duration_since(UNIX_EPOCH)
@@ -163,15 +158,12 @@ where
                                 partition_id: task.partition_id as usize,
                             };
 
-                            warn!(
-                                "Executor failed to run task: {partition_id:?}, error: {e:?}"
-                            );
+                            warn!("Executor failed to run task: {partition_id:?}, error: {e:?}");
 
                             let end_exec_time = SystemTime::now()
                                 .duration_since(UNIX_EPOCH)
                                 .unwrap()
-                                .as_millis()
-                                as u64;
+                                .as_millis() as u64;
 
                             let task_execution_times = TaskExecutionTimes {
                                 launch_time: task.launch_time,
@@ -270,10 +262,9 @@ async fn run_received_task<T: 'static + AsLogicalPlan, U: 'static + AsExecutionP
         runtime.clone(),
     ));
 
-    let plan: Arc<dyn ExecutionPlan> =
-        U::try_decode(task.plan.as_slice()).and_then(|proto| {
-            proto.try_into_physical_plan(&task_context, codec.physical_extension_codec())
-        })?;
+    let plan: Arc<dyn ExecutionPlan> = U::try_decode(task.plan.as_slice()).and_then(|proto| {
+        proto.try_into_physical_plan(&task_context, codec.physical_extension_codec())
+    })?;
 
     let query_stage_exec = executor.execution_engine.create_query_stage_exec(
         job_id.clone(),
@@ -344,9 +335,7 @@ async fn run_received_task<T: 'static + AsLogicalPlan, U: 'static + AsExecutionP
     Ok(())
 }
 
-async fn sample_tasks_status(
-    task_status_receiver: &mut Receiver<TaskStatus>,
-) -> Vec<TaskStatus> {
+async fn sample_tasks_status(task_status_receiver: &mut Receiver<TaskStatus>) -> Vec<TaskStatus> {
     let mut task_status: Vec<TaskStatus> = vec![];
 
     loop {
