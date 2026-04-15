@@ -178,11 +178,11 @@ impl Extension {
         use ballista_core::{serde::BallistaCodec, utils::default_config_producer};
 
         let addr = match session_state {
-            None => ballista_scheduler::standalone::new_standalone_scheduler()
+            None => scorpio_scheduler::standalone::new_standalone_scheduler()
                 .await
                 .map_err(|e| DataFusionError::Configuration(e.to_string()))?,
             Some(session_state) => {
-                ballista_scheduler::standalone::new_standalone_scheduler_from_state(session_state)
+                scorpio_scheduler::standalone::new_standalone_scheduler_from_state(session_state)
                     .await
                     .map_err(|e| DataFusionError::Configuration(e.to_string()))?
             }
@@ -207,7 +207,7 @@ impl Extension {
 
         match session_state {
             None => {
-                ballista_executor::new_standalone_executor(
+                scorpio_executor::new_standalone_executor(
                     scheduler,
                     concurrent_tasks,
                     BallistaCodec::default(),
@@ -216,7 +216,7 @@ impl Extension {
                 .map_err(|e| DataFusionError::Configuration(e.to_string()))?;
             }
             Some(session_state) => {
-                ballista_executor::new_standalone_executor_from_state(
+                scorpio_executor::new_standalone_executor_from_state(
                     scheduler,
                     concurrent_tasks,
                     session_state,

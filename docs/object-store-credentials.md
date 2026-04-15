@@ -48,7 +48,7 @@ stringData:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ballista-executor
+  name: scorpio-executor
 spec:
   template:
     spec:

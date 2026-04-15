@@ -24,7 +24,7 @@ Authoritative mapping for renaming **Scorpio-owned** crates, paths, and binaries
 | R4 | `scorpio-scheduler` only | `cargo test -p scorpio-scheduler --locked` |
 | R5 | `scorpio-core` only | `cargo test -p scorpio-core --locked` and, for object store integration tests, add `--features build-binary` (see below) |
 
-Until **R3–R5** land, keep using the **remaining** legacy package names (`ballista-core`, `ballista-executor`, `ballista-scheduler`) with the [aliases](#iterating-locally-scoped-builds) in `.cargo/config.toml` and the *Iterating locally* table. The CLI is **`scorpio-cli`** and the client library is **`scorpio`**.
+Until **R5** lands, keep using the **`ballista-core`** package name; scheduler **`scorpio-scheduler`** and executor **`scorpio-executor`** are renamed. Use the [aliases](#iterating-locally-scoped-builds) in `.cargo/config.toml` and the *Iterating locally* table. The CLI is **`scorpio-cli`** and the client library is **`scorpio`**.
 
 ## Prerequisites
 
@@ -60,8 +60,8 @@ Cargo **reuses** `engine/target/` incrementally: after a first compile, a change
 | If you are changing… | Package (`-p`) | Typical commands |
 |----------------------|----------------|------------------|
 | Protos, object store registry, shared plans | `ballista-core` | `cargo test-core` or `cargo check-core-tests` (compile tests, no run) |
-| Scheduler / stage scheduling | `ballista-scheduler` | `cargo test-scheduler` |
-| Executor / shuffle / Flight | `ballista-executor` | `cargo test-executor` |
+| Scheduler / stage scheduling | `scorpio-scheduler` | `cargo test-scheduler` |
+| Executor / shuffle / Flight | `scorpio-executor` | `cargo test-executor` |
 | Client library | `scorpio` | `cargo test-client` |
 | CLI | `scorpio-cli` | `cargo test-cli` |
 | Pre-merge / CI parity | — | `cargo test-ws` (= `cargo test --workspace --locked`) |
@@ -71,7 +71,7 @@ Cargo **reuses** `engine/target/` incrementally: after a first compile, a change
 - Windows: [`../scripts/run-engine-tests.ps1`](../scripts/run-engine-tests.ps1) (default `-p ballista-core`)
 - Unix: [`../scripts/run-engine-tests.sh`](../scripts/run-engine-tests.sh)
 
-Examples: `.\scripts\run-engine-tests.ps1 -p ballista-scheduler`; `./scripts/run-engine-tests.sh --workspace` before a PR.
+Examples: `.\scripts\run-engine-tests.ps1 -p scorpio-scheduler`; `./scripts/run-engine-tests.sh --workspace` before a PR.
 
 **Object store / `register_store` tests** need `--features build-binary` on `ballista-core` (the script: `-BuildBinary` / `--build-binary`). There is no separate Cargo alias for that pair; use the script or  
 `cargo test -p ballista-core --features build-binary --locked`.

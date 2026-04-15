@@ -22,7 +22,7 @@ use std::path::PathBuf;
 use scorpio::prelude::{SessionConfigExt, SessionContextExt};
 use ballista_core::serde::{BallistaCodec, protobuf::scheduler_grpc_client::SchedulerGrpcClient};
 use ballista_core::{ConfigProducer, RuntimeProducer};
-use ballista_scheduler::SessionBuilder;
+use scorpio_scheduler::SessionBuilder;
 use datafusion::execution::{SessionState, SessionStateBuilder};
 use datafusion::prelude::{SessionConfig, SessionContext};
 
@@ -103,7 +103,7 @@ pub async fn setup_test_cluster() -> (String, u16) {
     let config = SessionConfig::new_with_ballista();
     let default_codec = BallistaCodec::default();
 
-    let addr = ballista_scheduler::standalone::new_standalone_scheduler()
+    let addr = scorpio_scheduler::standalone::new_standalone_scheduler()
         .await
         .expect("scheduler to be created");
 
@@ -111,7 +111,7 @@ pub async fn setup_test_cluster() -> (String, u16) {
 
     let scheduler = connect_to_scheduler(format!("http://{}:{}", host, addr.port())).await;
 
-    ballista_executor::new_standalone_executor(
+    scorpio_executor::new_standalone_executor(
         scheduler,
         config.ballista_standalone_parallelism(),
         default_codec,
@@ -129,7 +129,7 @@ pub async fn setup_test_cluster() -> (String, u16) {
 pub async fn setup_test_cluster_with_state(session_state: SessionState) -> (String, u16) {
     let config = SessionConfig::new_with_ballista();
 
-    let addr = ballista_scheduler::standalone::new_standalone_scheduler_from_state(&session_state)
+    let addr = scorpio_scheduler::standalone::new_standalone_scheduler_from_state(&session_state)
         .await
         .expect("scheduler to be created");
 
@@ -137,7 +137,7 @@ pub async fn setup_test_cluster_with_state(session_state: SessionState) -> (Stri
 
     let scheduler = connect_to_scheduler(format!("http://{}:{}", host, addr.port())).await;
 
-    ballista_executor::new_standalone_executor_from_state(
+    scorpio_executor::new_standalone_executor_from_state(
         scheduler,
         config.ballista_standalone_parallelism(),
         &session_state,
@@ -165,7 +165,7 @@ pub async fn setup_test_cluster_with_builders(
         datafusion_proto::protobuf::PhysicalPlanNode,
     > = BallistaCodec::new(logical, physical);
 
-    let addr = ballista_scheduler::standalone::new_standalone_scheduler_with_builder(
+    let addr = scorpio_scheduler::standalone::new_standalone_scheduler_with_builder(
         session_builder,
         config_producer.clone(),
         codec.clone(),
@@ -177,7 +177,7 @@ pub async fn setup_test_cluster_with_builders(
 
     let scheduler = connect_to_scheduler(format!("http://{}:{}", host, addr.port())).await;
 
-    ballista_executor::new_standalone_executor_from_builder(
+    scorpio_executor::new_standalone_executor_from_builder(
         scheduler,
         config.ballista_standalone_parallelism(),
         config_producer,
@@ -255,8 +255,8 @@ fn init() {
     // Enable RUST_LOG logging configuration for test
     let _ = env_logger::builder()
         .filter_level(log::LevelFilter::Info)
-        .parse_filters("ballista=debug,ballista_scheduler=debug,ballista_executor=debug")
-        //.parse_filters("ballista=debug,ballista_scheduler-rs=debug,ballista_executor=debug,datafusion=debug")
+        .parse_filters("ballista=debug,scorpio_scheduler=debug,scorpio_executor=debug")
+        //.parse_filters("ballista=debug,scorpio_scheduler=debug,scorpio_executor=debug,datafusion=debug")
         .is_test(true)
         .try_init();
 }

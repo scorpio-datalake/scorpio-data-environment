@@ -84,14 +84,14 @@ async fn main() -> datafusion::error::Result<()> {
 A simple way to start a local cluster for testing purposes is to use cargo to install the scheduler and executor crates.
 
 ```bash
-cargo install --locked ballista-scheduler
-cargo install --locked ballista-executor
+cargo install --locked scorpio-scheduler
+cargo install --locked scorpio-executor
 ```
 
 With these crates installed, it is now possible to start a scheduler process.
 
 ```bash
-RUST_LOG=info ballista-scheduler
+RUST_LOG=info scorpio-scheduler
 ```
 
 The scheduler will bind to port `50050` by default.
@@ -99,7 +99,7 @@ The scheduler will bind to port `50050` by default.
 Next, start an executor processes in a new terminal session with the specified concurrency level.
 
 ```bash
-RUST_LOG=info ballista-executor -c 4
+RUST_LOG=info scorpio-executor -c 4
 ```
 
 The executor will bind to port `50051` by default. Additional executors can be started by manually specifying a bind port.

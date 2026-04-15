@@ -16,7 +16,7 @@
 # under the License.
 
 [package]
-name = "ballista-executor"
+name = "scorpio-executor"
 description = "Ballista Distributed Compute - Executor"
 license = "Apache-2.0"
 version = "53.0.0"
@@ -28,7 +28,7 @@ edition = { workspace = true }
 rust-version = { workspace = true }
 
 [[bin]]
-name = "ballista-executor"
+name = "scorpio-executor"
 path = "src/bin/main.rs"
 required-features = ["build-binary"]
 

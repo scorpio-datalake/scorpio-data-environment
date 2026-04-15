@@ -20,9 +20,9 @@
 use ballista_core::config::LogRotationPolicy;
 use ballista_core::error::BallistaError;
 use ballista_core::object_store::{session_config_with_s3_support, session_state_with_s3_support};
-use ballista_scheduler::cluster::BallistaCluster;
-use ballista_scheduler::config::{Config, SchedulerConfig};
-use ballista_scheduler::scheduler_process::start_server;
+use scorpio_scheduler::cluster::BallistaCluster;
+use scorpio_scheduler::config::{Config, SchedulerConfig};
+use scorpio_scheduler::scheduler_process::start_server;
 use clap::Parser;
 use std::sync::Arc;
 use std::{env, io};

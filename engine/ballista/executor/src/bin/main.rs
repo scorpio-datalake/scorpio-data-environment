@@ -19,8 +19,8 @@
 
 use ballista_core::config::LogRotationPolicy;
 use ballista_core::object_store::{runtime_env_with_s3_support, session_config_with_s3_support};
-use ballista_executor::config::Config;
-use ballista_executor::executor_process::{ExecutorProcessConfig, start_executor_process};
+use scorpio_executor::config::Config;
+use scorpio_executor::executor_process::{ExecutorProcessConfig, start_executor_process};
 use clap::Parser;
 use std::env;
 use std::sync::Arc;
