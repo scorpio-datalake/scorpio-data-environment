@@ -9,23 +9,23 @@ This document implements Epic 0 items **distributed DataFrame (engine)** and **e
 | **Python DataFrame** | Epic 2 (lazy API in `python/scorpio`). **Not** what this page exercises. |
 | **Engine distributed execution** | SQL / DataFusion `DataFrame` plans executed via Ballista: **scheduler**, **executor(s)**, **stage boundaries**, **shuffle** (hash or sort-based), **Arrow** batches. |
 | **Standalone mode** | `SessionContext::standalone()` — in-process Ballista scheduler + executor (still uses distributed *plans* and shuffle when the optimizer inserts exchanges). |
-| **Remote mode** | `SessionContext::remote("df://…")` — gRPC to a real scheduler; tests start **one** scheduler + **one** executor process (`ballista/client/tests/common/mod.rs`). |
+| **Remote mode** | `SessionContext::remote("df://…")` — gRPC to a real scheduler; tests start **one** scheduler + **one** executor process (`scorpio/client/tests/common/mod.rs`). |
 | **Task parallelism** | `ballista.standalone.parallelism` — concurrent tasks per executor (see `BALLISTA_STANDALONE_PARALLELISM` in `ballista/core`). |
 | **Multi-executor** | **Multiple executor processes** (e.g. several pods). The default integration tests use **one** executor process; scaling out is validated operationally (Compose/k8s) rather than in every `cargo test`. |
 
 ## What we assert today (joins, aggregations, shuffle)
 
-1. **Integration (`ballista` client, `standalone` feature)**  
-   - File: `engine/ballista/client/tests/context_checks.rs` (module `supported`).  
+1. **Integration (`scorpio` client, `standalone` feature)**  
+   - File: `engine/scorpio/client/tests/context_checks.rs` (module `supported`).  
    - **Remote + standalone** parameterized tests (`#[case::standalone]`, `#[case::remote]`) run the same SQL against Parquet (`testdata/alltypes_plain.parquet`).  
    - Covers **filters**, **aggregates** (`GROUP BY`, `HAVING`-style patterns elsewhere), **sort-merge join** (`should_support_sort_merge_join`), **shuffle-related settings** (e.g. remote Flight read), and **`should_execute_join_and_aggregate_standalone_and_remote`** — **inner hash join + `GROUP BY` + `ORDER BY`** (partitioned Parquet scan + shuffle stages as the planner emits them).  
    - Commands (from `engine/`):  
-     `cargo test -p ballista --features standalone --locked --test context_checks`  
+     `cargo test -p scorpio --features standalone --locked --test context_checks`  
      Filter one test:  
-     `cargo test -p ballista --features standalone --locked --test context_checks should_execute_join_and_aggregate_standalone_and_remote`
+     `cargo test -p scorpio --features standalone --locked --test context_checks should_execute_join_and_aggregate_standalone_and_remote`
 
 2. **Sort-based shuffle**  
-   - File: `engine/ballista/client/tests/sort_shuffle.rs` (requires `standalone` + sort-shuffle config).  
+   - File: `engine/scorpio/client/tests/sort_shuffle.rs` (requires `standalone` + sort-shuffle config).  
    - Exercises **GROUP BY**, **aggregates**, **UNION ALL**, etc., with local vs Flight remote shuffle read.
 
 3. **Unit / module tests (shuffle & plan boundaries)**  
@@ -48,8 +48,8 @@ This document implements Epic 0 items **distributed DataFrame (engine)** and **e
 
 ## If something fails
 
-1. Run `cargo test -p ballista --features standalone --locked --test context_checks` from `engine/` (requires `protoc`, Rust version in `engine/README.md` / `rust-toolchain.toml` if present).  
-2. Confirm `engine/ballista/client/testdata` or `EXAMPLES_TEST_DATA` points at `alltypes_plain.parquet`.  
+1. Run `cargo test -p scorpio --features standalone --locked --test context_checks` from `engine/` (requires `protoc`, Rust version in `engine/README.md` / `rust-toolchain.toml` if present).  
+2. Confirm `engine/scorpio/client/testdata` or `EXAMPLES_TEST_DATA` points at `alltypes_plain.parquet`.  
 3. For shuffle-only issues, add `--test sort_shuffle` and enable sort-shuffle flags as in `sort_shuffle.rs`.  
 4. Open an issue with **failing test name**, **standalone vs remote**, and **EXPLAIN** output if SQL-level.
 

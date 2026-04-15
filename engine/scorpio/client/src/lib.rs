@@ -16,9 +16,11 @@
 // under the License.
 
 #![doc = include_str!("../README.md")]
-pub const BALLISTA_CLI_VERSION: &str = env!("CARGO_PKG_VERSION");
+#![warn(missing_docs)]
 
-pub mod command;
-pub mod exec;
-
-pub use datafusion_cli::{functions, helper, print_format, print_options};
+/// Extension traits for integrating DataFusion with Scorpio distributed execution.
+pub mod extension;
+/// Prelude module providing commonly used imports for Scorpio client applications.
+pub mod prelude;
+/// Re-export of the DataFusion crate for convenience.
+pub use datafusion;

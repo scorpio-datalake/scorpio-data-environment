@@ -44,7 +44,7 @@
 .EXAMPLE
   .\scripts\run-engine-tests.ps1
   .\scripts\run-engine-tests.ps1 -BuildBinary -Filter object_store
-  .\scripts\run-engine-tests.ps1 -p ballista -Filter client
+  .\scripts\run-engine-tests.ps1 -p scorpio -Filter client
   .\scripts\run-engine-tests.ps1 -Workspace
   .\scripts\run-engine-tests.ps1 -RunOnly -Filter object_store
 #>

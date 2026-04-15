@@ -1,8 +1,8 @@
 [workspace]
 exclude = ["benchmarks", "dev/msrvcheck", "examples", "python"]
 members = [
-    "ballista-cli",
-    "ballista/client",
+    "scorpio-cli",
+    "scorpio/client",
     "ballista/core",
     "ballista/executor",
     "ballista/scheduler",

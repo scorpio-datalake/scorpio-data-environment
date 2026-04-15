@@ -24,7 +24,7 @@ mod common;
 #[cfg(test)]
 #[cfg(feature = "standalone")]
 mod basic {
-    use ballista::prelude::SessionContextExt;
+    use scorpio::prelude::SessionContextExt;
     use datafusion::arrow;
     use datafusion::arrow::util::pretty::pretty_format_batches;
     use datafusion::common::Result;

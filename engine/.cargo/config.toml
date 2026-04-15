@@ -7,3 +7,20 @@
 # whole team, or stay unset everywhere. If `RUSTFLAGS` differs between the
 # terminal and rust-analyzer, Cargo invalidates incremental artifacts and
 # rebuilds more than necessary — align both or leave both unset.
+
+# Scoped workflows (run from `engine/`). Full workspace: `cargo test-ws`.
+# See README.md "Iterating locally (scoped builds)".
+[alias]
+check-core = "check -p ballista-core --locked"
+check-core-tests = "check -p ballista-core --tests --locked"
+test-core = "test -p ballista-core --locked"
+check-scheduler = "check -p ballista-scheduler --locked"
+test-scheduler = "test -p ballista-scheduler --locked"
+check-executor = "check -p ballista-executor --locked"
+test-executor = "test -p ballista-executor --locked"
+check-client = "check -p scorpio --locked"
+test-client = "test -p scorpio --locked"
+check-cli = "check -p scorpio-cli --locked"
+test-cli = "test -p scorpio-cli --locked"
+check-ws = "check --workspace --locked"
+test-ws = "test --workspace --locked"

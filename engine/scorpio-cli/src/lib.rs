@@ -15,6 +15,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-//! Ballista Prelude (common imports)
+#![doc = include_str!("../README.md")]
+pub const SCORPIO_CLI_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub use crate::extension::{SessionConfigExt, SessionContextExt};
+pub mod command;
+pub mod exec;
+
+pub use datafusion_cli::{functions, helper, print_format, print_options};

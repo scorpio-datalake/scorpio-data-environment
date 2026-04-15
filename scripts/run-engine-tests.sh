@@ -5,7 +5,7 @@
 # Examples:
 #   ./scripts/run-engine-tests.sh
 #   ./scripts/run-engine-tests.sh --build-binary --filter object_store
-#   ./scripts/run-engine-tests.sh -p ballista --filter client
+#   ./scripts/run-engine-tests.sh -p scorpio --filter client
 #   ./scripts/run-engine-tests.sh --workspace
 #   ./scripts/run-engine-tests.sh --run-only --filter object_store
 #

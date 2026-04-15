@@ -50,7 +50,7 @@ async fn main() -> datafusion::error::Result<()> {
 can be distributed with few lines changed:
 
 ```rust,no_run
-use ballista::prelude::*;
+use scorpio::prelude::*;
 use datafusion::prelude::*;
 
 #[tokio::main]
@@ -120,7 +120,7 @@ cargo add ballista datafusion tokio
 **Important**: Make sure the version of `datafusion` is the same as `ballista`'s! You may need to use a bit older version of `datafusion`!
 
 ```rust,no_run
-use ballista::prelude::*;
+use scorpio::prelude::*;
 use datafusion::common::Result;
 use datafusion::prelude::{col, SessionContext, ParquetReadOptions};
 use datafusion::functions_aggregate::{min_max::min, min_max::max, sum::sum, average::avg};

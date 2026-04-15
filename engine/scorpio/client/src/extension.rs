@@ -29,7 +29,7 @@ const DEFAULT_SCHEDULER_PORT: u16 = 50050;
 /// handles running plans on Ballista clusters.
 ///
 ///```no_run
-/// use ballista::prelude::SessionContextExt;
+/// use scorpio::prelude::SessionContextExt;
 /// use datafusion::prelude::SessionContext;
 ///
 /// # #[tokio::main]
@@ -44,7 +44,7 @@ const DEFAULT_SCHEDULER_PORT: u16 = 50050;
 /// with `standalone`
 ///
 ///```no_run
-/// use ballista::prelude::SessionContextExt;
+/// use scorpio::prelude::SessionContextExt;
 /// use datafusion::prelude::SessionContext;
 ///
 /// # #[tokio::main]

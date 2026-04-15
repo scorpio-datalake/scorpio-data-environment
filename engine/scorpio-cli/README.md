@@ -17,26 +17,23 @@
   under the License.
 -->
 
-# Ballista Command-line Interface
+# Scorpio command-line interface
 
-[Ballista][ballista] is a distributed query execution framework, written in Rust, that uses Apache Arrow as its in-memory format.
-
-The Ballista CLI allows SQL queries to be executed by an in-process DataFusion context, or by a distributed
-Ballista context.
+[Ballista][ballista] is a distributed query execution framework, written in Rust, that uses Apache Arrow as its in-memory format. **Scorpio** distributes a CLI crate **`scorpio-cli`** for SQL against an in-process DataFusion context or a remote Scorpio scheduler.
 
 ```ignore
 USAGE:
-    ballista-cli [OPTIONS]
+    scorpio-cli [OPTIONS]
 
 OPTIONS:
     -c, --batch-size <BATCH_SIZE>
-            The batch size of each query, or use Ballista default
+            The batch size of each query, or use the engine default
 
         --color
             Enables console syntax highlighting
 
         --concurrent-tasks <CONCURRENT_TASKS>
-            The max concurrent tasks, only for Ballista local mode. Default: all available cores
+            The max concurrent tasks, only for standalone (in-process) mode. Default: all available cores
 
     -f, --file <FILE>...
             Execute commands from file(s), then exit
@@ -48,13 +45,13 @@ OPTIONS:
             Print help information
 
         --host <HOST>
-            Ballista scheduler host
+            Scorpio scheduler host
 
     -p, --data-path <DATA_PATH>
             Path to your data, default to current directory
 
         --port <PORT>
-            Ballista scheduler port
+            Scorpio scheduler port
 
     -q, --quiet
             Reduce printing other than the results and work quietly
@@ -75,9 +72,9 @@ $ echo "1,2" > data.csv
 ```
 
 ```sql,ignore
-$ ballista-cli
+$ scorpio-cli
 
-Ballista CLI v0.12.0
+Scorpio CLI v0.12.0
 
 > CREATE EXTERNAL TABLE foo (a INT, b INT) STORED AS CSV LOCATION 'data.csv';
 0 rows in set. Query took 0.001 seconds.
@@ -93,20 +90,19 @@ Ballista CLI v0.12.0
 > \q
 ```
 
-## Ballista-Cli
+## Build and run
 
-If you want to execute the SQL in ballista by `ballista-cli`, you must build/compile `ballista-cli` first.
+From the `engine/` workspace root:
 
 ```bash
-cd datafusion-ballista/ballista-cli
-cargo build
-cargo install --path .
+cargo build -p scorpio-cli --locked
+cargo run -p scorpio-cli --locked -- --help
 ```
 
-The Ballista CLI can connect to a Ballista scheduler for query execution.
+The Scorpio CLI can connect to a Scorpio scheduler for query execution:
 
 ```bash
-ballista-cli --host localhost --port 50050
+scorpio-cli --host localhost --port 50050
 ```
 
 [ballista]: https://crates.io/crates/ballista

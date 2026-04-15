@@ -28,7 +28,7 @@ mod common;
 #[cfg(feature = "test_extended_stack")]
 mod extended {
 
-    use ballista::prelude::SessionContextExt;
+    use scorpio::prelude::SessionContextExt;
     use datafusion::{assert_batches_eq, prelude::*};
     //
     // tests bug: [Failed to execute TPC-DS Q47 in ballista](https://github.com/apache/datafusion-ballista/issues/1296)

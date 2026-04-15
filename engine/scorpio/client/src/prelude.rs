@@ -15,12 +15,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#![doc = include_str!("../README.md")]
-#![warn(missing_docs)]
+//! Scorpio prelude (common imports)
 
-/// Extension traits for integrating DataFusion with Ballista distributed execution.
-pub mod extension;
-/// Prelude module providing commonly used imports for Ballista client applications.
-pub mod prelude;
-/// Re-export of the DataFusion crate for convenience.
-pub use datafusion;
+pub use crate::extension::{SessionConfigExt, SessionContextExt};

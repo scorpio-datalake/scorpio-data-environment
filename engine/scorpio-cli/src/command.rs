@@ -121,7 +121,7 @@ impl Command {
 
     fn get_name_and_description(&self) -> (&'static str, &'static str) {
         match self {
-            Self::Quit => ("\\q", "quit ballista-cli"),
+            Self::Quit => ("\\q", "quit scorpio-cli"),
             Self::ListTables => ("\\d", "list tables"),
             Self::DescribeTable(_) => ("\\d name", "describe table"),
             Self::Help => ("\\?", "help"),

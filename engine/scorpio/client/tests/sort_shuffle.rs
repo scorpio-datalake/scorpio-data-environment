@@ -28,7 +28,7 @@ mod common;
 #[cfg(test)]
 #[cfg(feature = "standalone")]
 mod sort_shuffle_tests {
-    use ballista::prelude::{SessionConfigExt, SessionContextExt};
+    use scorpio::prelude::{SessionConfigExt, SessionContextExt};
     use ballista_core::config::{
         BALLISTA_ADAPTIVE_PLANNER_ENABLED, BALLISTA_SHUFFLE_READER_FORCE_REMOTE_READ,
         BALLISTA_SHUFFLE_READER_REMOTE_PREFER_FLIGHT, BALLISTA_SHUFFLE_SORT_BASED_BUFFER_SIZE,

@@ -18,9 +18,9 @@
 use std::path::Path;
 use std::{env, sync::Arc};
 
-use ballista::{extension::SessionConfigExt, prelude::SessionContextExt};
-use ballista_cli::{
-    BALLISTA_CLI_VERSION, exec, print_format::PrintFormat, print_options::PrintOptions,
+use scorpio::{extension::SessionConfigExt, prelude::SessionContextExt};
+use scorpio_cli::{
+    SCORPIO_CLI_VERSION, exec, print_format::PrintFormat, print_options::PrintOptions,
 };
 use clap::Parser;
 use datafusion::{
@@ -50,14 +50,14 @@ struct Args {
     #[clap(
         short = 'c',
         long,
-        help = "The batch size of each query, or use Ballista default",
+        help = "The batch size of each query, or use the engine default",
         value_parser(parse_batch_size)
     )]
     batch_size: Option<usize>,
 
     #[clap(
         long,
-        help = "The max concurrent tasks, only for Ballista local mode. Default: all available cores",
+        help = "The max concurrent tasks, only for standalone (in-process) mode. Default: all available cores",
         value_parser(parse_valid_concurrent_tasks_size)
     )]
     concurrent_tasks: Option<usize>,
@@ -84,10 +84,10 @@ struct Args {
     #[clap(long, value_enum, default_value_t = PrintFormat::Table)]
     format: PrintFormat,
 
-    #[clap(long, help = "Ballista scheduler host")]
+    #[clap(long, help = "Scorpio scheduler host")]
     host: Option<String>,
 
-    #[clap(long, help = "Ballista scheduler port")]
+    #[clap(long, help = "Scorpio scheduler port")]
     port: Option<u16>,
 
     #[clap(
@@ -107,7 +107,7 @@ pub async fn main() -> Result<()> {
     let args = Args::parse();
 
     if !args.quiet {
-        println!("Ballista CLI v{BALLISTA_CLI_VERSION}");
+        println!("Scorpio CLI v{SCORPIO_CLI_VERSION}");
     }
 
     if let Some(ref path) = args.data_path {
@@ -141,7 +141,7 @@ pub async fn main() -> Result<()> {
                 .with_default_features()
                 .build();
 
-            // In-process execution with Ballista Standalone
+            // In-process standalone execution
             SessionContext::standalone_with_state(state).await?
         }
     };

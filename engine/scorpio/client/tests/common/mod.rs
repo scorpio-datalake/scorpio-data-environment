@@ -19,7 +19,7 @@ use std::env;
 use std::error::Error;
 use std::path::PathBuf;
 
-use ballista::prelude::{SessionConfigExt, SessionContextExt};
+use scorpio::prelude::{SessionConfigExt, SessionContextExt};
 use ballista_core::serde::{BallistaCodec, protobuf::scheduler_grpc_client::SchedulerGrpcClient};
 use ballista_core::{ConfigProducer, RuntimeProducer};
 use ballista_scheduler::SessionBuilder;

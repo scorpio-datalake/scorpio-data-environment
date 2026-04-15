@@ -17,7 +17,7 @@
 
 FROM rust:1.92-trixie as builder
 
-COPY ./ballista-cli /usr/src/ballista-cli
+COPY ./scorpio-cli /usr/src/scorpio-cli
 
 COPY ./ballista /usr/src/ballista
 
@@ -27,7 +27,7 @@ COPY ./examples /usr/src/examples
 
 COPY ./Cargo.toml /usr/src/Cargo.toml
 
-WORKDIR /usr/src/ballista-cli
+WORKDIR /usr/src/scorpio-cli
 
 RUN apt-get update && apt-get install -y protobuf-compiler
 
@@ -37,8 +37,8 @@ RUN cargo build --release
 
 FROM debian:bullseye-slim
 
-COPY --from=builder /usr/src/target/release/ballista-cli /usr/local/bin
+COPY --from=builder /usr/src/target/release/scorpio-cli /usr/local/bin
 
-ENTRYPOINT ["ballista-cli"]
+ENTRYPOINT ["scorpio-cli"]
 
 CMD ["--data-path", "/data"]

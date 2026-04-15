@@ -1,6 +1,30 @@
 # Scorpio engine (Rust)
 
-Workspace root for the **Ballista-derived** distributed engine (`ballista-cli`, `ballista/client`, `ballista/core`, `ballista/executor`, `ballista/scheduler`). Public product naming should stay **Scorpio** where you control user-facing text.
+Workspace root for the **Ballista-derived** distributed engine (`scorpio-cli`, `scorpio/client`, `ballista/core`, `ballista/executor`, `ballista/scheduler`). Public product naming should stay **Scorpio** where you control user-facing text.
+
+## Scorpio naming target (Epic 0 **R0**)
+
+Authoritative mapping for renaming **Scorpio-owned** crates, paths, and binaries. **Do not** rename crates.io dependency keys in `Cargo.toml` (`datafusion`, `arrow`, `object_store`, …) or their `use …` paths in Rust — those stay the upstream names.
+
+| Current path (under `engine/`) | Target path | Cargo package name | Binary / `lib` |
+|-------------------------------|-------------|---------------------|----------------|
+| `scorpio-cli/` (R1 **done**) | *(same)* | `scorpio-cli` | Binary **`scorpio-cli`** |
+| `ballista/core/` | `scorpio/core/` | `scorpio-core` | Library **`ballista_core`** → **`scorpio_core`** (rename with package; default lib name follows `snake_case` of package) |
+| `ballista/executor/` | `scorpio/executor/` | `scorpio-executor` | Binary(es) as today, renamed to **`scorpio-executor`** where applicable |
+| `ballista/scheduler/` | `scorpio/scheduler/` | `scorpio-scheduler` | **`scorpio-scheduler`** |
+| `scorpio/client/` (R2 **done**) | *(same)* | **`scorpio`** | Library **`scorpio`** (`use scorpio::…`) |
+
+**R0 itself** is documentation-only: **no `cargo` build** is required to land it. For **R1–R5**, **build and test only the crate you touch** (from `engine/`); do not use `cargo test --workspace` until **R6**:
+
+| Story | Scope | Validate |
+|-------|--------|----------|
+| R1 | `scorpio-cli` only | `cargo test -p scorpio-cli --locked` |
+| R2 | `scorpio` (client) only | `cargo test -p scorpio --locked` |
+| R3 | `scorpio-executor` only | `cargo test -p scorpio-executor --locked` |
+| R4 | `scorpio-scheduler` only | `cargo test -p scorpio-scheduler --locked` |
+| R5 | `scorpio-core` only | `cargo test -p scorpio-core --locked` and, for object store integration tests, add `--features build-binary` (see below) |
+
+Until **R3–R5** land, keep using the **remaining** legacy package names (`ballista-core`, `ballista-executor`, `ballista-scheduler`) with the [aliases](#iterating-locally-scoped-builds) in `.cargo/config.toml` and the *Iterating locally* table. The CLI is **`scorpio-cli`** and the client library is **`scorpio`**.
 
 ## Prerequisites
 
@@ -11,21 +35,46 @@ Workspace root for the **Ballista-derived** distributed engine (`ballista-cli`, 
 
 | Path | Role |
 |------|------|
-| `ballista-cli` | CLI binary **`ballista-cli`** |
+| `scorpio-cli` | CLI binary **`scorpio-cli`** |
 | `ballista/core` | Core types, protos, shared logic |
 | `ballista/scheduler` | Scheduler service |
 | `ballista/executor` | Executor service |
-| `ballista/client` | Client library (`ballista` crate) |
+| `scorpio/client` | Client library (`scorpio` crate) |
 
 ## Build / test
 
 ```bash
 cd engine
-cargo build -p ballista-cli --locked
+cargo build -p scorpio-cli --locked
 cargo test --workspace --locked
 ```
 
 `cargo build` and `cargo test` use the workspace **`[profile.dev]`** in `Cargo.toml` (incremental compilation, no LTO, `codegen-units = 256`). Run them from **`engine/`** so Cargo picks up **`engine/.cargo/config.toml`**.
+
+### Iterating locally (scoped builds)
+
+Cargo **reuses** `engine/target/` incrementally: after a first compile, a change in one crate usually rebuilds only that crate and its dependents. To keep feedback small on a modest machine, **default to the smallest package that contains your change**, not `cargo test --workspace` every time.
+
+**Dependency direction:** `ballista-core` is the foundation. Edits under `ballista/core` force rebuilds of scheduler, executor, client, and CLI until their APIs stabilize. Edits only under `ballista/scheduler` do not recompile `ballista-core` if its sources are unchanged.
+
+| If you are changing… | Package (`-p`) | Typical commands |
+|----------------------|----------------|------------------|
+| Protos, object store registry, shared plans | `ballista-core` | `cargo test-core` or `cargo check-core-tests` (compile tests, no run) |
+| Scheduler / stage scheduling | `ballista-scheduler` | `cargo test-scheduler` |
+| Executor / shuffle / Flight | `ballista-executor` | `cargo test-executor` |
+| Client library | `scorpio` | `cargo test-client` |
+| CLI | `scorpio-cli` | `cargo test-cli` |
+| Pre-merge / CI parity | — | `cargo test-ws` (= `cargo test --workspace --locked`) |
+
+**Scripts (same defaults, filters, `--build-binary` for core object-store tests):**
+
+- Windows: [`../scripts/run-engine-tests.ps1`](../scripts/run-engine-tests.ps1) (default `-p ballista-core`)
+- Unix: [`../scripts/run-engine-tests.sh`](../scripts/run-engine-tests.sh)
+
+Examples: `.\scripts\run-engine-tests.ps1 -p ballista-scheduler`; `./scripts/run-engine-tests.sh --workspace` before a PR.
+
+**Object store / `register_store` tests** need `--features build-binary` on `ballista-core` (the script: `-BuildBinary` / `--build-binary`). There is no separate Cargo alias for that pair; use the script or  
+`cargo test -p ballista-core --features build-binary --locked`.
 
 **rust-analyzer / IDE:** Prefer **no** `RUSTFLAGS` in your shell for this repo. If you must set `RUSTFLAGS`, use the **same** value in rust-analyzer (e.g. `rust-analyzer.cargo.extraEnv` / `RUSTFLAGS` in the IDE) so the build cache matches the terminal.
 

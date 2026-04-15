@@ -23,7 +23,7 @@ The script fails if `origin` still points at **`apache/datafusion-ballista`**. I
 
 ## 2. Trim the Ballista workspace (upstream layout)
 
-**Where this applies:** the **Ballista fork** (or `vendor/datafusion-ballista`), i.e. a tree that already contains `ballista/core`, `ballista-cli`, etc. **Do not** list workspace **members** for paths that are missing on disk: e.g. do not list `ballista-cli` until that folder exists, and do not list `crates/scorpio-core` unless you have added that crate. Mismatches produce “failed to read … Cargo.toml”.
+**Where this applies:** the **Ballista fork** (or `vendor/datafusion-ballista`), i.e. a tree that already contains `ballista/core`, `scorpio-cli`, etc. **Do not** list workspace **members** for paths that are missing on disk: e.g. do not list `scorpio-cli` until that folder exists, and do not list `crates/scorpio-core` unless you have added that crate. Mismatches produce “failed to read … Cargo.toml”.
 
 The following matches **apache/datafusion-ballista** as of a workspace whose root `Cargo.toml` includes `benchmarks` and `examples` in `[workspace].members` (see your snapshot under `vendor/datafusion-ballista` if you keep a local reference).
 
@@ -33,8 +33,8 @@ The following matches **apache/datafusion-ballista** as of a workspace whose roo
 [workspace]
 exclude = ["benchmarks", "dev/msrvcheck", "examples", "python"]
 members = [
-    "ballista-cli",
-    "ballista/client",
+    "scorpio-cli",
+    "scorpio/client",
     "ballista/core",
     "ballista/executor",
     "ballista/scheduler",
@@ -51,7 +51,7 @@ cargo check --workspace --locked
 cargo test --workspace --locked
 ```
 
-If you drop **`ballista-cli`**, remove it from `members` as well and confirm nothing in your deploy path depends on it.
+If you drop **`scorpio-cli`**, remove it from `members` as well and confirm nothing in your deploy path depends on it.
 
 ## 3. Smoke SQL suite (optional `scorpio-core` crate)
 

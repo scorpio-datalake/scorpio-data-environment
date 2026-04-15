@@ -19,7 +19,7 @@ mod common;
 
 #[cfg(test)]
 mod remote {
-    use ballista::prelude::{SessionConfigExt, SessionContextExt};
+    use scorpio::prelude::{SessionConfigExt, SessionContextExt};
     use datafusion::{
         assert_batches_eq,
         execution::SessionStateBuilder,
@@ -104,7 +104,7 @@ mod standalone {
 
     use std::sync::{Arc, atomic::AtomicBool};
 
-    use ballista::extension::{SessionConfigExt, SessionContextExt};
+    use scorpio::extension::{SessionConfigExt, SessionContextExt};
     use ballista_core::serde::BallistaPhysicalExtensionCodec;
     use datafusion::{
         assert_batches_eq,
