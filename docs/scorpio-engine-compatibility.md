@@ -1,13 +1,13 @@
-# Scorpio engine — DataFusion ↔ Ballista compatibility
+# Scorpio engine — DataFusion compatibility notes
 
-This document is for **operators and contributors**. User-facing Scorpio product copy should say **Scorpio** only where you control branding; internal crates may still use Ballista names.
+This document is for **operators and contributors**. Public product copy should say **Scorpio**; wire formats and session keys may still use **`ballista.*`** / protobuf paths for upstream compatibility (see [engine/README.md](../engine/README.md) *Legal*).
 
 ## Version alignment (pin together)
 
 | Layer | Location | Typical pin |
 |-------|----------|-------------|
-| **Ballista workspace** | `engine/Cargo.toml` `[workspace.dependencies]` | `datafusion = "53"`, `arrow = "58"`, `object_store = "0.13"`, matching `prost` / `tonic` |
-| **`scorpio-core`** (optional monorepo crate) | `engine/crates/scorpio-core/Cargo.toml` when present | `datafusion` **major.minor** must match the Ballista workspace |
+| **Engine workspace** | `engine/Cargo.toml` `[workspace.dependencies]` | `datafusion = "53"`, `arrow = "58"`, `object_store = "0.13"`, matching `prost` / `tonic` |
+| **`scorpio-core`** | `engine/scorpio/core` (package `scorpio-core`) | `datafusion` **major.minor** must match the rest of `engine/` |
 
 **Rule of thumb:** When you bump DataFusion in one place, bump it across the **whole** `engine/` workspace in the same release train, then run **`cargo test --workspace --locked`**.
 
@@ -16,14 +16,14 @@ This document is for **operators and contributors**. User-facing Scorpio product
 1. **In-process SQL (`scorpio-core`, if present)**  
    Uses DataFusion `SessionContext` directly. Does **not** prove distributed scheduler/executor behavior.
 
-2. **Distributed Ballista path**  
-   Plans cross process boundaries via **serialization** (e.g. `datafusion-proto`, Ballista protos). Custom physical nodes must round-trip.
+2. **Distributed execution path**  
+   Plans cross process boundaries via **serialization** (e.g. `datafusion-proto`, Ballista-derived protos). Custom physical nodes must round-trip.
 
 3. **Arrow / Flight**  
    Keep **arrow** / **arrow-flight** aligned across scheduler, executor, and clients sharing IPC.
 
 4. **Object stores**  
-   Keep **`object_store`** versions aligned so URLs and auth behave the same on scheduler and executors. The Ballista **`CustomObjectStoreRegistry`** (in `ballista-core`, `build-binary`) resolves **`gs://`**, **`abfs`/`abfss`/`az`/`azure`/`adl`**, **`https://`…`blob.core.windows.net` / `dfs.core.windows.net`** (and Fabric hosts), plus **`s3`**, **`http`**, and **`file`**, and supports **`register_store`** / **`deregister_store`** for explicit bucket registration. **S3 regression:** ignored-by-default MinIO integration test — `ballista/core/tests/s3_minio_integration.rs` (CI runs with `--ignored`; see [../engine/README.md](../engine/README.md)).
+   Keep **`object_store`** versions aligned so URLs and auth behave the same on scheduler and executors. **`CustomObjectStoreRegistry`** (in `scorpio-core`, `build-binary`) resolves **`gs://`**, **`abfs`/`abfss`/`az`/`azure`/`adl`**, **`https://`…`blob.core.windows.net` / `dfs.core.windows.net`** (and Fabric hosts), plus **`s3`**, **`http`**, and **`file`**, and supports **`register_store`** / **`deregister_store`** for explicit bucket registration. **S3 regression:** ignored-by-default MinIO integration test — `scorpio/core/tests/s3_minio_integration.rs` (CI runs with `--ignored`; see [../engine/README.md](../engine/README.md)).
 
 ## Practical caveats
 
@@ -34,7 +34,7 @@ This document is for **operators and contributors**. User-facing Scorpio product
 ## Smoke and CI
 
 - **With `scorpio-core` in `[workspace].members`:** [scripts/run-smoke-sql.sh](../scripts/run-smoke-sql.sh) / [run-smoke-sql.ps1](../scripts/run-smoke-sql.ps1) run `cargo test -p scorpio-core smoke_`.
-- **Ballista-only workspace (current default):** use **`cd engine && cargo test --workspace --locked`** as the SQL/engine smoke habit; CI runs the same in [`.github/workflows/scorpio-engine.yml`](../.github/workflows/scorpio-engine.yml).
+- **Otherwise:** use **`cd engine && cargo test --workspace --locked`** as the SQL/engine smoke habit; CI runs the same in [`.github/workflows/scorpio-engine.yml`](../.github/workflows/scorpio-engine.yml).
 
 ## Related
 

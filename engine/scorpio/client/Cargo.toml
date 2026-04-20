@@ -29,9 +29,9 @@ rust-version = { workspace = true }
 
 [dependencies]
 async-trait = { workspace = true }
-ballista-core = { path = "../../ballista/core", version = "53.0.0" }
-scorpio-executor = { path = "../../ballista/executor", version = "53.0.0", optional = true }
-scorpio-scheduler = { path = "../../ballista/scheduler", version = "53.0.0", optional = true }
+scorpio-core = { path = "../core", version = "53.0.0" }
+scorpio-executor = { path = "../executor", version = "53.0.0", optional = true }
+scorpio-scheduler = { path = "../scheduler", version = "53.0.0", optional = true }
 datafusion = { workspace = true }
 log = { workspace = true }
 
@@ -39,8 +39,8 @@ tokio = { workspace = true }
 url = { workspace = true }
 
 [dev-dependencies]
-scorpio-executor = { path = "../../ballista/executor", version = "53.0.0" }
-scorpio-scheduler = { path = "../../ballista/scheduler", version = "53.0.0" }
+scorpio-executor = { path = "../executor", version = "53.0.0" }
+scorpio-scheduler = { path = "../scheduler", version = "53.0.0" }
 ctor = { workspace = true }
 datafusion-proto = { workspace = true }
 env_logger = { workspace = true }

@@ -23,7 +23,7 @@ mod supported {
         remote_context, remote_context_with_state, standalone_context,
         standalone_context_with_state,
     };
-    use ballista_core::config::BallistaConfig;
+    use scorpio_core::config::BallistaConfig;
 
     use datafusion::physical_plan::collect;
     use datafusion::prelude::*;
@@ -301,7 +301,7 @@ mod supported {
         #[case]
         ctx: SessionContext,
     ) -> datafusion::error::Result<()> {
-        ctx.sql("SET ballista.job.name = 'Super Cool Ballista App'")
+        ctx.sql("SET ballista.job.name = 'Super Cool Scorpio App'")
             .await?
             .show()
             .await?;
@@ -316,7 +316,7 @@ mod supported {
             "+-------------------+-------------------------+",
             "| name              | value                   |",
             "+-------------------+-------------------------+",
-            "| ballista.job.name | Super Cool Ballista App |",
+            "| ballista.job.name | Super Cool Scorpio App |",
             "+-------------------+-------------------------+",
         ];
 

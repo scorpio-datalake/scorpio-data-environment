@@ -12,7 +12,8 @@
   updating Cargo.lock first.
 
   Override target directory with environment variable CARGO_TARGET_DIR (shared by all cargo commands).
-  Optional sccache: set RUSTC_WRAPPER to your sccache binary.
+  Optional sccache: set RUSTC_WRAPPER to your sccache binary. When RUSTC_WRAPPER is set, this script sets
+  CARGO_INCREMENTAL=0 because sccache does not support Cargo incremental compilation.
 
 .PARAMETER Release
   Use release profile (cargo build --release).
@@ -79,9 +80,11 @@ if ($VerboseCargo) {
     $env:CARGO_TERM_PROGRESS = 'verbose'
 }
 
-# Default dev build: ensure incremental compilation is not accidentally disabled via empty env.
-# Workspace [profile.dev] already sets incremental = true; this matches "use cache first" intent.
-if (-not $Release -and -not $Profile) {
+# Default dev build: ensure incremental compilation unless using sccache (RUSTC_WRAPPER).
+# sccache rejects builds when CARGO_INCREMENTAL is enabled; see https://github.com/mozilla/sccache
+if ($env:RUSTC_WRAPPER) {
+    $env:CARGO_INCREMENTAL = '0'
+} elseif (-not $Release -and -not $Profile) {
     if ([string]::IsNullOrEmpty($env:CARGO_INCREMENTAL)) {
         $env:CARGO_INCREMENTAL = '1'
     }

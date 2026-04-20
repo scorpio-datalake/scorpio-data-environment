@@ -1,36 +1,73 @@
 #requires -Version 5.1
 <#
 .SYNOPSIS
-  Validates full_build.ps1 (parse + expected cargo workspace build behavior).
+  Runs the full Rust workspace test suite (cargo test --workspace), from engine/.
+
+.DESCRIPTION
+  Mirrors full_build.ps1 scope: optional cargo metadata preflight, then cargo test --workspace.
+  Does not compile-only; use scripts/builds_and_scripts/full_build.ps1 for builds.
+
+.PARAMETER Release
+  Pass --release to Cargo.
+
+.PARAMETER NoLocked
+  Omit --locked from metadata and test.
+
+.PARAMETER Offline
+  Pass --offline to Cargo.
+
+.PARAMETER SkipPreflight
+  Skip cargo metadata.
+
+.PARAMETER VerboseCargo
+  Set CARGO_TERM_PROGRESS=verbose.
 #>
 [CmdletBinding()]
-param ()
+param (
+    [switch]$Release,
+    [switch]$NoLocked,
+    [switch]$Offline,
+    [switch]$SkipPreflight,
+    [switch]$VerboseCargo
+)
 
 $ErrorActionPreference = 'Stop'
-$moduleRoot = Split-Path -Parent $PSScriptRoot
-$scriptPath = Join-Path $moduleRoot 'full_build.ps1'
+. (Join-Path $PSScriptRoot '_ScorpioEngineTestSession.ps1')
 
-if (-not (Test-Path -LiteralPath $scriptPath)) {
-    throw "Missing script: $scriptPath"
+if ($VerboseCargo) {
+    $env:CARGO_TERM_PROGRESS = 'verbose'
 }
 
-$tokens = $null
-$parseErrors = $null
-$null = [System.Management.Automation.Language.Parser]::ParseFile(
-    ($scriptPath | Resolve-Path),
-    [ref]$tokens,
-    [ref]$parseErrors
-)
-if ($parseErrors -and $parseErrors.Count -gt 0) {
-    throw (($parseErrors | ForEach-Object { $_.Message }) -join '; ')
+Write-Host "Engine root: $ScorpioEngineRoot"
+Write-Host "Target dir: $(if ($env:CARGO_TARGET_DIR) { $env:CARGO_TARGET_DIR } else { Join-Path $ScorpioEngineRoot 'target' })"
+& rustc -V
+& cargo -V
+
+if (-not $SkipPreflight) {
+    $metaArgs = @('metadata', '--format-version', '1')
+    if (-not $NoLocked) {
+        $metaArgs += '--locked'
+    }
+    Write-Host "Preflight: cargo $($metaArgs -join ' ') ..."
+    & cargo @metaArgs | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
 }
 
-$content = Get-Content -LiteralPath $scriptPath -Raw
-if ($content -notmatch "('build',\s*'--workspace'|@\('build',\s*'--workspace'\))") {
-    throw "Expected cargo build --workspace in $scriptPath"
+$cargoArgs = @('test', '--workspace')
+if ($Release) {
+    $cargoArgs += '--release'
 }
-if ($content -notmatch "metadata") {
-    throw "Expected cargo metadata preflight in $scriptPath"
+if (-not $NoLocked) {
+    $cargoArgs += '--locked'
+}
+if ($Offline) {
+    $cargoArgs += '--offline'
 }
 
-Write-Host "OK: full_build.ps1"
+Write-Host "Testing: cargo $($cargoArgs -join ' ') ..."
+& cargo @cargoArgs
+if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+}

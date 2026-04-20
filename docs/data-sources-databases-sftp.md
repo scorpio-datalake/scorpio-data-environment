@@ -1,6 +1,6 @@
 # Databases, SFTP, and Scorpio — strategy (Phase 1)
 
-Ballista-style distributed execution is strongest when inputs are **object-store–backed columnar files** (Parquet, CSV, JSON) registered in the session catalog. **PostgreSQL, MySQL, Oracle, SFTP, and similar** sources are **not** first-class remote `TableProvider`s in stock Ballista the way `s3://` tables are.
+Scorpio’s distributed engine is strongest when inputs are **object-store–backed columnar files** (Parquet, CSV, JSON) registered in the session catalog. **PostgreSQL, MySQL, Oracle, SFTP, and similar** sources are **not** first-class remote `TableProvider`s the way `s3://` tables are.
 
 This document records the **approved strategies** and a **lightweight spike** you can run without committing secrets to the repo.
 
@@ -21,12 +21,12 @@ This document records the **approved strategies** and a **lightweight spike** yo
 
 ## Option B — Custom `TableProvider` (engine extension)
 
-**Pattern:** Implement a DataFusion [`TableProvider`](https://docs.rs/datafusion/latest/datafusion/catalog/trait.TableProvider.html) (and supporting `ExecutionPlan`) that streams JDBC/ODBC or native protocol rows into **Arrow** batches, register it in `SessionContext` / Ballista catalog paths you control.
+**Pattern:** Implement a DataFusion [`TableProvider`](https://docs.rs/datafusion/latest/datafusion/catalog/trait.TableProvider.html) (and supporting `ExecutionPlan`) that streams JDBC/ODBC or native protocol rows into **Arrow** batches, register it in `SessionContext` / catalog paths you control.
 
 | Pros | Cons |
 |------|------|
 | Query-in-place against operational DBs | Network and DB load on every scan; harder to push predicates unless you invest heavily |
-| Fits specialized connectors | Must serialize custom nodes through Ballista if used in distributed plans (see compatibility doc) |
+| Fits specialized connectors | Must serialize custom nodes through the distributed engine if used in distributed plans (see compatibility doc) |
 
 **When to choose:** Small number of high-value sources, team owns Rust connector maintenance, and latency/cost to the database is acceptable.
 

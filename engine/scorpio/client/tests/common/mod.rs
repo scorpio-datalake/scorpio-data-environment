@@ -20,8 +20,8 @@ use std::error::Error;
 use std::path::PathBuf;
 
 use scorpio::prelude::{SessionConfigExt, SessionContextExt};
-use ballista_core::serde::{BallistaCodec, protobuf::scheduler_grpc_client::SchedulerGrpcClient};
-use ballista_core::{ConfigProducer, RuntimeProducer};
+use scorpio_core::serde::{BallistaCodec, protobuf::scheduler_grpc_client::SchedulerGrpcClient};
+use scorpio_core::{ConfigProducer, RuntimeProducer};
 use scorpio_scheduler::SessionBuilder;
 use datafusion::execution::{SessionState, SessionStateBuilder};
 use datafusion::prelude::{SessionConfig, SessionContext};
@@ -97,7 +97,7 @@ fn get_data_dir(udf_env: &str, submodule_data: &str) -> Result<PathBuf, Box<dyn 
     }
 }
 
-/// starts a ballista cluster for integration tests
+/// starts a Scorpio cluster for integration tests
 #[allow(dead_code)]
 pub async fn setup_test_cluster() -> (String, u16) {
     let config = SessionConfig::new_with_ballista();
@@ -124,7 +124,7 @@ pub async fn setup_test_cluster() -> (String, u16) {
     (host, addr.port())
 }
 
-/// starts a ballista cluster for integration tests
+/// starts a Scorpio cluster for integration tests
 #[allow(dead_code)]
 pub async fn setup_test_cluster_with_state(session_state: SessionState) -> (String, u16) {
     let config = SessionConfig::new_with_ballista();

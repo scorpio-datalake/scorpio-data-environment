@@ -7,10 +7,10 @@ This document implements Epic 0 items **distributed DataFrame (engine)** and **e
 | Term | Meaning in this repo |
 |------|----------------------|
 | **Python DataFrame** | Epic 2 (lazy API in `python/scorpio`). **Not** what this page exercises. |
-| **Engine distributed execution** | SQL / DataFusion `DataFrame` plans executed via Ballista: **scheduler**, **executor(s)**, **stage boundaries**, **shuffle** (hash or sort-based), **Arrow** batches. |
-| **Standalone mode** | `SessionContext::standalone()` — in-process Ballista scheduler + executor (still uses distributed *plans* and shuffle when the optimizer inserts exchanges). |
+| **Engine distributed execution** | SQL / DataFusion `DataFrame` plans executed via the Scorpio stack: **scheduler**, **executor(s)**, **stage boundaries**, **shuffle** (hash or sort-based), **Arrow** batches. |
+| **Standalone mode** | `SessionContext::standalone()` — in-process scheduler + executor (still uses distributed *plans* and shuffle when the optimizer inserts exchanges). |
 | **Remote mode** | `SessionContext::remote("df://…")` — gRPC to a real scheduler; tests start **one** scheduler + **one** executor process (`scorpio/client/tests/common/mod.rs`). |
-| **Task parallelism** | `ballista.standalone.parallelism` — concurrent tasks per executor (see `BALLISTA_STANDALONE_PARALLELISM` in `ballista/core`). |
+| **Task parallelism** | `ballista.standalone.parallelism` — concurrent tasks per executor (see `BALLISTA_STANDALONE_PARALLELISM` in `scorpio/core`). |
 | **Multi-executor** | **Multiple executor processes** (e.g. several pods). The default integration tests use **one** executor process; scaling out is validated operationally (Compose/k8s) rather than in every `cargo test`. |
 
 ## What we assert today (joins, aggregations, shuffle)
@@ -29,13 +29,13 @@ This document implements Epic 0 items **distributed DataFrame (engine)** and **e
    - Exercises **GROUP BY**, **aggregates**, **UNION ALL**, etc., with local vs Flight remote shuffle read.
 
 3. **Unit / module tests (shuffle & plan boundaries)**  
-   - `ballista/core`: `shuffle_reader.rs`, `shuffle_writer.rs`, `distributed_query.rs`, sort-shuffle modules — serialization and shuffle mechanics.  
-   - `ballista/scheduler`: AQE / `plan_to_stages`, `execution_graph`, `join_selection`, etc.  
-   - `ballista/executor`: executor loop, Flight, metrics.
+   - `scorpio/core`: `shuffle_reader.rs`, `shuffle_writer.rs`, `distributed_query.rs`, sort-shuffle modules — serialization and shuffle mechanics.  
+   - `scorpio/scheduler`: AQE / `plan_to_stages`, `execution_graph`, `join_selection`, etc.  
+   - `scorpio/executor`: executor loop, Flight, metrics.
 
 4. **Object store**  
-   - `engine/ballista/core/src/object_store.rs` — URL schemes and `register_store`.  
-   - `engine/ballista/core/tests/s3_minio_integration.rs` — optional MinIO (ignored by default; see `engine/README.md`).
+   - `engine/scorpio/core/src/object_store.rs` — URL schemes and `register_store`.  
+   - `engine/scorpio/core/tests/s3_minio_integration.rs` — optional MinIO (ignored by default; see `engine/README.md`).
 
 ## Gaps (explicit)
 

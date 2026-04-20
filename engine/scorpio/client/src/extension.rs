@@ -15,8 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-pub use ballista_core::extension::{SessionConfigExt, SessionStateExt};
-use ballista_core::serde::protobuf::scheduler_grpc_client::SchedulerGrpcClient;
+pub use scorpio_core::extension::{SessionConfigExt, SessionStateExt};
+use scorpio_core::serde::protobuf::scheduler_grpc_client::SchedulerGrpcClient;
 use datafusion::{error::DataFusionError, execution::SessionState, prelude::SessionContext};
 use url::Url;
 
@@ -25,8 +25,8 @@ const DEFAULT_SCHEDULER_PORT: u16 = 50050;
 /// Module provides [SessionContextExt] which adds `standalone*` and `remote*`
 /// methods to [SessionContext].
 ///
-/// Provided methods set up [SessionContext] with [BallistaQueryPlanner](ballista_core::utils), which
-/// handles running plans on Ballista clusters.
+/// Provided methods set up [SessionContext] with [BallistaQueryPlanner](scorpio_core::utils), which
+/// handles running plans on distributed Scorpio clusters.
 ///
 ///```no_run
 /// use scorpio::prelude::SessionContextExt;
@@ -175,7 +175,7 @@ impl Extension {
     async fn setup_standalone(
         session_state: Option<&SessionState>,
     ) -> datafusion::error::Result<String> {
-        use ballista_core::{serde::BallistaCodec, utils::default_config_producer};
+        use scorpio_core::{serde::BallistaCodec, utils::default_config_producer};
 
         let addr = match session_state {
             None => scorpio_scheduler::standalone::new_standalone_scheduler()

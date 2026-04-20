@@ -3,9 +3,9 @@ exclude = ["benchmarks", "dev/msrvcheck", "examples", "python"]
 members = [
     "scorpio-cli",
     "scorpio/client",
-    "ballista/core",
-    "ballista/executor",
-    "ballista/scheduler",
+    "scorpio/core",
+    "scorpio/executor",
+    "scorpio/scheduler",
 ]
 resolver = "3"
 

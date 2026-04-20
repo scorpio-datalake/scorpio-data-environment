@@ -21,9 +21,9 @@ chmod +x scripts/verify-engine-git-remotes.sh
 
 The script fails if `origin` still points at **`apache/datafusion-ballista`**. It skips gracefully when the engine path is not a Git checkout (e.g. only the monorepo `engine/` crate tree is used).
 
-## 2. Trim the Ballista workspace (upstream layout)
+## 2. Trim the engine workspace (upstream layout)
 
-**Where this applies:** the **Ballista fork** (or `vendor/datafusion-ballista`), i.e. a tree that already contains `ballista/core`, `scorpio-cli`, etc. **Do not** list workspace **members** for paths that are missing on disk: e.g. do not list `scorpio-cli` until that folder exists, and do not list `crates/scorpio-core` unless you have added that crate. Mismatches produce “failed to read … Cargo.toml”.
+**Where this applies:** a **Ballista-derived** fork (or `vendor/datafusion-ballista`), i.e. a tree that already contains `scorpio/core`, `scorpio-cli`, etc. **Do not** list workspace **members** for paths that are missing on disk: e.g. do not list `scorpio-cli` until that folder exists. The core library package is **`scorpio-core`** at path `scorpio/core`. Mismatches produce “failed to read … Cargo.toml”.
 
 The following matches **apache/datafusion-ballista** as of a workspace whose root `Cargo.toml` includes `benchmarks` and `examples` in `[workspace].members` (see your snapshot under `vendor/datafusion-ballista` if you keep a local reference).
 
@@ -35,9 +35,9 @@ exclude = ["benchmarks", "dev/msrvcheck", "examples", "python"]
 members = [
     "scorpio-cli",
     "scorpio/client",
-    "ballista/core",
-    "ballista/executor",
-    "ballista/scheduler",
+    "scorpio/core",
+    "scorpio/executor",
+    "scorpio/scheduler",
 ]
 resolver = "3"
 ```
@@ -53,9 +53,9 @@ cargo test --workspace --locked
 
 If you drop **`scorpio-cli`**, remove it from `members` as well and confirm nothing in your deploy path depends on it.
 
-## 3. Smoke SQL suite (optional `scorpio-core` crate)
+## 3. Smoke SQL suite (`scorpio-core`)
 
-If you add **`engine/crates/scorpio-core`** to `[workspace].members`, in-process SQL smoke tests can live there and track the **DataFusion** version you pin in that crate (keep it aligned with Ballista’s `workspace.dependencies`).
+With **`scorpio/core`** (package **`scorpio-core`**) in `[workspace].members`, in-process SQL smoke tests run via the scripts below; keep **DataFusion** aligned with `engine/Cargo.toml` `[workspace.dependencies]`.
 
 From the repo root:
 
@@ -67,10 +67,10 @@ From the repo root:
 .\scripts\run-smoke-sql.ps1
 ```
 
-Those scripts run every test named `smoke_*` in `scorpio-core`. If **`scorpio-core` is not in the workspace**, rely on **`cargo test --workspace`** under `engine/` (Ballista’s own tests) after **`protoc`** is installed ([engine/README.md](../engine/README.md)).
+Those scripts run every test named `smoke_*` in `scorpio-core`. If the package is absent from the workspace, rely on **`cargo test --workspace`** under `engine/` after **`protoc`** is installed ([engine/README.md](../engine/README.md)).
 
 ## 4. CI habit
 
 This repository runs **`cargo fmt`**, **`clippy`**, and **`cargo test --locked`** for `engine/` on push/PR via `.github/workflows/scorpio-engine.yml`. Mirror the same jobs on your **standalone** Scorpio engine fork once it exists.
 
-DataFusion ↔ Ballista version notes: [scorpio-engine-compatibility.md](scorpio-engine-compatibility.md).
+DataFusion version alignment: [scorpio-engine-compatibility.md](scorpio-engine-compatibility.md).

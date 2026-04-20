@@ -19,7 +19,7 @@
 
 # Scorpio command-line interface
 
-[Ballista][ballista] is a distributed query execution framework, written in Rust, that uses Apache Arrow as its in-memory format. **Scorpio** distributes a CLI crate **`scorpio-cli`** for SQL against an in-process DataFusion context or a remote Scorpio scheduler.
+**Scorpio** ships the **`scorpio-cli`** crate for SQL against an in-process DataFusion context or a remote Scorpio scheduler. The engine is derived from [Apache DataFusion Ballista][ballista] (distributed query execution on Arrow); see `LICENSE` / `NOTICE` in `engine/`.
 
 ```ignore
 USAGE:
@@ -57,7 +57,7 @@ OPTIONS:
             Reduce printing other than the results and work quietly
 
     -r, --rc <RC>...
-            Run the provided files on startup instead of ~/.ballistarc
+            Run the provided files on startup instead of ~/.scorpiorc (or ~/.ballistarc if that is absent)
 
     -V, --version
             Print version information
@@ -105,4 +105,4 @@ The Scorpio CLI can connect to a Scorpio scheduler for query execution:
 scorpio-cli --host localhost --port 50050
 ```
 
-[ballista]: https://crates.io/crates/ballista
+[ballista]: https://github.com/apache/datafusion-ballista

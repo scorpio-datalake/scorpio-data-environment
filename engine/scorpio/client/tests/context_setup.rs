@@ -69,7 +69,7 @@ mod remote {
 
         let session_config = SessionConfig::new_with_ballista()
             .with_information_schema(true)
-            .with_ballista_job_name("Super Cool Ballista App");
+            .with_ballista_job_name("Super Cool Scorpio App");
 
         let state = SessionStateBuilder::new()
             .with_default_features()
@@ -88,7 +88,7 @@ mod remote {
             "+-------------------+-------------------------+",
             "| name              | value                   |",
             "+-------------------+-------------------------+",
-            "| ballista.job.name | Super Cool Ballista App |",
+            "| ballista.job.name | Super Cool Scorpio App |",
             "+-------------------+-------------------------+",
         ];
 
@@ -105,7 +105,7 @@ mod standalone {
     use std::sync::{Arc, atomic::AtomicBool};
 
     use scorpio::extension::{SessionConfigExt, SessionContextExt};
-    use ballista_core::serde::BallistaPhysicalExtensionCodec;
+    use scorpio_core::serde::BallistaPhysicalExtensionCodec;
     use datafusion::{
         assert_batches_eq,
         common::exec_err,
@@ -122,7 +122,7 @@ mod standalone {
     async fn should_execute_sql_set_configs() -> datafusion::error::Result<()> {
         let session_config = SessionConfig::new_with_ballista()
             .with_information_schema(true)
-            .with_ballista_job_name("Super Cool Ballista App");
+            .with_ballista_job_name("Super Cool Scorpio App");
 
         let state = SessionStateBuilder::new()
             .with_default_features()
@@ -141,7 +141,7 @@ mod standalone {
             "+-------------------+-------------------------+",
             "| name              | value                   |",
             "+-------------------+-------------------------+",
-            "| ballista.job.name | Super Cool Ballista App |",
+            "| ballista.job.name | Super Cool Scorpio App |",
             "+-------------------+-------------------------+",
         ];
 

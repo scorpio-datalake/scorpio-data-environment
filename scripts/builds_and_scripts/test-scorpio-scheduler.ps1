@@ -15,6 +15,10 @@ param (
 $ErrorActionPreference = 'Stop'
 $engineRoot = Resolve-Path (Join-Path (Join-Path (Join-Path $PSScriptRoot '..') '..') 'engine')
 Set-Location $engineRoot
+# sccache (RUSTC_WRAPPER) does not support Cargo incremental compilation
+if ($env:RUSTC_WRAPPER) {
+    $env:CARGO_INCREMENTAL = '0'
+}
 
 $cargoArgs = @('test', '-p', 'scorpio-scheduler', '--locked')
 if ($Release) { $cargoArgs += '--release' }

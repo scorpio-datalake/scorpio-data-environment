@@ -17,13 +17,15 @@
   under the License.
 -->
 
-# Ballista: Distributed Scheduler for Apache DataFusion
+# Scorpio client (`scorpio` crate)
 
-Ballista is a distributed compute platform primarily implemented in Rust, and powered by Apache Arrow and DataFusion. It is built on an architecture that allows other programming languages (such as Python, C++, and Java) to be supported as first-class citizens without paying a penalty for serialization costs.
+**Scorpio** is the distributed query stack shipped in this repo: the **`scorpio`** library wraps [Apache DataFusion](https://github.com/apache/datafusion) with remote scheduler/executor integration. The design descends from [Apache DataFusion Ballista](https://github.com/apache/datafusion-ballista); see `LICENSE` / `NOTICE` in `engine/`.
+
+The **scorpio** crate is primarily implemented in Rust and uses Apache Arrow and DataFusion. The architecture still allows other language bindings without unnecessary serialization on the core path.
 
 ![logo](https://github.com/apache/datafusion-ballista/blob/main/docs/source/_static/images/ballista-logo.png?raw=true)
 
-Ballista is a distributed query execution engine that enhances [Apache DataFusion](https://github.com/apache/datafusion) by enabling the parallelized execution of workloads across multiple nodes in a distributed environment.
+Downstream documentation below may still say “Ballista” where it describes historical architecture; behavior matches the Scorpio engine in this workspace.
 
 Existing DataFusion application:
 
@@ -55,9 +57,9 @@ use datafusion::prelude::*;
 
 #[tokio::main]
 async fn main() -> datafusion::error::Result<()> {
-    // create SessionContext with ballista support
+    // create SessionContext with Scorpio extensions
     // standalone context will start all required
-    // ballista infrastructure in the background as well
+    // scheduler/executor infrastructure in the background as well
     let ctx = SessionContext::standalone().await?;
 
     // everything else remains the same

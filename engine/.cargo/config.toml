@@ -9,11 +9,14 @@
 # rebuilds more than necessary — align both or leave both unset.
 
 # Scoped workflows (run from `engine/`). Full workspace: `cargo test-ws`.
+# CI parity (see `.github/workflows/scorpio-engine.yml`): `cargo fmt-check`, `cargo clippy-ws`, `cargo test-ws`.
 # See README.md "Iterating locally (scoped builds)".
 [alias]
-check-core = "check -p ballista-core --locked"
-check-core-tests = "check -p ballista-core --tests --locked"
-test-core = "test -p ballista-core --locked"
+fmt-check = "fmt --all -- --check"
+clippy-ws = "clippy --workspace --locked --all-targets -- -D warnings"
+check-core = "check -p scorpio-core --locked"
+check-core-tests = "check -p scorpio-core --tests --locked"
+test-core = "test -p scorpio-core --locked"
 check-scheduler = "check -p scorpio-scheduler --locked"
 test-scheduler = "test -p scorpio-scheduler --locked"
 check-executor = "check -p scorpio-executor --locked"

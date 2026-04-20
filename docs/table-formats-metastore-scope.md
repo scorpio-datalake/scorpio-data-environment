@@ -1,6 +1,6 @@
 # Hive Metastore, Iceberg, and Delta — Phase 1 scope
 
-This document captures the **product/engine scope decision** for Phase 1 so work stays aligned with DataFusion and Ballista capabilities in-tree.
+This document captures the **product/engine scope decision** for Phase 1 so work stays aligned with DataFusion and the Scorpio engine capabilities in-tree.
 
 ---
 
@@ -29,7 +29,7 @@ Revisit this document when **any** of the following is true:
 
 - Product requires **time travel** or **MERGE/DELETE** semantics at rest.
 - Customers expect **Unity Catalog / Glue / HMS** as the system of record for table names.
-- DataFusion + workspace dependencies add a **supported, pinned** Iceberg or Delta crate you are willing to test in **multi-executor** Ballista jobs.
+- DataFusion + workspace dependencies add a **supported, pinned** Iceberg or Delta crate you are willing to test in **multi-executor** jobs.
 
 ---
 

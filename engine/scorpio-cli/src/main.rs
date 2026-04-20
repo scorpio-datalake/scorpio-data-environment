@@ -75,7 +75,7 @@ struct Args {
         short = 'r',
         long,
         num_args = 0..,
-        help = "Run the provided files on startup instead of ~/.ballistarc",
+        help = "Run the provided files on startup instead of ~/.scorpiorc (falls back to ~/.ballistarc if missing)",
         value_parser(parse_valid_file),
         conflicts_with = "file"
     )]
@@ -115,29 +115,29 @@ pub async fn main() -> Result<()> {
         env::set_current_dir(p).unwrap();
     };
 
-    let mut ballista_config = SessionConfig::new_with_ballista().with_information_schema(true);
+    let mut session_config = SessionConfig::new_with_ballista().with_information_schema(true);
 
     if let Some(batch_size) = args.batch_size {
-        ballista_config = ballista_config.with_batch_size(batch_size);
+        session_config = session_config.with_batch_size(batch_size);
     };
 
     let ctx = match (args.host, args.port) {
         (Some(ref host), Some(port)) => {
             let address = format!("df://{host}:{port}");
             let state = SessionStateBuilder::new()
-                .with_config(ballista_config)
+                .with_config(session_config)
                 .with_default_features()
                 .build();
 
-            // Distributed execution with Ballista Remote
+            // Distributed execution against a remote Scorpio scheduler
             SessionContext::remote_with_state(&address, state).await?
         }
         _ => {
             if let Some(concurrent_tasks) = args.concurrent_tasks {
-                ballista_config = ballista_config.with_target_partitions(concurrent_tasks);
+                session_config = session_config.with_target_partitions(concurrent_tasks);
             };
             let state = SessionStateBuilder::new()
-                .with_config(ballista_config)
+                .with_config(session_config)
                 .with_default_features()
                 .build();
 
@@ -161,7 +161,13 @@ pub async fn main() -> Result<()> {
             let mut files = Vec::new();
             let home = dirs::home_dir();
             if let Some(p) = home {
-                let home_rc = p.join(".ballistarc");
+                let prefer = p.join(".scorpiorc");
+                let legacy = p.join(".ballistarc");
+                let home_rc = if prefer.exists() {
+                    prefer
+                } else {
+                    legacy
+                };
                 if home_rc.exists() {
                     files.push(home_rc.into_os_string().into_string().unwrap());
                 }

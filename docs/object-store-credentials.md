@@ -2,7 +2,7 @@
 
 **Goal:** Run scheduler and executor containers **without baking secrets into images**. Supply credentials at deploy time via **environment variables** (from plain env, Docker/Kubernetes secrets, or workload identity).
 
-**Code reference:** `engine/ballista/core/src/object_store.rs` — `CustomObjectStoreRegistry`.
+**Code reference:** `engine/scorpio/core/src/object_store.rs` — `CustomObjectStoreRegistry`.
 
 ---
 
@@ -16,7 +16,7 @@
 
 ## Amazon S3 (`s3://`)
 
-The registry starts from [`AmazonS3Builder::from_env`](https://docs.rs/object_store/latest/object_store/aws/struct.AmazonS3Builder.html#method.from_env). Optional Ballista SQL `SET` keys (`s3.access_key_id`, `s3.secret_access_key`, …) override the env chain when **both** access key and secret are set.
+The registry starts from [`AmazonS3Builder::from_env`](https://docs.rs/object_store/latest/object_store/aws/struct.AmazonS3Builder.html#method.from_env). Optional SQL `SET` keys (`s3.access_key_id`, `s3.secret_access_key`, …) override the env chain when **both** access key and secret are set.
 
 **Common variables (non-exhaustive):**
 
@@ -30,7 +30,7 @@ The registry starts from [`AmazonS3Builder::from_env`](https://docs.rs/object_st
 | `AWS_ENDPOINT_URL_S3` | S3 API endpoint (required for **MinIO** / LocalStack-style hosts) |
 | `AWS_ALLOW_HTTP` | Set to `true` when the endpoint uses `http://` (typical for local MinIO) |
 
-**Local / CI testing with MinIO:** MinIO is an S3-compatible server you run **locally** (often via Docker) to exercise real PUT/GET against the same code path as AWS—without AWS credentials. It is still a **network integration** test, not an in-process mock. See [../engine/README.md](../engine/README.md) (section *S3 / MinIO integration test*) and `ballista/core/tests/s3_minio_integration.rs`.
+**Local / CI testing with MinIO:** MinIO is an S3-compatible server you run **locally** (often via Docker) to exercise real PUT/GET against the same code path as AWS—without AWS credentials. It is still a **network integration** test, not an in-process mock. See [../engine/README.md](../engine/README.md) (section *S3 / MinIO integration test*) and `scorpio/core/tests/s3_minio_integration.rs`.
 
 **Kubernetes (pattern):** define a `Secret` with string data, mount into **scheduler** and **executor** `Deployment`/`StatefulSet` via `envFrom` (same secret name in both) or individual `valueFrom.secretKeyRef` entries.
 

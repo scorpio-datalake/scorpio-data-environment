@@ -126,7 +126,7 @@ mod unsupported {
         assert!(result.is_err());
         let err_msg = result.unwrap_err().to_string();
         assert!(
-            err_msg.contains("No installed planner was able to convert the custom node to an execution plan: BallistaCacheNode"),
+            err_msg.contains("No installed planner was able to convert the custom node to an execution plan: ScorpioCacheNode"),
             "Expected planner error, got: {err_msg}"
         );
 
