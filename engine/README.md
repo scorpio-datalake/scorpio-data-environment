@@ -73,6 +73,10 @@ Cargo **reuses** `engine/target/` incrementally: after a first compile, a change
 
 Examples: `.\scripts\run-engine-tests.ps1 -p scorpio-scheduler`; `./scripts/run-engine-tests.sh --workspace` before a PR.
 
+### Pull requests — tests with behavior changes
+
+If this PR changes **runtime behavior** (object store / S3, scheduler stages, executor or shuffle / Flight, proto or plan wire formats, etc.), add or update **`#[test]` / integration tests in the same PR**. The default [pull request template](../.github/pull_request_template.md) asks contributors to confirm; workspace CI is a gate, not a substitute for area-specific coverage.
+
 **CI parity from `engine/`:** `cargo fmt-check`, `cargo clippy-ws`, then `cargo test-ws`. GitHub Actions: [`.github/workflows/scorpio-engine-multi-os.yml`](../.github/workflows/scorpio-engine-multi-os.yml) runs those steps on **Ubuntu, Windows, and macOS** (no Docker). Optional **MinIO** S3 integration (Linux only, `docker run` for MinIO — not Scorpio image builds): [`.github/workflows/scorpio-engine.yml`](../.github/workflows/scorpio-engine.yml).
 
 **Object store / `register_store` tests** need `--features build-binary` on `scorpio-core` (the script: `-BuildBinary` / `--build-binary`). There is no separate Cargo alias for that pair; use the script or  

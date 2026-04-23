@@ -572,8 +572,10 @@ mod tests {
 
     #[test]
     fn s3_builder_rejects_only_one_sql_key() {
-        let mut opts = S3RegistryConfiguration::default();
-        opts.access_key_id = Some("id-only".into());
+        let opts = S3RegistryConfiguration {
+            access_key_id: Some("id-only".into()),
+            ..Default::default()
+        };
         let url = Url::parse("s3://bucket/p").unwrap();
         assert!(CustomObjectStoreRegistry::s3_object_store_builder(&url, &opts).is_err());
     }

@@ -1,0 +1,40 @@
+# Minimal Scorpio engine slice: scheduler + one executor (Ballista-style).
+# Prerequisites: Docker with BuildKit, repo clone, `SCORPIO_ENGINE_ROOT` = absolute path to `engine/`.
+#
+# From repo root (after exporting SCORPIO_ENGINE_ROOT if not using scripts):
+#   docker compose -f deploy/docker-compose/docker-compose.scorpio-engine.yml build
+#   docker compose -f deploy/docker-compose/docker-compose.scorpio-engine.yml up
+#
+# Windows: prefer forward slashes in SCORPIO_ENGINE_ROOT (e.g. C:/src/repo/engine) or set
+# COMPOSE_CONVERT_WINDOWS_PATHS=1 when using backslashes.
+
+services:
+  scheduler:
+    image: scorpio-scheduler:local
+    build:
+      context: ${SCORPIO_ENGINE_ROOT}
+      dockerfile: Dockerfile.scorpio-stack
+      target: scorpio-scheduler
+    command:
+      - --bind-host=0.0.0.0
+      - --external-host=scheduler
+      - --bind-port=50050
+    ports:
+      - "50050:50050"
+
+  executor:
+    image: scorpio-executor:local
+    build:
+      context: ${SCORPIO_ENGINE_ROOT}
+      dockerfile: Dockerfile.scorpio-stack
+      target: scorpio-executor
+    depends_on:
+      - scheduler
+    command:
+      - --scheduler-host=scheduler
+      - --scheduler-port=50050
+      - --bind-host=0.0.0.0
+      - --external-host=executor
+    ports:
+      - "50051:50051"
+      - "50052:50052"

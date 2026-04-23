@@ -1,0 +1,5 @@
+# Keep `docker build` context small (avoid uploading local `target/` to the daemon).
+target
+**/target
+.git
+.gitignore

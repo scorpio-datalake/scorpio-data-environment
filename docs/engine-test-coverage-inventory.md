@@ -2,6 +2,8 @@
 
 This document satisfies the Phase 1 **Engine test coverage audit**: what the retained Rust workspace exercises today, and known gaps. Update it when you add suites or close gaps.
 
+**Same-PR test updates:** When closing gaps or changing behavior, extend tests in the **same PR** as the code (see [`.github/pull_request_template.md`](../.github/pull_request_template.md) and [engine/README.md](../engine/README.md) § *Pull requests — tests with behavior changes*).
+
 ## Workspace members (`engine/Cargo.toml`)
 
 | Crate / path | Automated tests (summary) | Typical command |
@@ -14,6 +16,8 @@ This document satisfies the Phase 1 **Engine test coverage audit**: what the ret
 | Full workspace | CI-style | `cargo test --workspace --locked` |
 
 ## Gap tracker (explicit)
+
+Planning: extended integration work for these gaps lives under **Epic 12** in [Planning/Phase1.md](../Planning/Phase1.md) (*Multi-cloud freeware deployment smoke*).
 
 | Area | Coverage today | Gap / follow-up |
 |------|----------------|-----------------|
