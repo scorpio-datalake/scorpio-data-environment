@@ -326,17 +326,15 @@ impl PhysicalExtensionCodec for BallistaPhysicalExtensionCodec {
     ) -> Result<Arc<dyn ExecutionPlan>, DataFusionError> {
         let ballista_plan: protobuf::BallistaPhysicalPlanNode =
             protobuf::BallistaPhysicalPlanNode::decode(buf).map_err(|e| {
-                DataFusionError::Internal(format!(
-                    "Could not deserialize physical plan node: {e}"
-                ))
+                DataFusionError::Internal(format!("Could not deserialize physical plan node: {e}"))
             })?;
 
-        let ballista_plan =
-            ballista_plan.physical_plan_type.as_ref().ok_or_else(|| {
-                DataFusionError::Internal(
-                    "Could not deserialize physical plan node because physical_plan_type is none".to_string()
-                )
-            })?;
+        let ballista_plan = ballista_plan.physical_plan_type.as_ref().ok_or_else(|| {
+            DataFusionError::Internal(
+                "Could not deserialize physical plan node because physical_plan_type is none"
+                    .to_string(),
+            )
+        })?;
         let converter = DefaultPhysicalProtoConverter {};
         match ballista_plan {
             PhysicalPlanType::ShuffleWriter(shuffle_writer) => {

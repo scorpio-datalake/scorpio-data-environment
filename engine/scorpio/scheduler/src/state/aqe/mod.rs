@@ -24,6 +24,9 @@ use crate::state::execution_graph::{
 };
 use crate::state::execution_stage::RunningStage;
 use crate::state::task_manager::UpdatedStages;
+use datafusion::physical_plan::ExecutionPlan;
+use datafusion::prelude::SessionConfig;
+use log::{debug, error, info, warn};
 use scorpio_core::error::BallistaError;
 use scorpio_core::execution_plans::ShuffleWriterExec;
 use scorpio_core::serde::protobuf::failed_task::FailedReason;
@@ -33,9 +36,6 @@ use scorpio_core::serde::protobuf::{
     job_status, task_status,
 };
 use scorpio_core::serde::scheduler::{ExecutorMetadata, PartitionLocation};
-use datafusion::physical_plan::ExecutionPlan;
-use datafusion::prelude::SessionConfig;
-use log::{debug, error, info, warn};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};

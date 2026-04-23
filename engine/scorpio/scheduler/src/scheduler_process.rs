@@ -28,6 +28,12 @@ use crate::scheduler_server::SchedulerServer;
 #[cfg(feature = "keda-scaler")]
 use crate::scheduler_server::externalscaler::external_scaler_server::ExternalScalerServer;
 use arrow_flight::flight_service_server::FlightServiceServer;
+use datafusion::DATAFUSION_VERSION;
+use datafusion_proto::logical_plan::AsLogicalPlan;
+use datafusion_proto::physical_plan::AsExecutionPlan;
+use datafusion_proto::protobuf::{LogicalPlanNode, PhysicalPlanNode};
+use http::StatusCode;
+use log::info;
 use scorpio_core::BALLISTA_VERSION;
 use scorpio_core::error::BallistaError;
 use scorpio_core::extension::BallistaConfigGrpcEndpoint;
@@ -35,12 +41,6 @@ use scorpio_core::serde::protobuf::scheduler_grpc_server::SchedulerGrpcServer;
 use scorpio_core::serde::{
     BallistaCodec, BallistaLogicalExtensionCodec, BallistaPhysicalExtensionCodec,
 };
-use datafusion::DATAFUSION_VERSION;
-use datafusion_proto::logical_plan::AsLogicalPlan;
-use datafusion_proto::physical_plan::AsExecutionPlan;
-use datafusion_proto::protobuf::{LogicalPlanNode, PhysicalPlanNode};
-use http::StatusCode;
-use log::info;
 use std::{net::SocketAddr, sync::Arc};
 use tonic::service::RoutesBuilder;
 /// Creates as initialized scheduler service

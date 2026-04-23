@@ -20,6 +20,13 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use datafusion::config::ConfigOptions;
+use datafusion::physical_optimizer::PhysicalOptimizerRule;
+use datafusion::physical_optimizer::enforce_sorting::EnforceSorting;
+use datafusion::physical_plan::coalesce_partitions::CoalescePartitionsExec;
+use datafusion::physical_plan::repartition::RepartitionExec;
+use datafusion::physical_plan::sorts::sort_preserving_merge::SortPreservingMergeExec;
+use datafusion::physical_plan::{ExecutionPlan, Partitioning, with_new_children_if_necessary};
 use scorpio_core::config::BallistaConfig;
 use scorpio_core::error::{BallistaError, Result};
 use scorpio_core::execution_plans::ShuffleWriter;
@@ -30,13 +37,6 @@ use scorpio_core::{
     },
     serde::scheduler::PartitionLocation,
 };
-use datafusion::config::ConfigOptions;
-use datafusion::physical_optimizer::PhysicalOptimizerRule;
-use datafusion::physical_optimizer::enforce_sorting::EnforceSorting;
-use datafusion::physical_plan::coalesce_partitions::CoalescePartitionsExec;
-use datafusion::physical_plan::repartition::RepartitionExec;
-use datafusion::physical_plan::sorts::sort_preserving_merge::SortPreservingMergeExec;
-use datafusion::physical_plan::{ExecutionPlan, Partitioning, with_new_children_if_necessary};
 
 use log::{debug, info};
 
@@ -373,9 +373,6 @@ fn create_shuffle_writer_with_config(
 mod test {
     use crate::planner::{DefaultDistributedPlanner, DistributedPlanner};
     use crate::test_utils::datafusion_test_context;
-    use scorpio_core::error::BallistaError;
-    use scorpio_core::execution_plans::{ShuffleWriterExec, UnresolvedShuffleExec};
-    use scorpio_core::serde::BallistaCodec;
     use datafusion::arrow::compute::SortOptions;
     use datafusion::execution::TaskContext;
     use datafusion::physical_expr::expressions::Column;
@@ -391,6 +388,9 @@ mod test {
     use datafusion_proto::physical_plan::AsExecutionPlan;
     use datafusion_proto::protobuf::LogicalPlanNode;
     use datafusion_proto::protobuf::PhysicalPlanNode;
+    use scorpio_core::error::BallistaError;
+    use scorpio_core::execution_plans::{ShuffleWriterExec, UnresolvedShuffleExec};
+    use scorpio_core::serde::BallistaCodec;
     use std::sync::Arc;
     use uuid::Uuid;
 

@@ -24,7 +24,6 @@ mod common;
 #[cfg(test)]
 #[cfg(feature = "standalone")]
 mod basic {
-    use scorpio::prelude::SessionContextExt;
     use datafusion::arrow;
     use datafusion::arrow::util::pretty::pretty_format_batches;
     use datafusion::common::Result;
@@ -32,6 +31,7 @@ mod basic {
     use datafusion::dataframe::DataFrameWriteOptions;
     use datafusion::prelude::ParquetReadOptions;
     use datafusion::prelude::SessionContext;
+    use scorpio::prelude::SessionContextExt;
     use std::fs::File;
     use std::io::Write;
     use tempfile::TempDir;

@@ -24,13 +24,13 @@ use std::sync::atomic::Ordering;
 use std::time::{Duration, Instant, UNIX_EPOCH};
 
 use arrow_flight::flight_service_server::FlightServiceServer;
-use scorpio_core::registry::BallistaFunctionRegistry;
 use datafusion::DATAFUSION_VERSION;
 use datafusion_proto::logical_plan::LogicalExtensionCodec;
 use datafusion_proto::physical_plan::PhysicalExtensionCodec;
 use futures::StreamExt;
 use futures::stream::FuturesUnordered;
 use log::{error, info, warn};
+use scorpio_core::registry::BallistaFunctionRegistry;
 use tempfile::TempDir;
 use tokio::fs::DirEntry;
 use tokio::signal;
@@ -707,10 +707,7 @@ pub(crate) fn is_subdirectory(path: &Path, base_path: &Path) -> bool {
 /// Returns `Ok(true)` if the directory or any of its contents have been
 /// modified within the TTL period, meaning it should be kept.
 /// Returns `Ok(false)` if the directory is older than the TTL and can be deleted.
-pub async fn satisfy_dir_ttl(
-    dir: DirEntry,
-    ttl_seconds: u64,
-) -> scorpio_core::error::Result<bool> {
+pub async fn satisfy_dir_ttl(dir: DirEntry, ttl_seconds: u64) -> scorpio_core::error::Result<bool> {
     let cutoff = get_time_before(ttl_seconds);
 
     let mut to_check = vec![dir];

@@ -22,6 +22,11 @@ use crate::execution_engine::ExecutionEngine;
 use crate::execution_engine::QueryStageExecutor;
 use crate::metrics::ExecutorMetricsCollector;
 use crate::metrics::LoggingMetricsCollector;
+use dashmap::DashMap;
+use datafusion::execution::context::TaskContext;
+use datafusion::execution::runtime_env::RuntimeEnv;
+use datafusion::prelude::SessionConfig;
+use futures::future::AbortHandle;
 use scorpio_core::ConfigProducer;
 use scorpio_core::RuntimeProducer;
 use scorpio_core::error::BallistaError;
@@ -29,11 +34,6 @@ use scorpio_core::registry::BallistaFunctionRegistry;
 use scorpio_core::serde::protobuf;
 use scorpio_core::serde::protobuf::ExecutorRegistration;
 use scorpio_core::serde::scheduler::PartitionId;
-use dashmap::DashMap;
-use datafusion::execution::context::TaskContext;
-use datafusion::execution::runtime_env::RuntimeEnv;
-use datafusion::prelude::SessionConfig;
-use futures::future::AbortHandle;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -229,15 +229,15 @@ impl Executor {
 mod test {
     use crate::execution_engine::{DefaultQueryStageExec, ShuffleWriterVariant};
     use crate::executor::Executor;
+    use datafusion::arrow::datatypes::{Schema, SchemaRef};
+    use datafusion::arrow::record_batch::RecordBatch;
+    use datafusion::error::{DataFusionError, Result};
+    use datafusion::execution::context::TaskContext;
     use scorpio_core::RuntimeProducer;
     use scorpio_core::execution_plans::ShuffleWriterExec;
     use scorpio_core::serde::protobuf::ExecutorRegistration;
     use scorpio_core::serde::scheduler::PartitionId;
     use scorpio_core::utils::default_config_producer;
-    use datafusion::arrow::datatypes::{Schema, SchemaRef};
-    use datafusion::arrow::record_batch::RecordBatch;
-    use datafusion::error::{DataFusionError, Result};
-    use datafusion::execution::context::TaskContext;
 
     use datafusion::physical_plan::{
         DisplayAs, DisplayFormatType, ExecutionPlan, Partitioning, PlanProperties,

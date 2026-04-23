@@ -19,8 +19,6 @@ use axum::{
     extract::{Path, State},
     response::{IntoResponse, Response},
 };
-use scorpio_core::BALLISTA_VERSION;
-use scorpio_core::serde::protobuf::job_status::Status;
 use datafusion::DATAFUSION_VERSION;
 use datafusion::physical_plan::metrics::{MetricValue, MetricsSet, Time};
 use datafusion_proto::logical_plan::AsLogicalPlan;
@@ -32,6 +30,8 @@ use graphviz_rust::{
     printer::PrinterContext,
 };
 use http::{StatusCode, header::CONTENT_TYPE};
+use scorpio_core::BALLISTA_VERSION;
+use scorpio_core::serde::protobuf::job_status::Status;
 use std::sync::Arc;
 use std::time::Duration;
 

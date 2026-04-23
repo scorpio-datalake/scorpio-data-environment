@@ -19,6 +19,12 @@ use crate::cluster::BallistaCluster;
 use crate::config::SchedulerConfig;
 use crate::metrics::default_metrics_collector;
 use crate::scheduler_server::SchedulerServer;
+use datafusion::DATAFUSION_VERSION;
+use datafusion::execution::SessionState;
+use datafusion::prelude::SessionConfig;
+use datafusion_proto::protobuf::LogicalPlanNode;
+use datafusion_proto::protobuf::PhysicalPlanNode;
+use log::info;
 use scorpio_core::ConfigProducer;
 use scorpio_core::extension::SessionConfigExt;
 use scorpio_core::serde::BallistaCodec;
@@ -28,12 +34,6 @@ use scorpio_core::utils::{
 use scorpio_core::{
     BALLISTA_VERSION, error::Result, serde::protobuf::scheduler_grpc_server::SchedulerGrpcServer,
 };
-use datafusion::DATAFUSION_VERSION;
-use datafusion::execution::SessionState;
-use datafusion::prelude::SessionConfig;
-use datafusion_proto::protobuf::LogicalPlanNode;
-use datafusion_proto::protobuf::PhysicalPlanNode;
-use log::info;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::net::TcpListener;

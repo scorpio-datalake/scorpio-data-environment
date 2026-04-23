@@ -23,20 +23,20 @@ use crate::state::execution_graph::{
 };
 use crate::state::executor_manager::ExecutorManager;
 
+use datafusion::prelude::SessionConfig;
+use rand::distr::Alphanumeric;
 use scorpio_core::JobStatusSubscriber;
 use scorpio_core::error::BallistaError;
 use scorpio_core::error::Result;
 use scorpio_core::extension::{SessionConfigExt, SessionConfigHelperExt};
-use datafusion::prelude::SessionConfig;
-use rand::distr::Alphanumeric;
 
 use crate::cluster::JobState;
+use dashmap::DashMap;
 use scorpio_core::serde::BallistaCodec;
 use scorpio_core::serde::protobuf::{
     JobStatus, MultiTaskDefinition, TaskDefinition, TaskId, TaskStatus, job_status,
 };
 use scorpio_core::serde::scheduler::ExecutorMetadata;
-use dashmap::DashMap;
 
 use crate::state::aqe::AdaptiveExecutionGraph;
 use datafusion::physical_plan::ExecutionPlan;

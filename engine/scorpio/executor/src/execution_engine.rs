@@ -22,14 +22,14 @@
 //! for creating query stage executors from physical plans.
 
 use async_trait::async_trait;
-use scorpio_core::execution_plans::ShuffleWriterExec;
-use scorpio_core::execution_plans::sort_shuffle::SortShuffleWriterExec;
-use scorpio_core::serde::protobuf::ShuffleWritePartition;
-use scorpio_core::utils;
 use datafusion::error::{DataFusionError, Result};
 use datafusion::execution::context::TaskContext;
 use datafusion::physical_plan::ExecutionPlan;
 use datafusion::physical_plan::metrics::MetricsSet;
+use scorpio_core::execution_plans::ShuffleWriterExec;
+use scorpio_core::execution_plans::sort_shuffle::SortShuffleWriterExec;
+use scorpio_core::serde::protobuf::ShuffleWritePartition;
+use scorpio_core::utils;
 use std::fmt::{Debug, Display};
 use std::sync::Arc;
 

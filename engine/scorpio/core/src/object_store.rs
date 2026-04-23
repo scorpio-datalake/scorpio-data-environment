@@ -517,8 +517,7 @@ mod tests {
 
     #[test]
     fn url_host_is_azure_detects_dfs_endpoint() {
-        let u =
-            Url::parse("https://acct.dfs.core.windows.net/container/path").unwrap();
+        let u = Url::parse("https://acct.dfs.core.windows.net/container/path").unwrap();
         assert!(CustomObjectStoreRegistry::url_host_is_azure_blob_or_dfs(&u));
     }
 

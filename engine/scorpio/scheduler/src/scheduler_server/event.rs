@@ -20,8 +20,8 @@ use std::fmt::{Debug, Formatter};
 use datafusion::logical_expr::LogicalPlan;
 
 use crate::state::execution_graph::RunningTaskInfo;
-use scorpio_core::{JobStatusSubscriber, serde::protobuf::TaskStatus};
 use datafusion::prelude::SessionContext;
+use scorpio_core::{JobStatusSubscriber, serde::protobuf::TaskStatus};
 use std::sync::Arc;
 
 /// Events that drive the query stage scheduler state machine.

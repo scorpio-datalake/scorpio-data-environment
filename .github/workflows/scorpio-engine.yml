@@ -1,4 +1,7 @@
-name: Scorpio engine (Rust)
+# Linux-only S3/MinIO integration for scorpio-core (uses docker run for MinIO — not a Docker
+# *build* of Scorpio images). Workspace fmt/clippy/test on Ubuntu/Windows/macOS:
+# see scorpio-engine-multi-os.yml.
+name: Scorpio engine (Rust) — MinIO S3 integration
 
 on:
   push:
@@ -15,7 +18,7 @@ defaults:
     working-directory: engine
 
 jobs:
-  rust:
+  minio-s3:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,16 +30,6 @@ jobs:
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: 1.91.1
-          components: rustfmt, clippy
-
-      - name: cargo fmt
-        run: cargo fmt --all -- --check
-
-      - name: cargo clippy
-        run: cargo clippy --workspace --locked --all-targets -- -D warnings
-
-      - name: cargo test
-        run: cargo test --workspace --locked
 
       - name: S3 / MinIO integration (scorpio-core)
         run: |

@@ -33,8 +33,6 @@
 //!   adaptive and to carry mutable state such as `is_final` and resolved
 //!   shuffle metadata.
 
-use scorpio_core::execution_plans::{stats_for_partition, stats_for_partitions};
-use scorpio_core::serde::scheduler::PartitionLocation;
 use datafusion::execution::{SendableRecordBatchStream, TaskContext};
 use datafusion::physical_plan::Statistics;
 use datafusion::{
@@ -46,6 +44,8 @@ use datafusion::{
 };
 use log::trace;
 use parking_lot::Mutex;
+use scorpio_core::execution_plans::{stats_for_partition, stats_for_partitions};
+use scorpio_core::serde::scheduler::PartitionLocation;
 use std::any::Any;
 use std::fmt::Formatter;
 use std::ops::Deref;

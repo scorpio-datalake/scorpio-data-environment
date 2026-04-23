@@ -17,13 +17,13 @@
 
 use crate::state::aqe::execution_plan::{AdaptiveDatafusionExec, ExchangeExec};
 use crate::state::aqe::planner::AdaptiveStageInfo;
-use scorpio_core::execution_plans::{ShuffleReaderExec, ShuffleWriterExec};
 use datafusion::common::exec_err;
 use datafusion::error::DataFusionError;
 use datafusion::{
     common::tree_node::{Transformed, TreeNode},
     physical_plan::ExecutionPlan,
 };
+use scorpio_core::execution_plans::{ShuffleReaderExec, ShuffleWriterExec};
 use std::sync::Arc;
 
 #[derive(Debug, Clone, Default)]

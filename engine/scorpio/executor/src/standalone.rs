@@ -23,6 +23,8 @@
 use crate::metrics::LoggingMetricsCollector;
 use crate::{execution_loop, executor::Executor, flight_service::BallistaFlightService};
 use arrow_flight::flight_service_server::FlightServiceServer;
+use datafusion::execution::{SessionState, SessionStateBuilder};
+use log::info;
 use scorpio_core::extension::SessionConfigExt;
 use scorpio_core::registry::BallistaFunctionRegistry;
 use scorpio_core::utils::{GrpcServerConfig, default_config_producer};
@@ -35,8 +37,6 @@ use scorpio_core::{
     utils::create_grpc_server,
 };
 use scorpio_core::{ConfigProducer, RuntimeProducer};
-use datafusion::execution::{SessionState, SessionStateBuilder};
-use log::info;
 use std::sync::Arc;
 use tempfile::TempDir;
 use tokio::net::TcpListener;

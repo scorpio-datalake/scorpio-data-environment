@@ -71,6 +71,6 @@ Those scripts run every test named `smoke_*` in `scorpio-core`. If the package i
 
 ## 4. CI habit
 
-This repository runs **`cargo fmt`**, **`clippy`**, and **`cargo test --locked`** for `engine/` on push/PR via `.github/workflows/scorpio-engine.yml`. Mirror the same jobs on your **standalone** Scorpio engine fork once it exists.
+This repository runs **`cargo fmt`**, **`clippy`**, and **`cargo test --locked`** for `engine/` on push/PR via `.github/workflows/scorpio-engine-multi-os.yml` (Ubuntu, Windows, macOS). Linux MinIO/S3 integration uses `.github/workflows/scorpio-engine.yml`. Mirror the same jobs on your **standalone** Scorpio engine fork once it exists.
 
 DataFusion version alignment: [scorpio-engine-compatibility.md](scorpio-engine-compatibility.md).

@@ -17,11 +17,11 @@
 
 //! Ballista Rust executor binary.
 
+use clap::Parser;
 use scorpio_core::config::LogRotationPolicy;
 use scorpio_core::object_store::{runtime_env_with_s3_support, session_config_with_s3_support};
 use scorpio_executor::config::Config;
 use scorpio_executor::executor_process::{ExecutorProcessConfig, start_executor_process};
-use clap::Parser;
 use std::env;
 use std::sync::Arc;
 use tracing_subscriber::EnvFilter;

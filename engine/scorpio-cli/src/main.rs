@@ -18,10 +18,6 @@
 use std::path::Path;
 use std::{env, sync::Arc};
 
-use scorpio::{extension::SessionConfigExt, prelude::SessionContextExt};
-use scorpio_cli::{
-    SCORPIO_CLI_VERSION, exec, print_format::PrintFormat, print_options::PrintOptions,
-};
 use clap::Parser;
 use datafusion::{
     common::Result,
@@ -32,6 +28,10 @@ use datafusion_cli::{
     object_storage::instrumented::InstrumentedObjectStoreRegistry, print_options::MaxRows,
 };
 use mimalloc::MiMalloc;
+use scorpio::{extension::SessionConfigExt, prelude::SessionContextExt};
+use scorpio_cli::{
+    SCORPIO_CLI_VERSION, exec, print_format::PrintFormat, print_options::PrintOptions,
+};
 
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
@@ -163,11 +163,7 @@ pub async fn main() -> Result<()> {
             if let Some(p) = home {
                 let prefer = p.join(".scorpiorc");
                 let legacy = p.join(".ballistarc");
-                let home_rc = if prefer.exists() {
-                    prefer
-                } else {
-                    legacy
-                };
+                let home_rc = if prefer.exists() { prefer } else { legacy };
                 if home_rc.exists() {
                     files.push(home_rc.into_os_string().into_string().unwrap());
                 }

@@ -20,15 +20,15 @@ mod alter_stages;
 /// Tests if plan is going to be split to stages correctly
 mod plan_to_stages;
 
-use scorpio_core::serde::scheduler::{
-    ExecutorMetadata, ExecutorSpecification, PartitionId, PartitionLocation, PartitionStats,
-};
 use datafusion::arrow::array::{Int32Array, RecordBatch};
 use datafusion::arrow::datatypes::{DataType, Field, Schema, SchemaRef};
 use datafusion::catalog::TableProvider;
 use datafusion::datasource::MemTable;
 use datafusion::execution::SessionStateBuilder;
 use datafusion::prelude::{SessionConfig, SessionContext};
+use scorpio_core::serde::scheduler::{
+    ExecutorMetadata, ExecutorSpecification, PartitionId, PartitionLocation, PartitionStats,
+};
 use std::sync::Arc;
 
 pub(crate) fn mock_partitions_with_statistics() -> Vec<Vec<PartitionLocation>> {

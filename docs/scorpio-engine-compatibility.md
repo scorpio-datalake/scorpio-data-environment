@@ -34,7 +34,7 @@ This document is for **operators and contributors**. Public product copy should 
 ## Smoke and CI
 
 - **With `scorpio-core` in `[workspace].members`:** [scripts/run-smoke-sql.sh](../scripts/run-smoke-sql.sh) / [run-smoke-sql.ps1](../scripts/run-smoke-sql.ps1) run `cargo test -p scorpio-core smoke_`.
-- **Otherwise:** use **`cd engine && cargo test --workspace --locked`** as the SQL/engine smoke habit; CI runs the same in [`.github/workflows/scorpio-engine.yml`](../.github/workflows/scorpio-engine.yml).
+- **Otherwise:** use **`cd engine && cargo test --workspace --locked`** as the SQL/engine smoke habit; CI runs the same in [`.github/workflows/scorpio-engine-multi-os.yml`](../.github/workflows/scorpio-engine-multi-os.yml) (Ubuntu, Windows, macOS). Optional MinIO S3 integration: [`.github/workflows/scorpio-engine.yml`](../.github/workflows/scorpio-engine.yml).
 
 ## Related
 

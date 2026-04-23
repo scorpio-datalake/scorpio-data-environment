@@ -1,0 +1,68 @@
+# Cross-platform build and test for the Scorpio engine workspace (no Docker image builds,
+# no containerized services). For Linux-only S3/MinIO integration tests, see scorpio-engine.yml.
+name: Scorpio engine — multi-OS build & test
+
+on:
+  push:
+    paths:
+      - "engine/**"
+      - ".github/workflows/scorpio-engine-multi-os.yml"
+  pull_request:
+    paths:
+      - "engine/**"
+      - ".github/workflows/scorpio-engine-multi-os.yml"
+
+concurrency:
+  group: scorpio-engine-multi-os-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: engine
+
+jobs:
+  build-test:
+    name: ${{ matrix.os }} — fmt, clippy, test
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "27.x"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.91.1
+          components: rustfmt, clippy
+
+      - name: Show toolchain
+        run: |
+          rustc -Vv
+          cargo -Vv
+          protoc --version
+
+      - name: cargo fmt
+        run: cargo fmt --all -- --check
+
+      - name: cargo clippy
+        run: cargo clippy --workspace --locked --all-targets -- -D warnings
+
+      - name: cargo test
+        run: cargo test --workspace --locked
+        env:
+          # Stable CI: avoid incremental + large debug stacks on some Windows test crates.
+          CARGO_INCREMENTAL: "0"

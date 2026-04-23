@@ -33,8 +33,8 @@ use datafusion_proto::physical_plan::AsExecutionPlan;
 use crate::cluster::BallistaCluster;
 use crate::config::SchedulerConfig;
 use crate::metrics::SchedulerMetricsCollector;
-use scorpio_core::serde::scheduler::{ExecutorData, ExecutorMetadata};
 use log::{debug, error, warn};
+use scorpio_core::serde::scheduler::{ExecutorData, ExecutorMetadata};
 
 use crate::scheduler_server::event::QueryStageSchedulerEvent;
 use crate::scheduler_server::query_stage_scheduler::QueryStageScheduler;
@@ -409,11 +409,11 @@ pub fn timestamp_millis() -> u64 {
 mod test {
     use std::sync::Arc;
 
-    use scorpio_core::extension::SessionConfigExt;
-    use scorpio_core::serde::protobuf::job_status::Status;
     use datafusion::arrow::datatypes::{DataType, Field, Schema};
     use datafusion::functions_aggregate::sum::sum;
     use datafusion::logical_expr::{LogicalPlan, col};
+    use scorpio_core::extension::SessionConfigExt;
+    use scorpio_core::serde::protobuf::job_status::Status;
 
     use datafusion::prelude::SessionConfig;
     use datafusion::test_util::scan_empty_with_partitions;

@@ -27,10 +27,10 @@
 
 use crate::SessionBuilder;
 use crate::cluster::DistributionPolicy;
-use scorpio_core::extension::EndpointOverrideFn;
-use scorpio_core::{ConfigProducer, config::TaskSchedulingPolicy};
 use datafusion_proto::logical_plan::LogicalExtensionCodec;
 use datafusion_proto::physical_plan::PhysicalExtensionCodec;
+use scorpio_core::extension::EndpointOverrideFn;
+use scorpio_core::{ConfigProducer, config::TaskSchedulingPolicy};
 use std::fmt::Display;
 use std::sync::Arc;
 

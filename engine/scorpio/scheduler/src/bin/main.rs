@@ -17,13 +17,13 @@
 
 //! Ballista Rust scheduler binary.
 
+use clap::Parser;
 use scorpio_core::config::LogRotationPolicy;
 use scorpio_core::error::BallistaError;
 use scorpio_core::object_store::{session_config_with_s3_support, session_state_with_s3_support};
 use scorpio_scheduler::cluster::BallistaCluster;
 use scorpio_scheduler::config::{Config, SchedulerConfig};
 use scorpio_scheduler::scheduler_process::start_server;
-use clap::Parser;
 use std::sync::Arc;
 use std::{env, io};
 use tracing_subscriber::EnvFilter;

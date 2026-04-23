@@ -26,13 +26,13 @@ use tokio_util::io::ReaderStream;
 
 use arrow_flight::encode::FlightDataEncoderBuilder;
 use arrow_flight::error::FlightError;
+use datafusion::arrow::ipc::CompressionType;
 use scorpio_core::error::BallistaError;
 use scorpio_core::execution_plans::sort_shuffle::{
     get_index_path, is_sort_shuffle_output, stream_sort_shuffle_partition,
 };
 use scorpio_core::serde::decode_protobuf;
 use scorpio_core::serde::scheduler::Action as BallistaAction;
-use datafusion::arrow::ipc::CompressionType;
 
 use arrow_flight::{
     Action, ActionType, Criteria, Empty, FlightData, FlightDescriptor, FlightInfo,

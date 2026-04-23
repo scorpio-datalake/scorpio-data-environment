@@ -22,9 +22,6 @@ use crate::state::aqe::optimizer_rule::{
 };
 
 use crate::state::execution_stage::StageOutput;
-use scorpio_core::execution_plans::ShuffleWriterExec;
-use scorpio_core::extension::SessionConfigExt;
-use scorpio_core::serde::scheduler::PartitionLocation;
 use datafusion::common;
 use datafusion::common::{HashMap, exec_err};
 use datafusion::execution::{SessionState, SessionStateBuilder};
@@ -33,6 +30,9 @@ use datafusion::physical_plan::{ExecutionPlan, ExecutionPlanProperties, displaya
 use datafusion::physical_planner::DefaultPhysicalPlanner;
 use datafusion::prelude::SessionConfig;
 use log::{debug, warn};
+use scorpio_core::execution_plans::ShuffleWriterExec;
+use scorpio_core::extension::SessionConfigExt;
+use scorpio_core::serde::scheduler::PartitionLocation;
 use std::collections::HashSet;
 use std::fmt::{Debug, Formatter};
 use std::sync::Arc;

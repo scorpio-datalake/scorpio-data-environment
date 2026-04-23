@@ -16,6 +16,10 @@
 // under the License.
 
 use axum::extract::ConnectInfo;
+use datafusion_proto::logical_plan::AsLogicalPlan;
+use datafusion_proto::physical_plan::AsExecutionPlan;
+use futures::{Stream, StreamExt};
+use log::{debug, error, info, trace, warn};
 use scorpio_core::config::BALLISTA_JOB_NAME;
 use scorpio_core::error::{BallistaError, Result as BResult};
 use scorpio_core::extension::SessionConfigHelperExt;
@@ -32,10 +36,6 @@ use scorpio_core::serde::protobuf::{
     execute_query_result,
 };
 use scorpio_core::serde::scheduler::ExecutorMetadata;
-use datafusion_proto::logical_plan::AsLogicalPlan;
-use datafusion_proto::physical_plan::AsExecutionPlan;
-use futures::{Stream, StreamExt};
-use log::{debug, error, info, trace, warn};
 use std::net::SocketAddr;
 use std::pin::Pin;
 
@@ -50,9 +50,9 @@ use {
 use crate::cluster::{bind_task_bias, bind_task_round_robin};
 use crate::config::TaskDistributionPolicy;
 use crate::scheduler_server::event::QueryStageSchedulerEvent;
-use scorpio_core::serde::protobuf::get_job_status_result::FlightProxy;
 use datafusion::logical_expr::LogicalPlan;
 use datafusion::prelude::SessionContext;
+use scorpio_core::serde::protobuf::get_job_status_result::FlightProxy;
 use std::ops::Deref;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -655,10 +655,10 @@ mod test {
 
     #[cfg(feature = "substrait")]
     use {
-        scorpio_core::serde::protobuf::ExecuteQueryParams,
-        scorpio_core::serde::protobuf::execute_query_params::Query,
         datafusion::prelude::{SessionConfig, SessionContext},
         datafusion_substrait::serializer::serialize_bytes,
+        scorpio_core::serde::protobuf::ExecuteQueryParams,
+        scorpio_core::serde::protobuf::execute_query_params::Query,
     };
 
     use crate::config::SchedulerConfig;

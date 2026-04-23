@@ -24,20 +24,13 @@
 use datafusion::physical_plan::display::DisplayableExecutionPlan;
 
 use crate::state::execution_graph::ExecutionGraph;
-use crate::test_utils::{
-    test_aggregation_plan, test_join_plan, test_two_aggregations_plan,
-};
+use crate::test_utils::{test_aggregation_plan, test_join_plan, test_two_aggregations_plan};
 
 fn staged_plans_concat(graph: &impl ExecutionGraph) -> String {
     graph
         .stages()
         .values()
-        .map(|st| {
-            format!(
-                "{}",
-                DisplayableExecutionPlan::new(st.plan()).indent(false)
-            )
-        })
+        .map(|st| format!("{}", DisplayableExecutionPlan::new(st.plan()).indent(false)))
         .collect::<Vec<_>>()
         .join("\n")
 }

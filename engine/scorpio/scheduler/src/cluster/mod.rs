@@ -20,17 +20,15 @@ use crate::config::{SchedulerConfig, TaskDistributionPolicy};
 use crate::scheduler_server::SessionBuilder;
 use crate::state::execution_graph::{ExecutionGraphBox, TaskDescription, create_task_info};
 use crate::state::task_manager::JobInfoCache;
-use scorpio_core::error::Result;
-use scorpio_core::serde::protobuf::{
-    AvailableTaskSlots, ExecutorHeartbeat, JobStatus, job_status,
-};
-use scorpio_core::serde::scheduler::{ExecutorData, ExecutorMetadata, PartitionId};
-use scorpio_core::utils::{default_config_producer, default_session_builder};
-use scorpio_core::{ConfigProducer, JobStatusSubscriber};
 use datafusion::physical_plan::ExecutionPlan;
 use datafusion::prelude::{SessionConfig, SessionContext};
 use futures::Stream;
 use log::debug;
+use scorpio_core::error::Result;
+use scorpio_core::serde::protobuf::{AvailableTaskSlots, ExecutorHeartbeat, JobStatus, job_status};
+use scorpio_core::serde::scheduler::{ExecutorData, ExecutorMetadata, PartitionId};
+use scorpio_core::utils::{default_config_producer, default_session_builder};
+use scorpio_core::{ConfigProducer, JobStatusSubscriber};
 use std::collections::{HashMap, HashSet};
 use std::pin::Pin;
 use std::sync::Arc;

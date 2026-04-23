@@ -19,12 +19,12 @@ use std::env;
 use std::error::Error;
 use std::path::PathBuf;
 
+use datafusion::execution::{SessionState, SessionStateBuilder};
+use datafusion::prelude::{SessionConfig, SessionContext};
 use scorpio::prelude::{SessionConfigExt, SessionContextExt};
 use scorpio_core::serde::{BallistaCodec, protobuf::scheduler_grpc_client::SchedulerGrpcClient};
 use scorpio_core::{ConfigProducer, RuntimeProducer};
 use scorpio_scheduler::SessionBuilder;
-use datafusion::execution::{SessionState, SessionStateBuilder};
-use datafusion::prelude::{SessionConfig, SessionContext};
 
 /// Returns the parquet test data directory, which is by default
 /// stored in a git submodule rooted at

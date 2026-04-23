@@ -15,12 +15,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use scorpio_core::JobStatusSubscriber;
 use datafusion::common::tree_node::{Transformed, TreeNode, TreeNodeRecursion};
 use datafusion::datasource::listing::{ListingTable, ListingTableUrl};
 use datafusion::datasource::source_as_provider;
 use datafusion::error::DataFusionError;
 use datafusion::physical_plan::{ExecutionPlan, ExecutionPlanProperties};
+use scorpio_core::JobStatusSubscriber;
 use std::any::type_name;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -39,10 +39,6 @@ use crate::state::task_manager::{TaskLauncher, TaskManager};
 use crate::cluster::{BallistaCluster, BoundTask, ExecutorSlot};
 use crate::config::SchedulerConfig;
 use crate::state::execution_graph::TaskDescription;
-use scorpio_core::error::{BallistaError, Result};
-use scorpio_core::event_loop::EventSender;
-use scorpio_core::serde::BallistaCodec;
-use scorpio_core::serde::protobuf::TaskStatus;
 use datafusion::logical_expr::LogicalPlan;
 use datafusion::physical_plan::display::DisplayableExecutionPlan;
 use datafusion::physical_plan::empty::EmptyExec;
@@ -51,6 +47,10 @@ use datafusion_proto::logical_plan::AsLogicalPlan;
 use datafusion_proto::physical_plan::AsExecutionPlan;
 use log::{debug, error, info, warn};
 use prost::Message;
+use scorpio_core::error::{BallistaError, Result};
+use scorpio_core::event_loop::EventSender;
+use scorpio_core::serde::BallistaCodec;
+use scorpio_core::serde::protobuf::TaskStatus;
 
 mod aqe;
 mod distributed_explain;

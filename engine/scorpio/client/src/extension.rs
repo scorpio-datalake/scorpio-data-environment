@@ -15,9 +15,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use datafusion::{error::DataFusionError, execution::SessionState, prelude::SessionContext};
 pub use scorpio_core::extension::{SessionConfigExt, SessionStateExt};
 use scorpio_core::serde::protobuf::scheduler_grpc_client::SchedulerGrpcClient;
-use datafusion::{error::DataFusionError, execution::SessionState, prelude::SessionContext};
 use url::Url;
 
 const DEFAULT_SCHEDULER_PORT: u16 = 50050;

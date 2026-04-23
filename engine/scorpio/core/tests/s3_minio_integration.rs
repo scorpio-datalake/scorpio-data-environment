@@ -20,10 +20,10 @@
 //! Default `cargo test` does **not** run these (`#[ignore]`). CI runs them with `--ignored` after
 //! starting MinIO; locally, see [engine/README.md](../../../../README.md).
 
-use scorpio_core::object_store::{CustomObjectStoreRegistry, S3Options};
 use datafusion::execution::object_store::ObjectStoreRegistry;
 use object_store::path::Path;
 use object_store::{ObjectStoreExt, PutPayload};
+use scorpio_core::object_store::{CustomObjectStoreRegistry, S3Options};
 use url::Url;
 
 /// Bucket must exist (CI creates it with `mc mb`). Object key under that bucket.

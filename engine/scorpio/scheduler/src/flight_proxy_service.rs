@@ -202,9 +202,7 @@ async fn get_flight_client(
     }
 
     let connection = endpoint.connect().await.map_err(|e| {
-        BallistaError::GrpcConnectionError(format!(
-            "Error connecting to executor at {addr}: {e:?}"
-        ))
+        BallistaError::GrpcConnectionError(format!("Error connecting to executor at {addr}: {e:?}"))
     })?;
 
     let flight_client = FlightServiceClient::new(connection)

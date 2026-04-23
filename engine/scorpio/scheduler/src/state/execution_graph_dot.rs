@@ -18,9 +18,6 @@
 //! Utilities for producing dot diagrams from execution graphs
 
 use crate::state::execution_graph::ExecutionGraph;
-use scorpio_core::execution_plans::{
-    ShuffleReaderExec, ShuffleWriterExec, SortShuffleWriterExec, UnresolvedShuffleExec,
-};
 use datafusion::datasource::listing::PartitionedFile;
 use datafusion::datasource::memory::MemorySourceConfig;
 use datafusion::datasource::physical_plan::FileScanConfig;
@@ -40,6 +37,9 @@ use datafusion::physical_plan::union::UnionExec;
 use datafusion::physical_plan::{ExecutionPlan, Partitioning, PhysicalExpr};
 use log::debug;
 use object_store::path::Path;
+use scorpio_core::execution_plans::{
+    ShuffleReaderExec, ShuffleWriterExec, SortShuffleWriterExec, UnresolvedShuffleExec,
+};
 use std::collections::HashMap;
 use std::fmt::{self, Write};
 use std::sync::Arc;
@@ -410,11 +410,11 @@ mod tests {
     use crate::planner::DefaultDistributedPlanner;
     use crate::state::execution_graph::StaticExecutionGraph;
     use crate::state::execution_graph_dot::ExecutionGraphDot;
-    use scorpio_core::error::{BallistaError, Result};
-    use scorpio_core::extension::SessionConfigExt;
     use datafusion::arrow::datatypes::{DataType, Field, Schema};
     use datafusion::datasource::MemTable;
     use datafusion::prelude::{SessionConfig, SessionContext};
+    use scorpio_core::error::{BallistaError, Result};
+    use scorpio_core::extension::SessionConfigExt;
     use std::sync::Arc;
 
     #[tokio::test]

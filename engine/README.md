@@ -73,7 +73,7 @@ Cargo **reuses** `engine/target/` incrementally: after a first compile, a change
 
 Examples: `.\scripts\run-engine-tests.ps1 -p scorpio-scheduler`; `./scripts/run-engine-tests.sh --workspace` before a PR.
 
-**CI parity from `engine/`:** `cargo fmt-check`, `cargo clippy-ws`, then `cargo test-ws` (same steps as [`.github/workflows/scorpio-engine.yml`](../.github/workflows/scorpio-engine.yml), modulo the optional MinIO integration job).
+**CI parity from `engine/`:** `cargo fmt-check`, `cargo clippy-ws`, then `cargo test-ws`. GitHub Actions: [`.github/workflows/scorpio-engine-multi-os.yml`](../.github/workflows/scorpio-engine-multi-os.yml) runs those steps on **Ubuntu, Windows, and macOS** (no Docker). Optional **MinIO** S3 integration (Linux only, `docker run` for MinIO — not Scorpio image builds): [`.github/workflows/scorpio-engine.yml`](../.github/workflows/scorpio-engine.yml).
 
 **Object store / `register_store` tests** need `--features build-binary` on `scorpio-core` (the script: `-BuildBinary` / `--build-binary`). There is no separate Cargo alias for that pair; use the script or  
 `cargo test -p scorpio-core --features build-binary --locked`.
@@ -87,7 +87,7 @@ Examples: `.\scripts\run-engine-tests.ps1 -p scorpio-scheduler`; `./scripts/run-
 [MinIO](https://min.io/) is an **S3-compatible object store** used as a **local (or CI) stand-in for AWS S3**: same signing and bucket/object APIs, usually run in Docker on `localhost`. It is **not** a substitute for testing real IAM/IRSA, but it validates `CustomObjectStoreRegistry` + `object_store` against a real HTTP S3 endpoint.
 
 - **Default:** `cargo test --workspace` does **not** run the MinIO test (it is `#[ignore]` so laptops without Docker still pass).
-- **CI:** [`.github/workflows/scorpio-engine.yml`](../.github/workflows/scorpio-engine.yml) starts MinIO, creates bucket `scorpio-it`, then runs  
+- **CI:** [`.github/workflows/scorpio-engine.yml`](../.github/workflows/scorpio-engine.yml) (Linux only) starts MinIO, creates bucket `scorpio-it`, then runs  
   `cargo test -p scorpio-core --features build-binary --test s3_minio_integration -- --ignored`.
 - **Local (Docker required):** from `engine/`, start MinIO (example):
 

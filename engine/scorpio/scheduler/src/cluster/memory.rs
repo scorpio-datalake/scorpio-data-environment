@@ -21,22 +21,22 @@ use crate::cluster::{
 };
 use crate::state::execution_graph::ExecutionGraphBox;
 use async_trait::async_trait;
+use dashmap::DashMap;
+use datafusion::prelude::{SessionConfig, SessionContext};
 use scorpio_core::error::{BallistaError, Result};
 use scorpio_core::serde::protobuf::{
     AvailableTaskSlots, ExecutorHeartbeat, ExecutorStatus, FailedJob, QueuedJob, executor_status,
 };
 use scorpio_core::serde::scheduler::{ExecutorData, ExecutorMetadata};
 use scorpio_core::{ConfigProducer, JobStatusSubscriber};
-use dashmap::DashMap;
-use datafusion::prelude::{SessionConfig, SessionContext};
 use tokio::sync::mpsc::error::TrySendError;
 
 use crate::cluster::event::ClusterEventSender;
 use crate::scheduler_server::{SessionBuilder, timestamp_millis, timestamp_secs};
 use crate::state::session_manager::create_datafusion_context;
 use crate::state::task_manager::JobInfoCache;
-use scorpio_core::serde::protobuf::job_status::Status;
 use log::{error, warn};
+use scorpio_core::serde::protobuf::job_status::Status;
 use std::collections::{HashMap, HashSet};
 use std::ops::DerefMut;
 
@@ -508,12 +508,12 @@ mod test {
     use crate::cluster::test_util::{test_job_lifecycle, test_job_planning_failure};
     use crate::cluster::{ClusterState, ClusterStateEvent, JobState, JobStateEvent};
     use crate::test_utils::{test_aggregation_plan, test_join_plan, test_two_aggregations_plan};
+    use datafusion::prelude::SessionConfig;
+    use futures::StreamExt;
     use scorpio_core::error::Result;
     use scorpio_core::serde::protobuf::JobStatus;
     use scorpio_core::serde::scheduler::{ExecutorMetadata, ExecutorSpecification};
     use scorpio_core::utils::{default_config_producer, default_session_builder};
-    use datafusion::prelude::SessionConfig;
-    use futures::StreamExt;
     use tokio::sync::Barrier;
 
     #[tokio::test]

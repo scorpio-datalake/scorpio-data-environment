@@ -15,10 +15,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use datafusion::catalog::Session;
 use scorpio_core::JobStatusSubscriber;
 use scorpio_core::error::{BallistaError, Result};
 use scorpio_core::extension::SessionConfigExt;
-use datafusion::catalog::Session;
 use std::any::Any;
 use std::collections::HashMap;
 use std::future::Future;
@@ -35,13 +35,6 @@ use crate::scheduler_server::{SchedulerServer, timestamp_millis};
 use crate::state::executor_manager::ExecutorManager;
 use crate::state::task_manager::TaskLauncher;
 
-use scorpio_core::serde::protobuf::job_status::Status;
-use scorpio_core::serde::protobuf::{
-    FailedTask, JobStatus, MultiTaskDefinition, ShuffleWritePartition, SuccessfulTask, TaskId,
-    TaskStatus, task_status,
-};
-use scorpio_core::serde::scheduler::{ExecutorData, ExecutorMetadata, ExecutorSpecification};
-use scorpio_core::serde::{BallistaCodec, protobuf};
 use datafusion::arrow::datatypes::{DataType, Field, Schema, SchemaRef};
 use datafusion::common::DataFusionError;
 use datafusion::datasource::{TableProvider, TableType};
@@ -52,6 +45,13 @@ use datafusion::physical_plan::ExecutionPlan;
 use datafusion::physical_plan::display::DisplayableExecutionPlan;
 use datafusion::prelude::{CsvReadOptions, JoinType, col};
 use datafusion::test_util::scan_empty_with_partitions;
+use scorpio_core::serde::protobuf::job_status::Status;
+use scorpio_core::serde::protobuf::{
+    FailedTask, JobStatus, MultiTaskDefinition, ShuffleWritePartition, SuccessfulTask, TaskId,
+    TaskStatus, task_status,
+};
+use scorpio_core::serde::scheduler::{ExecutorData, ExecutorMetadata, ExecutorSpecification};
+use scorpio_core::serde::{BallistaCodec, protobuf};
 
 use crate::cluster::BallistaCluster;
 use crate::scheduler_server::event::QueryStageSchedulerEvent;
@@ -59,9 +59,9 @@ use crate::scheduler_server::event::QueryStageSchedulerEvent;
 use crate::state::execution_graph::{
     ExecutionGraph, ExecutionStage, StaticExecutionGraph, TaskDescription,
 };
-use scorpio_core::utils::{default_config_producer, default_session_builder};
 use datafusion_proto::protobuf::{LogicalPlanNode, PhysicalPlanNode};
 use parking_lot::Mutex;
+use scorpio_core::utils::{default_config_producer, default_session_builder};
 use tokio::sync::mpsc::{Receiver, Sender, channel};
 
 /// List of TPC-H benchmark table names.

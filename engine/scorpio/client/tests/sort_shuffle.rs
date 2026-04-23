@@ -28,17 +28,17 @@ mod common;
 #[cfg(test)]
 #[cfg(feature = "standalone")]
 mod sort_shuffle_tests {
+    use datafusion::arrow::util::pretty::pretty_format_batches;
+    use datafusion::common::Result;
+    use datafusion::execution::SessionStateBuilder;
+    use datafusion::prelude::{ParquetReadOptions, SessionConfig, SessionContext};
+    use rstest::rstest;
     use scorpio::prelude::{SessionConfigExt, SessionContextExt};
     use scorpio_core::config::{
         BALLISTA_ADAPTIVE_PLANNER_ENABLED, BALLISTA_SHUFFLE_READER_FORCE_REMOTE_READ,
         BALLISTA_SHUFFLE_READER_REMOTE_PREFER_FLIGHT, BALLISTA_SHUFFLE_SORT_BASED_BUFFER_SIZE,
         BALLISTA_SHUFFLE_SORT_BASED_ENABLED, BALLISTA_SHUFFLE_SORT_BASED_MEMORY_LIMIT,
     };
-    use datafusion::arrow::util::pretty::pretty_format_batches;
-    use datafusion::common::Result;
-    use datafusion::execution::SessionStateBuilder;
-    use datafusion::prelude::{ParquetReadOptions, SessionConfig, SessionContext};
-    use rstest::rstest;
     use std::collections::HashSet;
 
     /// Read mode for shuffle data

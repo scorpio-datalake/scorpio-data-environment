@@ -16,8 +16,8 @@
 // under the License.
 
 use crate::scheduler_server::SessionBuilder;
-use scorpio_core::error::Result;
 use datafusion::prelude::{SessionConfig, SessionContext};
+use scorpio_core::error::Result;
 
 use crate::cluster::JobState;
 use std::sync::Arc;

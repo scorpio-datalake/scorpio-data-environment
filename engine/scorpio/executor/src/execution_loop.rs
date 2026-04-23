@@ -25,6 +25,12 @@ use crate::cpu_bound_executor::DedicatedExecutor;
 use crate::executor::Executor;
 use crate::executor_process::remove_job_dir;
 use crate::{TaskExecutionTimes, as_task_status};
+use datafusion::execution::context::TaskContext;
+use datafusion::physical_plan::ExecutionPlan;
+use datafusion_proto::logical_plan::AsLogicalPlan;
+use datafusion_proto::physical_plan::AsExecutionPlan;
+use futures::FutureExt;
+use log::{debug, error, info, warn};
 use scorpio_core::error::BallistaError;
 use scorpio_core::extension::SessionConfigHelperExt;
 use scorpio_core::serde::BallistaCodec;
@@ -33,12 +39,6 @@ use scorpio_core::serde::protobuf::{
     scheduler_grpc_client::SchedulerGrpcClient,
 };
 use scorpio_core::serde::scheduler::{ExecutorSpecification, PartitionId};
-use datafusion::execution::context::TaskContext;
-use datafusion::physical_plan::ExecutionPlan;
-use datafusion_proto::logical_plan::AsLogicalPlan;
-use datafusion_proto::physical_plan::AsExecutionPlan;
-use futures::FutureExt;
-use log::{debug, error, info, warn};
 use std::any::Any;
 use std::convert::TryInto;
 use std::error::Error;

@@ -19,7 +19,6 @@ use std::collections::HashMap;
 use std::fmt::Write as _;
 use std::sync::Arc;
 
-use scorpio_core::error::Result;
 use datafusion::arrow::array::{ListArray, ListBuilder, StringBuilder};
 use datafusion::arrow::datatypes::{DataType, Field, Schema};
 use datafusion::common::{ScalarValue, UnnestOptions};
@@ -33,6 +32,7 @@ use datafusion::physical_plan::placeholder_row::PlaceholderRowExec;
 use datafusion::physical_plan::projection::ProjectionExec;
 use datafusion::physical_plan::unnest::{ListUnnest, UnnestExec};
 use datafusion::prelude::SessionContext;
+use scorpio_core::error::Result;
 
 use crate::state::execution_graph::ExecutionStage;
 use crate::{

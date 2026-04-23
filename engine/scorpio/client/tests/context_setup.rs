@@ -19,12 +19,12 @@ mod common;
 
 #[cfg(test)]
 mod remote {
-    use scorpio::prelude::{SessionConfigExt, SessionContextExt};
     use datafusion::{
         assert_batches_eq,
         execution::SessionStateBuilder,
         prelude::{SessionConfig, SessionContext},
     };
+    use scorpio::prelude::{SessionConfigExt, SessionContextExt};
 
     #[tokio::test]
     async fn should_execute_sql_show_with_custom_state() -> datafusion::error::Result<()> {
@@ -104,8 +104,6 @@ mod standalone {
 
     use std::sync::{Arc, atomic::AtomicBool};
 
-    use scorpio::extension::{SessionConfigExt, SessionContextExt};
-    use scorpio_core::serde::BallistaPhysicalExtensionCodec;
     use datafusion::{
         assert_batches_eq,
         common::exec_err,
@@ -117,6 +115,8 @@ mod standalone {
     use datafusion_proto::{
         logical_plan::LogicalExtensionCodec, physical_plan::PhysicalExtensionCodec,
     };
+    use scorpio::extension::{SessionConfigExt, SessionContextExt};
+    use scorpio_core::serde::BallistaPhysicalExtensionCodec;
 
     #[tokio::test]
     async fn should_execute_sql_set_configs() -> datafusion::error::Result<()> {

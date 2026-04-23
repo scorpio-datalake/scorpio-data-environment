@@ -19,11 +19,11 @@
 //! [`datafusion::physical_plan::display`] for examples of how to
 //! format
 
-use scorpio_core::utils::collect_plan_metrics;
 use datafusion::logical_expr::{StringifiedPlan, ToStringifiedPlan};
 use datafusion::physical_plan::metrics::MetricsSet;
 use datafusion::physical_plan::{DisplayFormatType, ExecutionPlan, ExecutionPlanVisitor, accept};
 use log::{error, info};
+use scorpio_core::utils::collect_plan_metrics;
 use std::fmt;
 
 /// Prints the physical plan for a completed stage with its aggregated metrics.

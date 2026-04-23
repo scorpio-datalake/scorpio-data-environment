@@ -17,10 +17,10 @@
 
 use std::time::Duration;
 
+use log::trace;
 use scorpio_core::error::BallistaError;
 use scorpio_core::error::Result;
 use scorpio_core::serde::protobuf;
-use log::trace;
 
 use crate::cluster::{BoundTask, ClusterState, ExecutorSlot};
 use crate::config::SchedulerConfig;

@@ -19,8 +19,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
-use scorpio_core::serde::protobuf::{FailedJob, JobStatus};
 use log::{error, info, trace, warn};
+use scorpio_core::serde::protobuf::{FailedJob, JobStatus};
 
 use scorpio_core::error::{BallistaError, Result};
 use scorpio_core::event_loop::{EventAction, EventSender};
@@ -363,12 +363,12 @@ impl<T: 'static + AsLogicalPlan, U: 'static + AsExecutionPlan> EventAction<Query
 mod tests {
     use crate::config::SchedulerConfig;
     use crate::test_utils::{SchedulerTest, TestMetricsCollector, await_condition};
-    use scorpio_core::config::TaskSchedulingPolicy;
-    use scorpio_core::error::Result;
     use datafusion::arrow::datatypes::{DataType, Field, Schema};
     use datafusion::functions_aggregate::sum::sum;
     use datafusion::logical_expr::{LogicalPlan, col};
     use datafusion::test_util::scan_empty_with_partitions;
+    use scorpio_core::config::TaskSchedulingPolicy;
+    use scorpio_core::error::Result;
     use std::sync::Arc;
     use std::time::Duration;
 

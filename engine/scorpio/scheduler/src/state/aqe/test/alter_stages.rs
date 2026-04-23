@@ -18,9 +18,6 @@
 use crate::assert_plan;
 use crate::state::aqe::planner::AdaptivePlanner;
 use crate::state::aqe::test::{mock_batch, mock_context, mock_partitions_with_statistics_no_data};
-use scorpio_core::serde::scheduler::{
-    ExecutorMetadata, ExecutorSpecification, PartitionId, PartitionLocation, PartitionStats,
-};
 use datafusion::arrow::datatypes::{DataType, Field, Schema};
 use datafusion::common::stats::Precision;
 use datafusion::common::{ColumnStatistics, DataFusionError, Statistics};
@@ -32,6 +29,9 @@ use datafusion::physical_plan::joins::CrossJoinExec;
 use datafusion::physical_plan::repartition::RepartitionExec;
 use datafusion::physical_plan::test::exec::StatisticsExec;
 use datafusion::physical_plan::{DisplayAs, DisplayFormatType, ExecutionPlan, PlanProperties};
+use scorpio_core::serde::scheduler::{
+    ExecutorMetadata, ExecutorSpecification, PartitionId, PartitionLocation, PartitionStats,
+};
 use std::any::Any;
 use std::collections::HashSet;
 use std::fmt::Formatter;
