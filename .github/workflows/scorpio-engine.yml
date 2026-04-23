@@ -44,8 +44,9 @@ jobs:
             fi
             sleep 1
           done
-          docker run --rm --network host quay.io/minio/mc \
-            sh -c "mc --quiet alias set sc http://127.0.0.1:9000 minioadmin minioadmin && mc mb -p sc/scorpio-it"
+          # mc image ENTRYPOINT is `mc`; use a shell so `alias set` and `mb` run in one container.
+          docker run --rm --network host --entrypoint /bin/sh quay.io/minio/mc -c \
+            "mc --quiet alias set sc http://127.0.0.1:9000 minioadmin minioadmin && mc mb -p sc/scorpio-it"
           cargo test -p scorpio-core --features build-binary --test s3_minio_integration --locked -- --ignored --nocapture
         env:
           AWS_ACCESS_KEY_ID: minioadmin

@@ -95,8 +95,8 @@ Examples: `.\scripts\run-engine-tests.ps1 -p scorpio-scheduler`; `./scripts/run-
   docker run -d --name scorpio-minio -p 9000:9000 \
     -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin \
     quay.io/minio/minio server /data
-  docker run --rm --network host quay.io/minio/mc \
-    sh -c "mc alias set sc http://127.0.0.1:9000 minioadmin minioadmin && mc mb -p sc/scorpio-it"
+  docker run --rm --network host --entrypoint /bin/sh quay.io/minio/mc -c \
+    "mc alias set sc http://127.0.0.1:9000 minioadmin minioadmin && mc mb -p sc/scorpio-it"
   export AWS_ACCESS_KEY_ID=minioadmin AWS_SECRET_ACCESS_KEY=minioadmin AWS_DEFAULT_REGION=us-east-1
   export AWS_ENDPOINT_URL_S3=http://127.0.0.1:9000 AWS_ALLOW_HTTP=true AWS_EC2_METADATA_DISABLED=true
   cargo test -p scorpio-core --features build-binary --test s3_minio_integration --locked -- --ignored --nocapture
