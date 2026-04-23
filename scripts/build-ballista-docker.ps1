@@ -4,10 +4,10 @@
   Build Scorpio scheduler and executor Docker images (Ballista-derived; name kept for planning).
 
 .DESCRIPTION
-  Uses deploy/docker-compose/docker-compose.scorpio-engine.yml with build context SCORPIO_ENGINE_ROOT
-  (the directory that contains engine Cargo.toml). Defaults SCORPIO_ENGINE_ROOT to <repo>/engine.
+  Defaults to deploy/docker-compose/docker-compose.scorpio-stack.yml (override with env COMPOSE_FILE).
+  Engine build uses SCORPIO_ENGINE_ROOT (directory with Cargo.toml); default <repo>/engine.
 
-  Prerequisites: Docker Desktop (or Docker Engine) with Compose v2, first-build network access to crates.io.
+  Prerequisites: Docker Compose v2.20+ (include:), BuildKit, network for first Rust build.
 
 .PARAMETER EngineRoot
   Override engine workspace path (same as env SCORPIO_ENGINE_ROOT).
@@ -31,9 +31,14 @@ if (-not (Test-Path -LiteralPath $cargoToml)) {
     Write-Error "SCORPIO_ENGINE_ROOT must be the engine workspace (Cargo.toml not found): $engine"
 }
 
-$composeFile = Join-Path $RepoRoot 'deploy\docker-compose\docker-compose.scorpio-engine.yml'
+$stackFile = Join-Path $RepoRoot 'deploy\docker-compose\docker-compose.scorpio-stack.yml'
+$engineFile = Join-Path $RepoRoot 'deploy\docker-compose\docker-compose.scorpio-engine.yml'
+$composeFile = if ($env:COMPOSE_FILE) { $env:COMPOSE_FILE } else { $stackFile }
 if (-not (Test-Path -LiteralPath $composeFile)) {
     Write-Error "Compose file missing: $composeFile"
+}
+if (($composeFile -eq $stackFile) -and -not (Test-Path -LiteralPath $engineFile)) {
+    Write-Error "Stack includes missing file: $engineFile"
 }
 
 $env:DOCKER_BUILDKIT = '1'

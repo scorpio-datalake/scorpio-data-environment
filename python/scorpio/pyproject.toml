@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scorpio"
+version = "0.0.0"
+description = "Scorpio Python client (gRPC client stub; Epic 1+)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "grpcio>=1.60,<2",
+  "protobuf>=4.25,<6",
+  "pyarrow>=14,<21",
+  "pandas>=2,<3",
+  "typing-extensions>=4.8",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "grpcio-tools>=1.60,<2"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

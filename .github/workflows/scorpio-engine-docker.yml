@@ -1,0 +1,52 @@
+# Build scheduler + executor images the same way contributors/operators run locally:
+# scripts/build-ballista-docker.* with default SCORPIO_ENGINE_ROOT = <repo>/engine.
+name: Scorpio engine — Docker images
+
+on:
+  push:
+    paths:
+      - "engine/**"
+      - "python/**"
+      - "notebooks/**"
+      - "deploy/docker-compose/**"
+      - "docs/deployment.md"
+      - "license-and-notice.txt"
+      - "scripts/build-ballista-docker.sh"
+      - "scripts/build-ballista-docker.ps1"
+      - "scripts/docker-compose-up.sh"
+      - "scripts/docker-compose-up.ps1"
+      - ".github/workflows/scorpio-engine-docker.yml"
+  pull_request:
+    paths:
+      - "engine/**"
+      - "python/**"
+      - "notebooks/**"
+      - "deploy/docker-compose/**"
+      - "docs/deployment.md"
+      - "license-and-notice.txt"
+      - "scripts/build-ballista-docker.sh"
+      - "scripts/build-ballista-docker.ps1"
+      - "scripts/docker-compose-up.sh"
+      - "scripts/docker-compose-up.ps1"
+      - ".github/workflows/scorpio-engine-docker.yml"
+
+concurrency:
+  group: scorpio-engine-docker-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  docker-build:
+    name: Linux — docker compose build (stack)
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build images via repo script
+        run: bash scripts/build-ballista-docker.sh
+        env:
+          DOCKER_BUILDKIT: "1"

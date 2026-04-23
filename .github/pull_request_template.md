@@ -6,7 +6,12 @@
 
 CI runs `cargo fmt`, `clippy`, and `cargo test --workspace --locked` on Ubuntu, Windows, and macOS (`.github/workflows/scorpio-engine-multi-os.yml`). That does **not** replace updating the suites your change can break.
 
-Please check **one**:
+## Tests — Python (`python/`)
+
+- [ ] **No Python behavior change** — packaging only, deps, or docs.
+- [ ] **Python behavior changed** — I **added or updated `pytest`** (or equivalent) in this PR for the code I touched.
+
+Please check **one** (engine):
 
 - [ ] **No engine behavior change** — docs, workflow-only, comments, or refactors that preserve semantics.
 - [ ] **Engine behavior changed** — I **added or updated automated tests in this PR** for the areas I touched (same PR, not a follow-up ticket). Examples:

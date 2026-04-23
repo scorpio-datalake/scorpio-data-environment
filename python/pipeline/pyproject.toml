@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scorpio-pipeline"
+version = "0.0.0"
+description = "Scorpio pipeline / ETL helpers (stub; see Planning/Phase1)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "scorpio",
+  "pandas>=2,<3",
+  "pyarrow>=14,<21",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,34 @@
+# MVP stack: engine + slim Python runtime + API/Web stubs (Epic 7/8 replace stubs).
+# Requires Docker Compose v2.20+ (`include:`). Set SCORPIO_ENGINE_ROOT (see .env.example).
+# Repo root: docker compose -f deploy/docker-compose/docker-compose.scorpio-stack.yml up --build
+
+include:
+  - path: ./docker-compose.scorpio-engine.yml
+
+services:
+  python-runtime:
+    image: scorpio-python-runtime:local
+    build:
+      context: ../..
+      dockerfile: deploy/docker-compose/Dockerfile.python-runtime
+    depends_on:
+      - scheduler
+      - executor
+
+  api:
+    image: hashicorp/http-echo:0.2.3
+    command: ["-listen=:8080", "-text=scorpio-api-stub"]
+    ports:
+      - "8080:8080"
+    depends_on:
+      - scheduler
+
+  web:
+    image: scorpio-web:local
+    build:
+      context: .
+      dockerfile: Dockerfile.web-stub
+    ports:
+      - "8081:80"
+    depends_on:
+      - scheduler

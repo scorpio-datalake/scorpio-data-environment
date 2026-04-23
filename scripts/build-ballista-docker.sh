@@ -4,6 +4,7 @@
 #
 # SCORPIO_ENGINE_ROOT — absolute path to the engine workspace (directory containing Cargo.toml).
 # Default: <repo>/engine when unset (repo = parent of scripts/).
+# COMPOSE_FILE — optional override; default deploy/docker-compose/docker-compose.scorpio-stack.yml.
 
 set -euo pipefail
 
@@ -16,9 +17,15 @@ if [[ ! -f "${SCORPIO_ENGINE_ROOT}/Cargo.toml" ]]; then
   exit 1
 fi
 
-COMPOSE_FILE="${REPO_ROOT}/deploy/docker-compose/docker-compose.scorpio-engine.yml"
+STACK_FILE="${REPO_ROOT}/deploy/docker-compose/docker-compose.scorpio-stack.yml"
+ENGINE_FILE="${REPO_ROOT}/deploy/docker-compose/docker-compose.scorpio-engine.yml"
+COMPOSE_FILE="${COMPOSE_FILE:-${STACK_FILE}}"
 if [[ ! -f "${COMPOSE_FILE}" ]]; then
   echo "error: compose file missing: ${COMPOSE_FILE}" >&2
+  exit 1
+fi
+if [[ "${COMPOSE_FILE}" == "${STACK_FILE}" ]] && [[ ! -f "${ENGINE_FILE}" ]]; then
+  echo "error: stack includes missing file: ${ENGINE_FILE}" >&2
   exit 1
 fi
 

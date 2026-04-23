@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scorpio-web-stub
+  namespace: scorpio
+  labels:
+    app.kubernetes.io/name: scorpio-web-stub
+data:
+  index.html: |
+    <!doctype html><meta charset="utf-8"><title>Scorpio</title><p>web stub</p>
