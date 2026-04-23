@@ -46,4 +46,8 @@ mod flight_proxy_service;
 #[cfg(test)]
 pub mod test_utils;
 
+/// Distributed plan invariants (shuffle boundaries, multi-stage graphs) for regression tests.
+#[cfg(test)]
+mod distributed_plan_invariants_tests;
+
 pub use scheduler_server::SessionBuilder;

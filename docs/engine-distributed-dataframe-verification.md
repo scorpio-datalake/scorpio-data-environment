@@ -15,6 +15,11 @@ This document implements Epic 0 items **distributed DataFrame (engine)** and **e
 
 ## What we assert today (joins, aggregations, shuffle)
 
+0. **Unit tests (`scorpio-scheduler`)**  
+   - Module: `engine/scorpio/scheduler/src/distributed_plan_invariants_tests.rs` (compiled only under `cfg(test)`).  
+   - Builds the same synthetic graphs as `test_utils` (`test_aggregation_plan`, `test_join_plan`, `test_two_aggregations_plan`) and asserts **at least two stages** and presence of **shuffle-related** operators (`ShuffleWriterExec`, `SortShuffleWriterExec`, or `UnresolvedShuffleExec`) in staged physical plans.  
+   - Command (scoped): `cargo test -p scorpio-scheduler --locked distributed_plan_invariants` (from `engine/`); or full crate tests without the filter.
+
 1. **Integration (`scorpio` client, `standalone` feature)**  
    - File: `engine/scorpio/client/tests/context_checks.rs` (module `supported`).  
    - **Remote + standalone** parameterized tests (`#[case::standalone]`, `#[case::remote]`) run the same SQL against Parquet (`testdata/alltypes_plain.parquet`).  
