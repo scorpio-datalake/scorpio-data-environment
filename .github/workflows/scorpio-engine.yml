@@ -23,8 +23,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install protoc
-        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+      - name: Install protoc and well-known protos (substrait / prost-build)
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler libprotobuf-dev
 
       - name: Rust toolchain
         uses: dtolnay/rust-toolchain@master
@@ -49,6 +49,7 @@ jobs:
             "mc --quiet alias set sc http://127.0.0.1:9000 minioadmin minioadmin && mc mb -p sc/scorpio-it"
           cargo test -p scorpio-core --features build-binary --test s3_minio_integration --locked -- --ignored --nocapture
         env:
+          PROTOC_INCLUDE: /usr/include
           AWS_ACCESS_KEY_ID: minioadmin
           AWS_SECRET_ACCESS_KEY: minioadmin
           AWS_DEFAULT_REGION: us-east-1

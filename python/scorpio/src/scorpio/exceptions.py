@@ -40,3 +40,7 @@ class ScorpioSqlError(ScorpioCoordinatorError):
 
 class ScorpioNotImplementedError(ScorpioError):
     """Feature not available in this build or deployment (document upgrade path)."""
+
+
+class ScorpioPlanError(ScorpioError):
+    """Lazy DataFrame logical plan could not be compiled or executed (see docs/python-dataframe.md)."""

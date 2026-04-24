@@ -15,16 +15,18 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Scorpio Python client — session, catalog, and coordinator REST (Epic 1)."""
+"""Scorpio Python client — session, catalog, coordinator REST (Epic 1), lazy DataFrame (Epic 2)."""
 
 from scorpio.catalog import Catalog, TableHandle
 from scorpio.config import SessionConfig
+from scorpio.dataframe import AggExpr, DataFrame, JobHandle, read_csv, read_json, read_parquet
 from scorpio.exceptions import (
     ScorpioConfigError,
     ScorpioConnectionError,
     ScorpioCoordinatorError,
     ScorpioError,
     ScorpioNotImplementedError,
+    ScorpioPlanError,
     ScorpioSqlError,
 )
 from scorpio.session import Session, SessionBuilder
@@ -32,16 +34,23 @@ from scorpio.session import Session, SessionBuilder
 __version__ = "0.0.0"
 
 __all__ = [
+    "AggExpr",
     "Catalog",
+    "DataFrame",
+    "JobHandle",
     "Session",
     "SessionBuilder",
     "SessionConfig",
     "TableHandle",
+    "read_csv",
+    "read_json",
+    "read_parquet",
     "ScorpioConfigError",
     "ScorpioConnectionError",
     "ScorpioCoordinatorError",
     "ScorpioError",
     "ScorpioNotImplementedError",
+    "ScorpioPlanError",
     "ScorpioSqlError",
     "__version__",
 ]

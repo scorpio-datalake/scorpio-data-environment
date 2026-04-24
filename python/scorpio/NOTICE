@@ -1,0 +1,8 @@
+Scorpio Python client (`python/scorpio`)
+Copyright 2026 Scorpio contributors.
+
+Licensed under the Apache License, Version 2.0 (see LICENSE at the repository root).
+
+This package may be used with the Scorpio engine, which is derived from or
+related to Apache Ballista and Apache DataFusion. See the repository NOTICE
+file for upstream attribution.

@@ -26,6 +26,7 @@ The MVP `scorpio.catalog.Catalog` keeps **client-side** registrations (`register
 | `session.config()` | Redacted mapping for logging/tests. |
 | `session.version()` | Python package version plus optional `GET /v1/version` body. |
 | `session.verify_scheduler_reachable()` | gRPC channel readiness to `SCORPIO_SCHEDULER_HOST:SCORPIO_SCHEDULER_PORT` (TCP / protocol handshake only; RPC stubs live under `docs/grpc-codegen.md`). |
+| `session.run_dataframe(df)` | Run a lazy Epic 2 `scorpio.dataframe.DataFrame` (compiled SQL → same `sql()` path). |
 
 ## Coordinator REST contract (MVP)
 
@@ -56,7 +57,7 @@ All mutating coordinator calls send header **`X-Scorpio-Tenant-Id`** when `SCORP
 | `SCORPIO_HTTP_RETRY_BACKOFF_SEC` | Linear backoff multiplier between retries. | `0.4` |
 | `SCORPIO_INTEGRATION` | Set to `1` to enable optional `pytest` integration tests against a live stack. | unset |
 
-See also [docs/deployment.md](deployment.md) for Compose ports and image wiring.
+See also [docs/deployment.md](deployment.md) for Compose ports and image wiring, and [docs/python-dataframe.md](python-dataframe.md) for the Epic 2 lazy DataFrame API built on this session.
 
 ## Distributed SQL acceptance
 

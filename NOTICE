@@ -1,0 +1,25 @@
+Scorpio Data Environment
+Copyright 2026 Scorpio contributors.
+
+Licensed under the Apache License, Version 2.0 (see LICENSE in this repository).
+
+--------------------------------------------------------------------
+Third-party and upstream attribution
+--------------------------------------------------------------------
+
+The Scorpio Rust engine under the `engine/` directory is derived from or
+otherwise incorporates work from Apache Ballista and Apache DataFusion.
+Those projects are licensed under the Apache License, Version 2.0.
+Upstream references (not necessarily exact file-for-file in this fork):
+
+  * Apache DataFusion — https://github.com/apache/datafusion
+  * Apache DataFusion Ballista — https://github.com/apache/datafusion-ballista
+
+When distributing the engine, retain any LICENSE and NOTICE files shipped
+with that subtree and preserve required copyright and attribution notices
+as required by the Apache License 2.0.
+
+The Python packages under `python/` in this repository are Scorpio project
+code intended for use with the Scorpio engine and coordinator APIs; they are
+also licensed under Apache License, Version 2.0, unless a file header states
+otherwise.

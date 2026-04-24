@@ -267,6 +267,14 @@ class Session:
         resp = self._client.execute_sql_raw(self._session_id, query)
         return _table_from_coordinator_response(resp)
 
+    def run_dataframe(self, df: object) -> pa.Table:
+        """Execute a lazy :class:`scorpio.dataframe.DataFrame` (compiled to SQL via this session)."""
+        from scorpio.dataframe.frame import DataFrame
+
+        if not isinstance(df, DataFrame):
+            raise TypeError(f"run_dataframe expects scorpio.dataframe.DataFrame, got {type(df)!r}")
+        return df.collect(self)
+
     def stop(self) -> None:
         """Close remote session at coordinator (best-effort) and release client-side state."""
         if self._client and self._session_id and not self._stopped:

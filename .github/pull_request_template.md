@@ -9,7 +9,7 @@ CI runs `cargo fmt`, `clippy`, and `cargo test --workspace --locked` on Ubuntu, 
 ## Tests — Python (`python/`)
 
 - [ ] **No Python behavior change** — packaging only, deps, or docs.
-- [ ] **Python behavior changed** — I **added or updated `pytest`** (or equivalent) in this PR for the code I touched.
+- [ ] **Python behavior changed** — I **added or updated `pytest`** (or equivalent) in this PR for the code I touched (session / catalog / coordinator REST under `python/scorpio/src/scorpio/`, lazy DataFrame under `python/scorpio/src/scorpio/dataframe/`, etc.).
 
 Please check **one** (engine):
 
