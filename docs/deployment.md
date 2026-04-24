@@ -23,4 +23,4 @@ Build/up from repo root: `scripts/build-ballista-docker.sh` / `scripts/docker-co
 
 ## Python / notebooks
 
-Images install from `python/scorpio` and `python/pipeline`; see `python/README.md` and `docs/grpc-codegen.md`. Python **session** env vars and coordinator REST contract: `docs/python-session.md`. Lazy DataFrame: `docs/python-dataframe.md`.
+Images install **Scorpio's Python API** (`python/scorpio`) and `python/pipeline`; see `python/README.md` and `docs/grpc-codegen.md`. Session env vars and REST contract: `docs/python-session.md`. Lazy DataFrame: `docs/python-dataframe.md`.

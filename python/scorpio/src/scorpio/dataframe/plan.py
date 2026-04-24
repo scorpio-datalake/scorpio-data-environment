@@ -103,7 +103,7 @@ class Repartition:
 
 @dataclass(frozen=True)
 class Coalesce:
-    """Reduce partition count hint (documentation vs Spark/DataFusion semantics)."""
+    """Reduce partition count hint (see docs vs DataFusion/Ballista engine semantics)."""
 
     num_partitions: int
 

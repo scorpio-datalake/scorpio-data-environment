@@ -6,7 +6,7 @@
 
 CI runs `cargo fmt`, `clippy`, and `cargo test --workspace --locked` on Ubuntu, Windows, and macOS (`.github/workflows/scorpio-engine-multi-os.yml`). That does **not** replace updating the suites your change can break.
 
-## Tests — Python (`python/`)
+## Tests — Scorpio's Python API (`python/`, `scorpio-python-api`)
 
 - [ ] **No Python behavior change** — packaging only, deps, or docs.
 - [ ] **Python behavior changed** — I **added or updated `pytest`** (or equivalent) in this PR for the code I touched (session / catalog / coordinator REST under `python/scorpio/src/scorpio/`, lazy DataFrame under `python/scorpio/src/scorpio/dataframe/`, etc.).

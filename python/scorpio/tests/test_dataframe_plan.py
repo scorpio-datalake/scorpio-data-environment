@@ -15,9 +15,11 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import pyarrow as pa
 import pytest
 
 from scorpio import AggExpr, DataFrame
+from scorpio.dataframe.frame import _arrow_table_to_fixed_width_string
 from scorpio.dataframe.plan import LogicalPlan, SourceTable
 from scorpio.dataframe.sql import logical_plan_to_sql
 from scorpio.exceptions import ScorpioPlanError
@@ -71,3 +73,20 @@ def test_explain_contains_scan() -> None:
 def test_join_generates_on_clause() -> None:
     sql = DataFrame.from_table("orders").join("customers", "customer_id", how="inner").to_sql()
     assert "JOIN" in sql and "ON" in sql and "customer_id" in sql
+
+
+def test_arrow_table_format_header_and_rows() -> None:
+    tbl = pa.table({"a": [1, 2], "b": ["x", "y"]})
+    s = _arrow_table_to_fixed_width_string(tbl, 10)
+    assert "a" in s and "b" in s and "1" in s and "x" in s
+
+
+def test_arrow_table_format_truncation_footer() -> None:
+    tbl = pa.table({"n": list(range(5))})
+    s = _arrow_table_to_fixed_width_string(tbl, max_rows=2)
+    assert "more rows" in s
+
+
+def test_arrow_table_format_empty_schema() -> None:
+    tbl = pa.table({})
+    assert _arrow_table_to_fixed_width_string(tbl, 5) == "(empty schema)"

@@ -15,4 +15,4 @@ pip install -e python/pipeline
 
 Optional: `uv pip install -e python/scorpio -e python/pipeline`.
 
-Session / coordinator REST (Epic 1): [docs/python-session.md](../docs/python-session.md). Lazy DataFrame (Epic 2): [docs/python-dataframe.md](../docs/python-dataframe.md).
+**Scorpio's Python API** (`scorpio-python-api`): session + lazy DataFrame — [docs/python-session.md](../docs/python-session.md), [docs/python-dataframe.md](../docs/python-dataframe.md).

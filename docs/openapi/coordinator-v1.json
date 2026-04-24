@@ -1,0 +1,226 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Scorpio coordinator HTTP API (v1)",
+    "version": "1.0.0",
+    "description": "Contract for Scorpio's Python API (`scorpio-python-api`) and the Rust `scorpio` client when using coordinator REST (Epic 3 / Epic 8). Single source of truth for JSON job envelopes; SQL path remains MVP."
+  },
+  "paths": {
+    "/v1/sessions": {
+      "post": {
+        "summary": "Create session",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateSessionRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CreateSessionResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sessions/{session_id}/close": {
+      "post": {
+        "summary": "Close session",
+        "parameters": [
+          { "name": "session_id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "204": { "description": "Closed" } }
+      }
+    },
+    "/v1/sql": {
+      "post": {
+        "summary": "Execute SQL synchronously",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SqlRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Arrow IPC stream or JSON table",
+            "content": {
+              "application/vnd.apache.arrow.stream": { "schema": { "type": "string", "format": "binary" } },
+              "application/json": { "schema": { "$ref": "#/components/schemas/JsonTable" } }
+            }
+          }
+        }
+      }
+    },
+    "/v1/jobs": {
+      "post": {
+        "summary": "Submit async job (SQL snapshot)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SubmitJobRequest" }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SubmitJobResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/jobs/{job_id}": {
+      "get": {
+        "summary": "Job status",
+        "parameters": [
+          { "name": "job_id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "session_id", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/JobStatusResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/jobs/{job_id}/cancel": {
+      "post": {
+        "summary": "Cancel job",
+        "parameters": [
+          { "name": "job_id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CancelJobRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CancelJobResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/jobs/{job_id}/result": {
+      "get": {
+        "summary": "Paged job result (Arrow IPC stream for one page)",
+        "parameters": [
+          { "name": "job_id", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "session_id", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "minimum": 0, "default": 0 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "default": 65536 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Arrow IPC page",
+            "content": {
+              "application/vnd.apache.arrow.stream": { "schema": { "type": "string", "format": "binary" } }
+            }
+          },
+          "409": {
+            "description": "Job not complete",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorBody" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateSessionRequest": {
+        "type": "object",
+        "properties": { "tenant_id": { "type": "string", "nullable": true } }
+      },
+      "CreateSessionResponse": {
+        "type": "object",
+        "required": ["session_id"],
+        "properties": { "session_id": { "type": "string" } }
+      },
+      "SqlRequest": {
+        "type": "object",
+        "required": ["session_id", "sql"],
+        "properties": {
+          "session_id": { "type": "string" },
+          "sql": { "type": "string" },
+          "tenant_id": { "type": "string", "nullable": true }
+        }
+      },
+      "JsonTable": {
+        "type": "object",
+        "required": ["columns", "rows"],
+        "properties": {
+          "columns": { "type": "array", "items": { "type": "string" } },
+          "rows": { "type": "array", "items": { "type": "array" } }
+        }
+      },
+      "SubmitJobRequest": {
+        "type": "object",
+        "required": ["session_id", "sql"],
+        "properties": {
+          "session_id": { "type": "string" },
+          "sql": { "type": "string" },
+          "tenant_id": { "type": "string", "nullable": true }
+        }
+      },
+      "SubmitJobResponse": {
+        "type": "object",
+        "required": ["job_id", "status"],
+        "properties": {
+          "job_id": { "type": "string" },
+          "status": { "type": "string", "enum": ["QUEUED", "RUNNING", "SUCCEEDED", "FAILED", "CANCELLED"] }
+        }
+      },
+      "JobStatusResponse": {
+        "type": "object",
+        "required": ["job_id", "status"],
+        "properties": {
+          "job_id": { "type": "string" },
+          "session_id": { "type": "string" },
+          "status": { "type": "string" },
+          "error": { "type": "string", "nullable": true }
+        }
+      },
+      "CancelJobRequest": {
+        "type": "object",
+        "required": ["session_id"],
+        "properties": { "session_id": { "type": "string" } }
+      },
+      "CancelJobResponse": {
+        "type": "object",
+        "properties": { "ok": { "type": "boolean" }, "status": { "type": "string" } }
+      },
+      "ErrorBody": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" },
+          "code": { "type": "string" }
+        }
+      }
+    }
+  }
+}

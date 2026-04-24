@@ -1,3 +1,20 @@
+Metadata-Version: 2.4
+Name: scorpio
+Version: 0.0.0
+Summary: Scorpio's Python API (scorpio-python-api): thin coordinator client; session + lazy DataFrame over the Rust engine (Epic 1–2+)
+License-Expression: Apache-2.0
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: NOTICE
+Requires-Dist: grpcio<2,>=1.60
+Requires-Dist: protobuf<6,>=4.25
+Requires-Dist: pyarrow<21,>=14
+Requires-Dist: typing-extensions>=4.8
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: grpcio-tools<2,>=1.60; extra == "dev"
+Dynamic: license-file
+
 # Scorpio's Python API (`scorpio` package)
 
 Editable install: `pip install -e python/scorpio` (see [python/README.md](../README.md)).

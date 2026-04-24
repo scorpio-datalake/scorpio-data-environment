@@ -15,14 +15,17 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Read paths for lazy :class:`scorpio.dataframe.DataFrame` (Epic 0 object-store URIs supported as strings)."""
+"""Read paths for lazy :class:`scorpio.dataframe.DataFrame` via **Scorpio's Python API** (registers URIs for remote engine).
+
+Every path requires a :class:`scorpio.session.Session`; execution is always remote (Rust coordinator/engine).
+"""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from scorpio.dataframe.frame import DataFrame
-from scorpio.dataframe.plan import LogicalPlan, SourceScan, SourceTable
+from scorpio.dataframe.plan import LogicalPlan, SourceTable
 
 if TYPE_CHECKING:
     from scorpio.session import Session
@@ -48,16 +51,3 @@ def read_json(session: Session, path: str, *, table_name: str = "scorpio_df_json
     """Register a JSON path/URI on the session catalog (logical handle for engine-side scan)."""
     session.catalog.register_uri(table_name, path)
     return DataFrame(LogicalPlan(SourceTable(table_name)))
-
-
-def scan_parquet(path: str) -> DataFrame:
-    """Lazy scan without session registration (``collect`` requires register via session first)."""
-    return DataFrame(LogicalPlan(SourceScan(path, "parquet")))
-
-
-def scan_csv(path: str) -> DataFrame:
-    return DataFrame(LogicalPlan(SourceScan(path, "csv")))
-
-
-def scan_json(path: str) -> DataFrame:
-    return DataFrame(LogicalPlan(SourceScan(path, "json")))

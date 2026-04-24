@@ -15,13 +15,12 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Lazy partition-aware DataFrame (Epic 2) — composes with :class:`scorpio.session.Session`."""
+"""Lazy DataFrame for **Scorpio's Python API** — plan → SQL → remote :class:`scorpio.session.Session` (no local engine)."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal
 
-import pandas as pd
 import pyarrow as pa
 
 from scorpio.dataframe.job import JobHandle
@@ -49,12 +48,41 @@ if TYPE_CHECKING:
     from scorpio.session import Session
 
 
+def _arrow_table_to_fixed_width_string(tbl: pa.Table, max_rows: int) -> str:
+    """Pretty-print up to ``max_rows`` without pandas/polars (driver-side display only)."""
+    names = list(tbl.column_names)
+    n = min(max_rows, tbl.num_rows)
+    if tbl.num_columns == 0:
+        return "(empty schema)"
+    rows: list[list[str]] = []
+    for i in range(n):
+        row: list[str] = []
+        for j in range(tbl.num_columns):
+            v = tbl.column(j)[i].as_py()
+            row.append("" if v is None else str(v))
+        rows.append(row)
+    widths = [len(names[k]) for k in range(len(names))]
+    for r in rows:
+        for k, cell in enumerate(r):
+            widths[k] = max(widths[k], len(cell))
+
+    def fmt_row(cells: list[str]) -> str:
+        return "  ".join(cell.ljust(widths[k]) for k, cell in enumerate(cells))
+
+    sep = fmt_row(["-" * widths[k] for k in range(len(names))])
+    out = [fmt_row(names), sep]
+    out.extend(fmt_row(r) for r in rows)
+    if tbl.num_rows > max_rows:
+        out.append(f"... ({tbl.num_rows - max_rows} more rows)")
+    return "\n".join(out)
+
+
 def _extend(plan: LogicalPlan, *nodes: Transform) -> LogicalPlan:
     return LogicalPlan(plan.source, plan.transforms + nodes)
 
 
 class DataFrame:
-    """Lazy relational plan; use :meth:`collect` with :class:`~scorpio.session.Session` for execution."""
+    """Lazy relational plan for **Scorpio's Python API**; :meth:`collect` always uses remote ``Session.sql`` (no local engine)."""
 
     __slots__ = ("_plan",)
 
@@ -105,7 +133,7 @@ class DataFrame:
         return DataFrame(_extend(self._plan, Repartition(num_partitions=num_partitions)))
 
     def coalesce(self, num_partitions: int) -> DataFrame:
-        """Reduce partition-hint (see docs for semantics vs Spark ``coalesce`` / DataFusion)."""
+        """Reduce partition-hint (see ``docs/python-dataframe.md`` vs engine ``coalesce`` semantics)."""
         if num_partitions < 1:
             raise ValueError("num_partitions must be >= 1")
         return DataFrame(_extend(self._plan, Coalesce(num_partitions=num_partitions)))
@@ -140,13 +168,15 @@ class DataFrame:
         return "\n".join(lines)
 
     def collect(self, session: Session) -> pa.Table:
-        """Execute through coordinator REST using :meth:`scorpio.session.Session.sql`."""
+        """Execute through coordinator REST using :meth:`scorpio.session.Session.sql`.
+
+        Returns an **Apache Arrow** table (materialized result batches). The lazy
+        :class:`DataFrame` itself stays on the cluster until this action runs.
+        """
         return session.sql(self.to_sql())
 
-    def to_pandas(self, session: Session) -> pd.DataFrame:
-        return self.collect(session).to_pandas()
-
     def to_arrow(self, session: Session) -> pa.Table:
+        """Alias of :meth:`collect` — Scorpio materializes results as Arrow, not local pandas/polars."""
         return self.collect(session)
 
     def count(self, session: Session) -> int:
@@ -154,13 +184,13 @@ class DataFrame:
         return int(t.column(0)[0].as_py())
 
     def show(self, n: int = 20, *, session: Session) -> None:
-        """Print up to ``n`` rows (runs ``LIMIT`` via coordinator)."""
-        print(self.limit(n).collect(session).to_pandas().to_string(index=False)))  # noqa: T201
+        """Print up to ``n`` rows (``LIMIT`` via coordinator; Arrow → text on the driver, no pandas)."""
+        tbl = self.limit(n).collect(session)
+        print(_arrow_table_to_fixed_width_string(tbl, n))  # noqa: T201
 
     def submit(self, session: Session) -> JobHandle:
-        """Prepare job handle (Epic 3); executors invoked once coordinator fronts real jobs."""
-        _ = session  # reserved for tenancy / session context on submit
-        return JobHandle(job_id="epic3-placeholder", sql_text=self.to_sql())
+        """Submit compiled SQL as async job (``POST /v1/jobs`` — Epic 3)."""
+        return session.submit_sql(self.to_sql())
 
     def __repr__(self) -> str:
         head = "DataFrame"

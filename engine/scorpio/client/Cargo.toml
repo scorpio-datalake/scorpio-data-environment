@@ -45,6 +45,8 @@ ctor = { workspace = true }
 datafusion-proto = { workspace = true }
 env_logger = { workspace = true }
 rstest = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 tempfile = { workspace = true }
 tonic = { workspace = true }
 

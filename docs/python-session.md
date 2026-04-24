@@ -1,36 +1,35 @@
-# Scorpio Python session (Epic 1)
+# Scorpio's Python API — session (Epic 1)
 
-The `scorpio` package under `python/scorpio/` exposes a **session** entry point aligned with `Planning/Phase1.md` — Epic 1 (Python-native session) and the coordinator **REST shim** tracked for Epic 7/8 (Compose comments reference replacing `http-echo` stubs).
+The `scorpio` package under `python/scorpio/` is **Scorpio's Python API** (also referred to in code and HTTP headers as **`scorpio-python-api`**): a **thin client** over the **Rust** Scorpio coordinator/engine. It does **not** run queries or scans in Python; all SQL goes to the coordinator (`POST /v1/sql`) per Epic 8 REST contract (Compose may still use stubs until the real API ships).
 
 ## Product scope (lake, not Parquet-only)
 
-Epic 1 requires that the session and catalog story stay consistent with broader lake plans:
+The session and catalog story must stay consistent with broader lake plans:
 
 - [docs/data-sources-databases-sftp.md](data-sources-databases-sftp.md) — databases / SFTP (ELT vs federation vs custom `TableProvider`).
 - [docs/table-formats-metastore-scope.md](table-formats-metastore-scope.md) — Hive / Iceberg / Delta and metastore scope.
 
-The MVP `scorpio.catalog.Catalog` keeps **client-side** registrations (`register_parquet`, `register_uri`) so names and hooks do not contradict those documents; pushing catalog state to distributed engines is deferred to later epics.
+`scorpio.catalog.Catalog` holds **logical names and paths** used when building SQL for the remote engine; it is not a local execution catalog.
 
 ## Public API (overview)
 
 | Symbol | Role |
 |--------|------|
-| `Session.connect(...)` | Short constructor using env + optional overrides. |
+| `Session.connect(...)` | Short constructor using env + optional overrides (always coordinator-attached). |
 | `Session.builder()` / `SessionBuilder` | Fluent configuration. |
-| `Session.local(...)` | Catalog-only; `sql()` is unavailable (raises `ScorpioNotImplementedError`). |
-| `session.catalog` | `Catalog` instance (thread-safe in-process registry). |
+| `session.catalog` | Logical table registry (metadata for SQL generation; engine resolves paths and credentials). |
 | `session.sql(query)` | `POST /v1/sql` on coordinator; decodes **Arrow IPC stream** or JSON tabular payload to `pyarrow.Table`. |
 | `session.ping()` | `GET /` (or health) — returns `True` on HTTP 2xx. |
 | `session.start()` | Eager `POST /v1/sessions`. |
 | `session.stop()` | Best-effort `POST /v1/sessions/{id}/close`. |
 | `session.config()` | Redacted mapping for logging/tests. |
-| `session.version()` | Python package version plus optional `GET /v1/version` body. |
+| `session.version()` | `scorpio_python_api` package version plus optional `GET /v1/version` body. |
 | `session.verify_scheduler_reachable()` | gRPC channel readiness to `SCORPIO_SCHEDULER_HOST:SCORPIO_SCHEDULER_PORT` (TCP / protocol handshake only; RPC stubs live under `docs/grpc-codegen.md`). |
 | `session.run_dataframe(df)` | Run a lazy Epic 2 `scorpio.dataframe.DataFrame` (compiled SQL → same `sql()` path). |
 
 ## Coordinator REST contract (MVP)
 
-Until the real coordinator ships, the Compose stack may still use `hashicorp/http-echo` for port **8080** (`deploy/docker-compose/docker-compose.scorpio-stack.yml`). The Python client expects the following routes when you run against a real API:
+Until the real coordinator ships, the Compose stack may still use `hashicorp/http-echo` for port **8080** (`deploy/docker-compose/docker-compose.scorpio-stack.yml`). Scorpio's Python API expects the following routes when you run against a real API:
 
 | Method | Path | Notes |
 |--------|------|--------|
@@ -61,10 +60,10 @@ See also [docs/deployment.md](deployment.md) for Compose ports and image wiring,
 
 ## Distributed SQL acceptance
 
-Phase 1 acceptance calls for a Python **distributed** SQL path (executor participation). Today:
+Phase 1 acceptance calls for **Scorpio's Python API** to drive a **distributed** SQL path (executor participation). Today:
 
 - The **Rust** `scorpio` client exercises the full DataFusion / Ballista scheduler path (see `engine/README.md`).
-- The **Python** session implements the **coordinator HTTP contract** and Arrow/JSON decoding so a future API (Epic 8) can front the same engine without redesign.
+- **Python** implements the **coordinator HTTP contract** and Arrow/JSON decoding so a future API (Epic 8) can front the same engine without redesign.
 - Opt-in integration: run Compose with a coordinator implementing the routes above, export `SCORPIO_INTEGRATION=1`, and run `pytest` from `python/scorpio/` (see `tests/test_session_http_roundtrip.py` marker `integration`).
 
 ## Tests

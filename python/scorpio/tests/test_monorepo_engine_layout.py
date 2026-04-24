@@ -15,11 +15,22 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Lazy DataFrame (Epic 2) for **Scorpio's Python API** — SQL compilation + remote ``Session`` execution only."""
+"""Regression: monorepo contains Scorpio engine workspace (Epic 0) for CI checkout."""
 
-from scorpio.dataframe.frame import DataFrame
-from scorpio.dataframe.io import read_csv, read_json, read_parquet
-from scorpio.dataframe.job import JobHandle
-from scorpio.dataframe.plan import AggExpr
+from __future__ import annotations
 
-__all__ = ["AggExpr", "DataFrame", "JobHandle", "read_csv", "read_json", "read_parquet"]
+from pathlib import Path
+
+
+def _repo_root() -> Path:
+    return Path(__file__).resolve().parents[3]
+
+
+def test_engine_workspace_manifest_exists() -> None:
+    cargo = _repo_root() / "engine" / "Cargo.toml"
+    assert cargo.is_file(), "Epic 0 engine workspace expected at engine/Cargo.toml"
+
+
+def test_engine_scorpio_client_crate_exists() -> None:
+    lib = _repo_root() / "engine" / "scorpio" / "client" / "Cargo.toml"
+    assert lib.is_file(), "Rust scorpio client crate expected at engine/scorpio/client/Cargo.toml"

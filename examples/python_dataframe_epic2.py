@@ -16,7 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Epic 2 sample: lazy DataFrame → SQL → Session (requires live coordinator for collect)."""
+"""Epic 2 sample — Scorpio's Python API: lazy DataFrame → SQL → Session (requires live coordinator)."""
 
 from __future__ import annotations
 
@@ -39,8 +39,8 @@ def main() -> None:
     print(df.explain())  # noqa: T201
     print(df.to_sql())  # noqa: T201
     # Distributed execution (executor-backed) once coordinator implements /v1/sql:
-    # table = session.run_dataframe(df)
-    # print(table.to_pandas())
+    # table = session.run_dataframe(df)  # pyarrow.Table from cluster
+    # print(table.to_pylist())  # or iterate batches — no pandas in scorpio
 
 
 if __name__ == "__main__":

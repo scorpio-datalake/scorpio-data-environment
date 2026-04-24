@@ -4507,6 +4507,8 @@ dependencies = [
  "scorpio-core",
  "scorpio-executor",
  "scorpio-scheduler",
+ "serde",
+ "serde_json",
  "tempfile",
  "tokio",
  "tonic",

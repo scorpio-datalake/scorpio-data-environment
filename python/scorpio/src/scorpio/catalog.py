@@ -15,11 +15,11 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Client-side catalog metadata for Phase 1 MVP (registration is local until coordinator sync lands).
+"""Logical table names and paths attached to **Scorpio's Python API** ``Session`` for remote SQL.
 
-Lake scope (databases, SFTP, Hive / Iceberg / Delta) is documented in the monorepo; this module
-must stay consistent with those product paths—see ``docs/data-sources-databases-sftp.md`` and
-``docs/table-formats-metastore-scope.md`` in the repository root.
+Registrations are **metadata only in Python** (they become identifiers in SQL sent to the Rust
+coordinator/engine); they are not scans or compute in Python. Lake scope is documented in the
+monorepo — see ``docs/data-sources-databases-sftp.md`` and ``docs/table-formats-metastore-scope.md``.
 """
 
 from __future__ import annotations
@@ -39,11 +39,12 @@ class TableHandle:
 
 
 class Catalog:
-    """In-process table registry attached to a :class:`scorpio.session.Session`.
+    """Logical table registry attached to a :class:`scorpio.session.Session` (Scorpio's Python API).
 
-    Phase 1 keeps registration **client-side**; pushing catalog state to the distributed
-    coordinator/engine is deferred to later epics. Names and hooks intentionally align with a
-    future metastore / table-format story (Iceberg, Delta, Hive) without claiming support here.
+    Entries are **names and URIs used in generated SQL** for the remote Rust engine; Python does
+    not read datasets here. Pushing catalog state through coordinator APIs is deferred to later
+    epics. Names align with a future metastore / table-format story (Iceberg, Delta, Hive) without
+    claiming support here.
     """
 
     def __init__(self) -> None:
@@ -51,7 +52,7 @@ class Catalog:
         self._tables: dict[str, TableHandle] = {}
 
     def register_parquet(self, name: str, path: str) -> None:
-        """Register a Parquet dataset path under ``name`` (local metadata only in MVP)."""
+        """Register a Parquet path/URI under ``name`` for SQL sent to the remote engine."""
         with self._lock:
             self._tables[name] = TableHandle(name=name, kind="parquet", location=path)
 

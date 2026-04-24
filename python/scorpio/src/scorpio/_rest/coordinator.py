@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Minimal REST client for the future Scorpio coordinator (Epic 8 API contract, MVP)."""
+"""Minimal REST client for Scorpio's Python API (``scorpio-python-api``) → coordinator (Epic 8 contract, MVP)."""
 
 from __future__ import annotations
 
@@ -25,10 +25,11 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from typing import Any, Mapping, MutableMapping
-from urllib.parse import urljoin
+from urllib.parse import quote, urlencode, urljoin
 
 from scorpio.config import SessionConfig
-from scorpio.exceptions import ScorpioConnectionError, ScorpioCoordinatorError
+from scorpio.exceptions import ScorpioConnectionError, ScorpioCoordinatorError, ScorpioJobError
+from scorpio.python_api_meta import SCORPIO_PYTHON_API_ID
 
 
 @dataclass(frozen=True)
@@ -49,7 +50,9 @@ class CoordinatorClient:
         self._base = base
 
     def _headers(self, extra: Mapping[str, str] | None = None) -> dict[str, str]:
-        h: dict[str, str] = {"User-Agent": "scorpio-python/0.0.0"}
+        from scorpio import __version__ as _package_version
+
+        h: dict[str, str] = {"User-Agent": f"{SCORPIO_PYTHON_API_ID}/{_package_version}"}
         if self._config.auth_bearer_token:
             h["Authorization"] = f"Bearer {self._config.auth_bearer_token}"
         if self._config.tenant_id:
@@ -132,3 +135,74 @@ class CoordinatorClient:
             "/v1/sql",
             json_body={"session_id": session_id, "sql": sql, "tenant_id": self._config.tenant_id},
         )
+
+    def submit_job(self, session_id: str, sql: str) -> tuple[str, str]:
+        """POST ``/v1/jobs`` — returns ``(job_id, status)`` per OpenAPI ``SubmitJobResponse``."""
+        try:
+            resp = self.request(
+                "POST",
+                "/v1/jobs",
+                json_body={"session_id": session_id, "sql": sql, "tenant_id": self._config.tenant_id},
+            )
+        except ScorpioCoordinatorError as e:
+            if "HTTP 404" in str(e):
+                raise ScorpioJobError(
+                    "POST /v1/jobs not implemented on this coordinator (HTTP 404); "
+                    "use Session.sql() or DataFrame.collect() for synchronous SQL."
+                ) from e
+            raise
+        if resp.status not in (200, 201, 202):
+            raise ScorpioJobError(f"submit_job: HTTP {resp.status}: {resp.body[:512]!r}")
+        payload = json.loads(resp.body.decode("utf-8"))
+        job_id = payload.get("job_id")
+        status = payload.get("status", "UNKNOWN")
+        if not isinstance(job_id, str) or not job_id:
+            raise ScorpioJobError(f"submit_job: missing job_id in {payload!r}")
+        if not isinstance(status, str):
+            raise ScorpioJobError(f"submit_job: bad status in {payload!r}")
+        return job_id, status
+
+    def get_job_status_payload(self, session_id: str, job_id: str) -> dict[str, Any]:
+        """GET ``/v1/jobs/{job_id}?session_id=…`` — JSON ``JobStatusResponse``."""
+        safe_sid = quote(session_id, safe="")
+        safe_jid = quote(job_id, safe="")
+        path = f"/v1/jobs/{safe_jid}?session_id={safe_sid}"
+        resp = self.request("GET", path)
+        if resp.status != 200:
+            raise ScorpioJobError(f"get_job_status: HTTP {resp.status}: {resp.body[:512]!r}")
+        out = json.loads(resp.body.decode("utf-8"))
+        if not isinstance(out, dict):
+            raise ScorpioJobError(f"get_job_status: expected JSON object, got {type(out)}")
+        return out
+
+    def cancel_job(self, session_id: str, job_id: str) -> dict[str, Any]:
+        """POST ``/v1/jobs/{job_id}/cancel`` with JSON body ``{{\"session_id\"}}``."""
+        safe_jid = quote(job_id, safe="")
+        resp = self.request(
+            "POST",
+            f"/v1/jobs/{safe_jid}/cancel",
+            json_body={"session_id": session_id},
+        )
+        if resp.status not in (200, 204):
+            raise ScorpioJobError(f"cancel_job: HTTP {resp.status}: {resp.body[:512]!r}")
+        if resp.status == 204 or not resp.body.strip():
+            return {"ok": True, "status": "CANCELLED"}
+        out = json.loads(resp.body.decode("utf-8"))
+        if not isinstance(out, dict):
+            raise ScorpioJobError(f"cancel_job: expected JSON object, got {type(out)}")
+        return out
+
+    def fetch_job_result_page_raw(
+        self,
+        session_id: str,
+        job_id: str,
+        *,
+        offset: int = 0,
+        limit: int = 65_536,
+    ) -> HttpResponse:
+        """GET ``/v1/jobs/{job_id}/result`` — one Arrow IPC stream page (Epic 3 pagination)."""
+        if offset < 0 or limit < 1:
+            raise ValueError("offset must be >= 0 and limit >= 1")
+        safe_jid = quote(job_id, safe="")
+        q = urlencode({"session_id": session_id, "offset": offset, "limit": limit})
+        return self.request("GET", f"/v1/jobs/{safe_jid}/result?{q}")

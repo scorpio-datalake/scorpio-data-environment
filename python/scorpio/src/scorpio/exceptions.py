@@ -38,6 +38,10 @@ class ScorpioSqlError(ScorpioCoordinatorError):
     """SQL execution failed at the coordinator or downstream engine."""
 
 
+class ScorpioJobError(ScorpioCoordinatorError):
+    """Async job lifecycle error (submit/status/cancel/result) at the coordinator."""
+
+
 class ScorpioNotImplementedError(ScorpioError):
     """Feature not available in this build or deployment (document upgrade path)."""
 

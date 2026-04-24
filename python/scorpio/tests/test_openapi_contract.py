@@ -15,11 +15,29 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Lazy DataFrame (Epic 2) for **Scorpio's Python API** — SQL compilation + remote ``Session`` execution only."""
+"""Epic 3 — OpenAPI JSON contract is loadable and defines job + session paths."""
 
-from scorpio.dataframe.frame import DataFrame
-from scorpio.dataframe.io import read_csv, read_json, read_parquet
-from scorpio.dataframe.job import JobHandle
-from scorpio.dataframe.plan import AggExpr
+from __future__ import annotations
 
-__all__ = ["AggExpr", "DataFrame", "JobHandle", "read_csv", "read_json", "read_parquet"]
+import json
+from pathlib import Path
+
+
+def _repo_root() -> Path:
+    return Path(__file__).resolve().parents[3]
+
+
+def test_openapi_coordinator_v1_json_loads() -> None:
+    path = _repo_root() / "docs" / "openapi" / "coordinator-v1.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    assert data["openapi"].startswith("3.")
+    paths = data["paths"]
+    for key in (
+        "/v1/sessions",
+        "/v1/sql",
+        "/v1/jobs",
+        "/v1/jobs/{job_id}",
+        "/v1/jobs/{job_id}/cancel",
+        "/v1/jobs/{job_id}/result",
+    ):
+        assert key in paths, f"missing path {key}"

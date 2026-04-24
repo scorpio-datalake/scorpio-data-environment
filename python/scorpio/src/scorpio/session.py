@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Scorpio Python :class:`Session` — connect, catalog, SQL via coordinator REST (Epic 1)."""
+"""Scorpio's Python API — :class:`Session` over coordinator REST (thin wrapper; no local execution)."""
 
 from __future__ import annotations
 
@@ -32,7 +32,6 @@ from scorpio.exceptions import (
     ScorpioConfigError,
     ScorpioConnectionError,
     ScorpioCoordinatorError,
-    ScorpioNotImplementedError,
     ScorpioSqlError,
 )
 from scorpio._rest.coordinator import CoordinatorClient, HttpResponse
@@ -130,38 +129,32 @@ class SessionBuilder:
     def build(self) -> Session:
         if self._config is None:
             self._config = SessionConfig.from_env()
-        return Session._from_config(self._config, local_only=False)
+        return Session._from_config(self._config)
 
     def _ensure(self) -> None:
         if self._config is None:
-            self._config = SessionConfig()
+            self._config = SessionConfig.from_env()
 
 
 class Session:
-    """Connected Scorpio workspace: coordinator REST, optional gRPC reachability, catalog, SQL.
+    """Coordinator-attached workspace for **Scorpio's Python API** (REST → Rust engine).
 
-    Use :meth:`connect` for a short path, :class:`SessionBuilder` for full control, or
-    :meth:`local` for catalog-only work without a cluster.
+    All query execution goes through the coordinator ``/v1/sql`` path; there is **no** local
+    query engine in Python. Use :meth:`connect` or :class:`SessionBuilder`.
     """
 
-    def __init__(
-        self,
-        config: SessionConfig,
-        *,
-        local_only: bool,
-        client: CoordinatorClient | None,
-    ) -> None:
+    __slots__ = ("_config", "_client", "_session_id", "_stopped", "catalog")
+
+    def __init__(self, config: SessionConfig, *, client: CoordinatorClient) -> None:
         self._config = config
-        self._local_only = local_only
         self._client = client
         self._session_id: str | None = None
         self._stopped = False
         self.catalog = Catalog()
 
     @classmethod
-    def _from_config(cls, config: SessionConfig, *, local_only: bool) -> Session:
-        client = None if local_only else CoordinatorClient(config)
-        return cls(config, local_only=local_only, client=client)
+    def _from_config(cls, config: SessionConfig) -> Session:
+        return cls(config, client=CoordinatorClient(config))
 
     @classmethod
     def builder(cls) -> SessionBuilder:
@@ -180,15 +173,7 @@ class Session:
             cfg = replace(cfg, coordinator_url=coordinator_url)
         if tenant_id is not None:
             cfg = replace(cfg, tenant_id=tenant_id)
-        return cls._from_config(cfg, local_only=False)
-
-    @classmethod
-    def local(cls, *, tenant_id: str | None = None) -> Session:
-        """Catalog-only session (no coordinator); :meth:`sql` is not available."""
-        cfg = SessionConfig.from_env()
-        if tenant_id is not None:
-            cfg = replace(cfg, tenant_id=tenant_id)
-        return cls._from_config(cfg, local_only=True)
+        return cls._from_config(cfg)
 
     def config(self) -> Mapping[str, Any]:
         """Return a redacted view of session configuration (for logging and tests)."""
@@ -201,14 +186,13 @@ class Session:
             "request_timeout_sec": self._config.request_timeout_sec,
             "max_retries": self._config.max_retries,
             "has_auth_bearer": bool(self._config.auth_bearer_token),
-            "local_only": self._local_only,
         }
 
     def version(self) -> dict[str, str]:
-        """Client version and optional coordinator ``GET /v1/version`` body."""
+        """``scorpio-python-api`` package version and optional coordinator ``GET /v1/version`` body."""
         from scorpio import __version__ as ver
 
-        out: dict[str, str] = {"scorpio_python": ver}
+        out: dict[str, str] = {"scorpio_python_api": ver}
         if self._client and not self._stopped:
             try:
                 r = self._client.request("GET", "/v1/version")
@@ -220,8 +204,6 @@ class Session:
 
     def ping(self) -> bool:
         """Return True if coordinator responds with HTTP 2xx to ``GET /``."""
-        if self._local_only or self._client is None:
-            return True
         try:
             r = self._client.health_get("/")
             return 200 <= r.status < 300
@@ -245,27 +227,34 @@ class Session:
 
     def start(self) -> None:
         """Eagerly create remote session id at coordinator (``POST /v1/sessions``)."""
-        self._ensure_remote_sql()
-        assert self._client is not None
-        if self._session_id is None:
-            self._session_id = self._client.create_session()
+        self._ensure_session_id()
 
-    def sql(self, query: str) -> pa.Table:
-        """Run SQL through coordinator ``POST /v1/sql`` (distributed path when API is live)."""
+    def coordinator_session_id(self) -> str:
+        """Return coordinator ``session_id``, creating it via ``POST /v1/sessions`` if needed."""
+        return self._ensure_session_id()
+
+    def _ensure_session_id(self) -> str:
         if self._stopped:
             raise ScorpioSqlError("Session is stopped")
-        if self._local_only:
-            raise ScorpioNotImplementedError(
-                "Session.local() has no coordinator; use Session.connect() for SQL. "
-                "For engine-native distributed SQL today, use the Rust scorpio client "
-                "(see engine README) until the coordinator REST API is deployed (Epic 8)."
-            )
-        self._ensure_remote_sql()
-        assert self._client is not None
         if self._session_id is None:
             self._session_id = self._client.create_session()
-        resp = self._client.execute_sql_raw(self._session_id, query)
+        return self._session_id
+
+    def sql(self, query: str) -> pa.Table:
+        """Run SQL through coordinator ``POST /v1/sql`` (Rust Scorpio / DataFusion engine)."""
+        if self._stopped:
+            raise ScorpioSqlError("Session is stopped")
+        resp = self._client.execute_sql_raw(self._ensure_session_id(), query)
         return _table_from_coordinator_response(resp)
+
+    def submit_sql(self, sql: str) -> "JobHandle":
+        """Submit async job ``POST /v1/jobs`` (Epic 3); poll via :class:`scorpio.dataframe.job.JobHandle`."""
+        from scorpio.dataframe.job import JobHandle
+
+        if self._stopped:
+            raise ScorpioSqlError("Session is stopped")
+        job_id, _status = self._client.submit_job(self._ensure_session_id(), sql)
+        return JobHandle(job_id=job_id, sql_text=sql)
 
     def run_dataframe(self, df: object) -> pa.Table:
         """Execute a lazy :class:`scorpio.dataframe.DataFrame` (compiled to SQL via this session)."""
@@ -277,14 +266,10 @@ class Session:
 
     def stop(self) -> None:
         """Close remote session at coordinator (best-effort) and release client-side state."""
-        if self._client and self._session_id and not self._stopped:
+        if self._session_id and not self._stopped:
             try:
                 self._client.close_session(self._session_id)
             except ScorpioCoordinatorError:
                 logger.debug("stop: coordinator close_session failed", exc_info=True)
         self._session_id = None
         self._stopped = True
-
-    def _ensure_remote_sql(self) -> None:
-        if self._local_only or self._client is None:
-            raise ScorpioNotImplementedError("No coordinator client configured.")

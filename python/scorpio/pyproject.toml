@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "scorpio"
 version = "0.0.0"
-description = "Scorpio Python client — session, lazy DataFrame, coordinator REST (Epic 1–2+)"
+description = "Scorpio's Python API (scorpio-python-api): thin coordinator client; session + lazy DataFrame over the Rust engine (Epic 1–2+)"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
@@ -13,7 +13,6 @@ dependencies = [
   "grpcio>=1.60,<2",
   "protobuf>=4.25,<6",
   "pyarrow>=14,<21",
-  "pandas>=2,<3",
   "typing-extensions>=4.8",
 ]
 

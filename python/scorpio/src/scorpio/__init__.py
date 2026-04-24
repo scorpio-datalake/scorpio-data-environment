@@ -15,16 +15,18 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Scorpio Python client — session, catalog, coordinator REST (Epic 1), lazy DataFrame (Epic 2)."""
+"""**Scorpio's Python API** (`scorpio-python-api`): thin coordinator client over the Rust Scorpio engine."""
 
 from scorpio.catalog import Catalog, TableHandle
 from scorpio.config import SessionConfig
+from scorpio.python_api_meta import SCORPIO_PYTHON_API_ID
 from scorpio.dataframe import AggExpr, DataFrame, JobHandle, read_csv, read_json, read_parquet
 from scorpio.exceptions import (
     ScorpioConfigError,
     ScorpioConnectionError,
     ScorpioCoordinatorError,
     ScorpioError,
+    ScorpioJobError,
     ScorpioNotImplementedError,
     ScorpioPlanError,
     ScorpioSqlError,
@@ -49,8 +51,10 @@ __all__ = [
     "ScorpioConnectionError",
     "ScorpioCoordinatorError",
     "ScorpioError",
+    "ScorpioJobError",
     "ScorpioNotImplementedError",
     "ScorpioPlanError",
     "ScorpioSqlError",
+    "SCORPIO_PYTHON_API_ID",
     "__version__",
 ]

@@ -1,8 +1,8 @@
-Scorpio Python client (`python/scorpio`)
+Scorpio's Python API (`python/scorpio`, identifier `scorpio-python-api`)
 Copyright 2026 Scorpio contributors.
 
 Licensed under the Apache License, Version 2.0 (see LICENSE at the repository root).
 
-This package may be used with the Scorpio engine, which is derived from or
-related to Apache Ballista and Apache DataFusion. See the repository NOTICE
+This package is a thin client over the Scorpio Rust engine and may be used with coordinators
+derived from or related to Apache Ballista and Apache DataFusion. See the repository NOTICE
 file for upstream attribution.

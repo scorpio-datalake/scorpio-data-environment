@@ -15,11 +15,11 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Lazy DataFrame (Epic 2) for **Scorpio's Python API** — SQL compilation + remote ``Session`` execution only."""
+"""Stable identifiers for **Scorpio's Python API** (HTTP clients, support, logging).
 
-from scorpio.dataframe.frame import DataFrame
-from scorpio.dataframe.io import read_csv, read_json, read_parquet
-from scorpio.dataframe.job import JobHandle
-from scorpio.dataframe.plan import AggExpr
+This layer is a thin client over the Rust Scorpio coordinator/engine — it does not
+execute queries locally. Use ``scorpio-python-api`` as the product-facing client name
+(do not compare or label it as other vendors' Python products in docs or UX).
+"""
 
-__all__ = ["AggExpr", "DataFrame", "JobHandle", "read_csv", "read_json", "read_parquet"]
+SCORPIO_PYTHON_API_ID = "scorpio-python-api"
