@@ -84,15 +84,11 @@ mod remote {
             .collect()
             .await?;
 
-        let expected = [
-            "+-------------------+-------------------------+",
-            "| name              | value                   |",
-            "+-------------------+-------------------------+",
-            "| ballista.job.name | Super Cool Scorpio App |",
-            "+-------------------+-------------------------+",
-        ];
-
-        assert_batches_eq!(expected, &result);
+        crate::common::assert_one_row_two_strings(
+            &result,
+            "ballista.job.name",
+            "Super Cool Scorpio App",
+        );
 
         Ok(())
     }
@@ -105,7 +101,6 @@ mod standalone {
     use std::sync::{Arc, atomic::AtomicBool};
 
     use datafusion::{
-        assert_batches_eq,
         common::exec_err,
         execution::{SessionState, SessionStateBuilder, TaskContext, context::QueryPlanner},
         logical_expr::LogicalPlan,
@@ -137,15 +132,11 @@ mod standalone {
             .collect()
             .await?;
 
-        let expected = [
-            "+-------------------+-------------------------+",
-            "| name              | value                   |",
-            "+-------------------+-------------------------+",
-            "| ballista.job.name | Super Cool Scorpio App |",
-            "+-------------------+-------------------------+",
-        ];
-
-        assert_batches_eq!(expected, &result);
+        crate::common::assert_one_row_two_strings(
+            &result,
+            "ballista.job.name",
+            "Super Cool Scorpio App",
+        );
 
         Ok(())
     }

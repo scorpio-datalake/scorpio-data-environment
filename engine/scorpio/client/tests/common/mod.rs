@@ -19,12 +19,39 @@ use std::env;
 use std::error::Error;
 use std::path::PathBuf;
 
+use datafusion::arrow::array::{Array, LargeStringArray, StringArray};
+use datafusion::arrow::record_batch::RecordBatch;
 use datafusion::execution::{SessionState, SessionStateBuilder};
 use datafusion::prelude::{SessionConfig, SessionContext};
 use scorpio::prelude::{SessionConfigExt, SessionContextExt};
 use scorpio_core::serde::{BallistaCodec, protobuf::scheduler_grpc_client::SchedulerGrpcClient};
 use scorpio_core::{ConfigProducer, RuntimeProducer};
 use scorpio_scheduler::SessionBuilder;
+
+/// Assert one row and two UTF-8 string columns without comparing pretty-print width
+/// (column padding can differ by platform / DataFusion version).
+#[allow(dead_code)]
+pub fn assert_one_row_two_strings(batches: &[RecordBatch], col0: &str, col1: &str) {
+    assert_eq!(batches.len(), 1, "expected exactly one RecordBatch");
+    let batch = &batches[0];
+    assert_eq!(batch.num_rows(), 1, "expected exactly one row");
+    assert_eq!(utf8_cell(batch, 0, 0), col0);
+    assert_eq!(utf8_cell(batch, 1, 0), col1);
+}
+
+fn utf8_cell(batch: &RecordBatch, col: usize, row: usize) -> String {
+    let array = batch.column(col);
+    if let Some(a) = array.as_any().downcast_ref::<StringArray>() {
+        return a.value(row).to_string();
+    }
+    if let Some(a) = array.as_any().downcast_ref::<LargeStringArray>() {
+        return a.value(row).to_string();
+    }
+    panic!(
+        "column {col} has type {:?}, expected Utf8 or LargeUtf8",
+        array.data_type()
+    );
+}
 
 /// Returns the parquet test data directory, which is by default
 /// stored in a git submodule rooted at

@@ -7,10 +7,14 @@ FROM rust:1.91.1-bookworm AS builder
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         protobuf-compiler \
+        libprotobuf-dev \
         pkg-config \
         libssl-dev \
         cmake \
     && rm -rf /var/lib/apt/lists/*
+
+# Well-known `google/protobuf/*.proto` imports (substrait / prost-build); prost-build reads PROTOC_INCLUDE.
+ENV PROTOC_INCLUDE=/usr/include
 
 WORKDIR /usr/src/engine
 COPY . .
