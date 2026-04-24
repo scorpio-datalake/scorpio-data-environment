@@ -15,33 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Scorpio Python client — session, catalog, and coordinator REST (Epic 1)."""
+"""Internal HTTP client for the coordinator REST shim (Epic 1 / Epic 8).
 
-from scorpio.catalog import Catalog, TableHandle
-from scorpio.config import SessionConfig
-from scorpio.exceptions import (
-    ScorpioConfigError,
-    ScorpioConnectionError,
-    ScorpioCoordinatorError,
-    ScorpioError,
-    ScorpioNotImplementedError,
-    ScorpioSqlError,
-)
-from scorpio.session import Session, SessionBuilder
-
-__version__ = "0.0.0"
-
-__all__ = [
-    "Catalog",
-    "Session",
-    "SessionBuilder",
-    "SessionConfig",
-    "TableHandle",
-    "ScorpioConfigError",
-    "ScorpioConnectionError",
-    "ScorpioCoordinatorError",
-    "ScorpioError",
-    "ScorpioNotImplementedError",
-    "ScorpioSqlError",
-    "__version__",
-]
+Import ``CoordinatorClient`` from ``scorpio._rest.coordinator`` to avoid import cycles
+with ``scorpio.__init__``.
+"""

@@ -15,33 +15,4 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Scorpio Python client — session, catalog, and coordinator REST (Epic 1)."""
-
-from scorpio.catalog import Catalog, TableHandle
-from scorpio.config import SessionConfig
-from scorpio.exceptions import (
-    ScorpioConfigError,
-    ScorpioConnectionError,
-    ScorpioCoordinatorError,
-    ScorpioError,
-    ScorpioNotImplementedError,
-    ScorpioSqlError,
-)
-from scorpio.session import Session, SessionBuilder
-
-__version__ = "0.0.0"
-
-__all__ = [
-    "Catalog",
-    "Session",
-    "SessionBuilder",
-    "SessionConfig",
-    "TableHandle",
-    "ScorpioConfigError",
-    "ScorpioConnectionError",
-    "ScorpioCoordinatorError",
-    "ScorpioError",
-    "ScorpioNotImplementedError",
-    "ScorpioSqlError",
-    "__version__",
-]
+"""Pytest configuration for ``python/scorpio`` (``pythonpath`` is set in ``pyproject.toml``)."""

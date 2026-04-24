@@ -15,33 +15,28 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Scorpio Python client — session, catalog, and coordinator REST (Epic 1)."""
+"""Errors raised by the Scorpio Python session and HTTP coordinator client."""
 
-from scorpio.catalog import Catalog, TableHandle
-from scorpio.config import SessionConfig
-from scorpio.exceptions import (
-    ScorpioConfigError,
-    ScorpioConnectionError,
-    ScorpioCoordinatorError,
-    ScorpioError,
-    ScorpioNotImplementedError,
-    ScorpioSqlError,
-)
-from scorpio.session import Session, SessionBuilder
 
-__version__ = "0.0.0"
+class ScorpioError(Exception):
+    """Base class for Scorpio client errors."""
 
-__all__ = [
-    "Catalog",
-    "Session",
-    "SessionBuilder",
-    "SessionConfig",
-    "TableHandle",
-    "ScorpioConfigError",
-    "ScorpioConnectionError",
-    "ScorpioCoordinatorError",
-    "ScorpioError",
-    "ScorpioNotImplementedError",
-    "ScorpioSqlError",
-    "__version__",
-]
+
+class ScorpioConfigError(ScorpioError):
+    """Invalid session configuration or environment."""
+
+
+class ScorpioConnectionError(ScorpioError):
+    """Could not reach the coordinator or scheduler endpoint."""
+
+
+class ScorpioCoordinatorError(ScorpioError):
+    """Coordinator returned an error response."""
+
+
+class ScorpioSqlError(ScorpioCoordinatorError):
+    """SQL execution failed at the coordinator or downstream engine."""
+
+
+class ScorpioNotImplementedError(ScorpioError):
+    """Feature not available in this build or deployment (document upgrade path)."""

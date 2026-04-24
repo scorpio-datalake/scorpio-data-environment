@@ -21,3 +21,10 @@ dev = ["pytest", "grpcio-tools>=1.60,<2"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+markers = [
+  "integration: optional tests against a live Compose/k8s stack (SCORPIO_INTEGRATION=1)",
+]

@@ -14,3 +14,5 @@ pip install -e python/pipeline
 ```
 
 Optional: `uv pip install -e python/scorpio -e python/pipeline`.
+
+Session / coordinator REST (Epic 1): [docs/python-session.md](../docs/python-session.md).

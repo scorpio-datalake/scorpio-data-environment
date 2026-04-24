@@ -1,1 +1,3 @@
 Scorpio engine is derived from Apache Ballista / DataFusion. Keep engine/LICENSE and engine/NOTICE accurate when shipping; retain Apache 2.0 headers where required. Epic 0 sign-off: docs/license-notice-epic0.md.
+
+Epic 1 (Python session): new modules under python/scorpio/src/scorpio use Apache-2.0 headers; engine LICENSE/NOTICE unchanged in substance — see docs/license-notice-epic1-python.md.
