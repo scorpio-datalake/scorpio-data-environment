@@ -24,3 +24,13 @@ Build/up from repo root: `scripts/build-ballista-docker.sh` / `scripts/docker-co
 ## Python / notebooks
 
 Images install **Scorpio's Python API** (`python/scorpio`) and `python/pipeline`; see `python/README.md` and `docs/grpc-codegen.md`. Session env vars and REST contract: `docs/python-session.md`. Lazy DataFrame: `docs/python-dataframe.md`.
+
+## Web UI (Epic 7)
+
+Production React shell lives under **`web/`** (Vite — see **`web/README.md`**). Operators typically:
+
+1. **`npm ci && npm run build`** in **`web/`** (or bake the same in a frontend image Dockerfile).
+2. Serve **`web/dist`** behind an ingress aligned with **`VITE_SCORPIO_COORDINATOR_URL`** (**`docs/control-plane-overview.md`**, **`docs/openapi/coordinator-v1.json`**).
+3. Address **browser CORS** (proxy same-origin **or** coordinator `Access-Control-*` once **Phase 2** **`Planning/Phase2-OSS.md` P2‑E1** ships hardened HTTP).
+
+Compose today still uses **`Dockerfile.web-stub`** placeholder; swapping in the real UI image wiring is backlog for deployment overlays (see **`docs/runbooks-multi-cloud-smoke.md`** for cloud smoke scaffolding).

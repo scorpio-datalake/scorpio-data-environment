@@ -15,6 +15,7 @@ import {
   Typography,
 } from "@mui/material";
 import AppBar from "@mui/material/AppBar";
+import type { Theme } from "@mui/material/styles";
 import { Link, Outlet, useLocation } from "react-router-dom";
 
 const drawerWidth = 240;
@@ -56,7 +57,7 @@ function NavDrawer() {
 export function AppShell() {
   return (
     <Box sx={{ display: "flex" }}>
-      <AppBar position="fixed" sx={{ zIndex: (t) => t.zIndex.drawer + 1 }}>
+      <AppBar position="fixed" sx={{ zIndex: (theme: Theme) => theme.zIndex.drawer + 1 }}>
         <Toolbar>
           <Typography variant="h6" component="span" sx={{ flexGrow: 1 }}>
             Scorpio
