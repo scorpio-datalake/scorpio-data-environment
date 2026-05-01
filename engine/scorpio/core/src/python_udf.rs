@@ -82,18 +82,12 @@ impl SessionPythonUdfRegistry {
         def.validate()?;
         let session_id = session_id.into();
         let name = def.name.clone();
-        self.inner
-            .lock()
-            .insert((session_id, name), def);
+        self.inner.lock().insert((session_id, name), def);
         Ok(())
     }
 
     /// Fetch a definition if present.
-    pub fn get(
-        &self,
-        session_id: &str,
-        name: &str,
-    ) -> Option<PythonScalarUdfDefinition> {
+    pub fn get(&self, session_id: &str, name: &str) -> Option<PythonScalarUdfDefinition> {
         self.inner
             .lock()
             .get(&(session_id.to_string(), name.to_string()))
