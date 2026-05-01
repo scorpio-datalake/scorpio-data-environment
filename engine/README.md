@@ -41,6 +41,8 @@ Workspace packages use Scorpio names (`scorpio-core`, `scorpio-scheduler`, `scor
 | `scorpio/executor` | Executor service |
 | `scorpio/client` | Client library (`scorpio` crate) |
 
+Coordinator **REST job contract** (JSON envelopes shared with Python) lives in **`../docs/openapi/coordinator-v1.json`** with parity notes in **`../docs/epic3-parity-matrix.md`**.
+
 ## Build / test
 
 ```bash

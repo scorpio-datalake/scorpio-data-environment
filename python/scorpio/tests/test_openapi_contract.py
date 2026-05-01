@@ -41,3 +41,8 @@ def test_openapi_coordinator_v1_json_loads() -> None:
         "/v1/jobs/{job_id}/result",
     ):
         assert key in paths, f"missing path {key}"
+
+    submit_props = data["components"]["schemas"]["SubmitJobRequest"]["properties"]
+    for field in ("plan_encoding", "plan_ir_version", "plan_bytes"):
+        assert field in submit_props
+    assert "headers" in paths["/v1/jobs/{job_id}/result"]["get"]["responses"]["200"]

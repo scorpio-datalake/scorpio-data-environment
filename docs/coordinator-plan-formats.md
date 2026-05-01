@@ -7,10 +7,25 @@ This note records **versioning and format choices** for moving work between clie
 - **SQL text** — `POST /v1/sql` and `POST /v1/jobs` carry a UTF-8 `sql` string. The engine parses with DataFusion. **Versioning** is implicit in the **Scorpio engine image tag** (scheduler + executors + planner version).
 - **JSON envelopes** — Job lifecycle (`SubmitJobRequest`, `JobStatusResponse`, …) are defined in [docs/openapi/coordinator-v1.json](openapi/coordinator-v1.json) and mirrored in Rust tests under `engine/scorpio/client/tests/job_contract_serde.rs`.
 
-## Future (Epic 3+)
+## Optional serialized plans (v1 OpenAPI, coordinator-dependent)
 
-- **Substrait** (or DataFusion `LogicalPlan` protobuf) — optional plan bytes on `POST /v1/jobs` / `POST /v1/sql` with explicit **plan_version** or **substrait_version** field once the coordinator accepts non-SQL plans.
-- **Apache Arrow Flight** — preferred bulk result path per Phase 1; HTTP paged Arrow IPC remains a fallback for small clients.
+| Field | Meaning |
+|-------|---------|
+| `plan_encoding` | `"substrait"` — Substrait protobuf bytes; `"opaque"` — fork-specific blob (document server-side). |
+| `plan_ir_version` | Opaque string tying bytes to a planner / fork revision (not semver-enforced in the spec). |
+| `plan_bytes` | Base64-encoded blob; **omit** for SQL-only MVP submit. |
+
+Clients **must** keep sending `sql` today for compatibility; coordinators that only understand SQL may ignore `plan_*` keys until they implement IR ingest.
+
+## Results: HTTP pagination vs Flight
+
+- **`GET /v1/jobs/{job_id}/result`** — Query params `offset` / `limit`; response may include **`X-Scorpio-Has-More`** and **`X-Scorpio-Next-Offset`** so drivers need not infer continuation from row counts alone.
+- **Apache Arrow Flight** — preferred bulk path when the deployment exposes it; REST IPC pages remain the portable fallback (see [epic3-parity-matrix.md](epic3-parity-matrix.md)).
+
+## Future (Epic 3+ extensions)
+
+- **`POST /v1/sql`** accepting optional plan bytes (same `plan_*` fields as jobs) once synchronous path needs IR.
+- Explicit **Substrait semantic version** negotiation if multiple encodings must coexist.
 
 ## Compatibility rule
 

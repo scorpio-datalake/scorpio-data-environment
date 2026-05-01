@@ -20,6 +20,7 @@
 from __future__ import annotations
 
 import json
+import threading
 from http.server import BaseHTTPRequestHandler
 from typing import Any
 from urllib.parse import parse_qs, urlparse
@@ -43,6 +44,7 @@ def build_epic3_handler(
     *,
     expected_tenant: str | None = None,
     full_result_rows: list[int] | None = None,
+    capture_submits: dict[str, Any] | None = None,
 ) -> type[BaseHTTPRequestHandler]:
     """Return a ``BaseHTTPRequestHandler`` subclass with in-memory job store."""
     rows_default = [0, 1, 2, 3, 4]
@@ -50,8 +52,10 @@ def build_epic3_handler(
     state: dict[str, Any] = {
         "jobs": {},
         "counter": 0,
+        "counter_lock": threading.Lock(),
         "expected_tenant": expected_tenant,
         "full_rows": full_rows,
+        "capture_submits": capture_submits,
     }
 
     class Epic3CoordinatorHandler(BaseHTTPRequestHandler):
@@ -121,9 +125,16 @@ def build_epic3_handler(
                     return
                 offset = int(qs.get("offset", ["0"])[0])
                 limit = int(qs.get("limit", ["65536"])[0])
-                raw = _arrow_ipc_table_slice(state["full_rows"], offset=offset, limit=limit)
+                full = state["full_rows"]
+                slice_vals = full[offset : offset + limit]
+                slice_len = len(slice_vals)
+                next_offset = offset + slice_len
+                has_more = next_offset < len(full)
+                raw = _arrow_ipc_table_slice(full, offset=offset, limit=limit)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/vnd.apache.arrow.stream")
+                self.send_header("X-Scorpio-Has-More", "1" if has_more else "0")
+                self.send_header("X-Scorpio-Next-Offset", str(next_offset))
                 self.end_headers()
                 self.wfile.write(raw)
                 return
@@ -187,18 +198,22 @@ def build_epic3_handler(
                 self.wfile.write(sink.getvalue().to_pybytes())
                 return
             if path == "/v1/jobs":
-                state["counter"] += 1
-                job_id = f"j-{state['counter']}"
+                cap = state.get("capture_submits")
+                if isinstance(cap, dict):
+                    cap["last_submit"] = dict(payload)
                 sid = str(payload.get("session_id", ""))
                 sql = str(payload.get("sql", ""))
-                state["jobs"][job_id] = {
-                    "session_id": sid,
-                    "sql": sql,
-                    "status": "QUEUED",
-                    "polls": 0,
-                    "cancelled": False,
-                    "error": None,
-                }
+                with state["counter_lock"]:
+                    state["counter"] += 1
+                    job_id = f"j-{state['counter']}"
+                    state["jobs"][job_id] = {
+                        "session_id": sid,
+                        "sql": sql,
+                        "status": "QUEUED",
+                        "polls": 0,
+                        "cancelled": False,
+                        "error": None,
+                    }
                 self.send_response(202)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()

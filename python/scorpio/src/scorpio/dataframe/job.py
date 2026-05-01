@@ -113,18 +113,30 @@ class JobHandle:
             raise ScorpioJobError("Timed out waiting for job SUCCEEDED (coordinator status poll).")
         sid = session.coordinator_session_id()
         offset = 0
+        limit = _JOB_RESULT_PAGE_ROWS
         chunks: list[pa.Table] = []
         while True:
             resp = session._client.fetch_job_result_page_raw(
-                sid, self.job_id, offset=offset, limit=_JOB_RESULT_PAGE_ROWS
+                sid, self.job_id, offset=offset, limit=limit
             )
             tbl = _table_from_job_result_response(resp)
+            if tbl.num_rows > 0:
+                chunks.append(tbl)
+
+            has_more = resp.headers.get("x-scorpio-has-more", "").strip()
+            next_off = resp.headers.get("x-scorpio-next-offset")
+            if has_more == "1":
+                if next_off is not None:
+                    offset = int(next_off)
+                else:
+                    offset += max(tbl.num_rows, 1)
+                continue
+
             if tbl.num_rows == 0:
                 break
-            chunks.append(tbl)
-            offset += tbl.num_rows
-            if tbl.num_rows < _JOB_RESULT_PAGE_ROWS:
+            if tbl.num_rows < limit:
                 break
+            offset += tbl.num_rows
         if not chunks:
             return pa.table({})
         return pa.concat_tables(chunks)

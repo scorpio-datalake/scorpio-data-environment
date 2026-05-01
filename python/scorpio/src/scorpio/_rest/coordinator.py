@@ -19,17 +19,23 @@
 
 from __future__ import annotations
 
+import base64
 import json
 import time
 import urllib.error
 import urllib.request
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Any, Mapping, MutableMapping
 from urllib.parse import quote, urlencode, urljoin
 
 from scorpio.config import SessionConfig
 from scorpio.exceptions import ScorpioConnectionError, ScorpioCoordinatorError, ScorpioJobError
 from scorpio.python_api_meta import SCORPIO_PYTHON_API_ID
+
+
+def _response_headers_dict(raw: Mapping[str, str]) -> Mapping[str, str]:
+    return MappingProxyType({k.lower(): v for k, v in raw.items()})
 
 
 @dataclass(frozen=True)
@@ -39,6 +45,7 @@ class HttpResponse:
     status: int
     body: bytes
     content_type: str | None
+    headers: Mapping[str, str] = field(default_factory=lambda: MappingProxyType({}))
 
 
 class CoordinatorClient:
@@ -88,7 +95,13 @@ class CoordinatorClient:
                 ) as resp:
                     raw = resp.read()
                     ctype = resp.headers.get("Content-Type")
-                    return HttpResponse(status=resp.status, body=raw, content_type=ctype)
+                    hdrs = _response_headers_dict(dict(resp.headers.items()))
+                    return HttpResponse(
+                        status=resp.status,
+                        body=raw,
+                        content_type=ctype,
+                        headers=hdrs,
+                    )
             except urllib.error.HTTPError as e:
                 if e.code == 503 and attempt + 1 < self._config.max_retries:
                     time.sleep(self._config.retry_backoff_sec * (attempt + 1))
@@ -136,13 +149,32 @@ class CoordinatorClient:
             json_body={"session_id": session_id, "sql": sql, "tenant_id": self._config.tenant_id},
         )
 
-    def submit_job(self, session_id: str, sql: str) -> tuple[str, str]:
+    def submit_job(
+        self,
+        session_id: str,
+        sql: str,
+        *,
+        plan_encoding: str | None = None,
+        plan_ir_version: str | None = None,
+        plan_bytes: bytes | None = None,
+    ) -> tuple[str, str]:
         """POST ``/v1/jobs`` — returns ``(job_id, status)`` per OpenAPI ``SubmitJobResponse``."""
+        payload: dict[str, Any] = {
+            "session_id": session_id,
+            "sql": sql,
+            "tenant_id": self._config.tenant_id,
+        }
+        if plan_encoding is not None:
+            payload["plan_encoding"] = plan_encoding
+        if plan_ir_version is not None:
+            payload["plan_ir_version"] = plan_ir_version
+        if plan_bytes is not None:
+            payload["plan_bytes"] = base64.standard_b64encode(plan_bytes).decode("ascii")
         try:
             resp = self.request(
                 "POST",
                 "/v1/jobs",
-                json_body={"session_id": session_id, "sql": sql, "tenant_id": self._config.tenant_id},
+                json_body=payload,
             )
         except ScorpioCoordinatorError as e:
             if "HTTP 404" in str(e):

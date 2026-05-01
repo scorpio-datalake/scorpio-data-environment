@@ -26,6 +26,14 @@ pub struct SubmitJobRequest {
     pub sql: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tenant_id: Option<String>,
+    /// `substrait` or `opaque`; optional wire field from `coordinator-v1.json`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub plan_encoding: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub plan_ir_version: Option<String>,
+    /// Base64 plan blob when coordinator accepts non-SQL IR.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub plan_bytes: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -54,10 +62,36 @@ fn submit_job_request_roundtrip() {
         session_id: "s1".into(),
         sql: "SELECT 1".into(),
         tenant_id: Some("t1".into()),
+        plan_encoding: None,
+        plan_ir_version: None,
+        plan_bytes: None,
     };
     let json = serde_json::to_string(&v).unwrap();
     let back: SubmitJobRequest = serde_json::from_str(&json).unwrap();
     assert_eq!(v, back);
+}
+
+#[test]
+fn submit_job_request_optional_plan_fields_roundtrip() {
+    let json = r#"{"session_id":"s","sql":"SELECT 1","plan_encoding":"substrait","plan_ir_version":"0.1","plan_bytes":"AQID"}"#;
+    let v: SubmitJobRequest = serde_json::from_str(json).unwrap();
+    assert_eq!(v.session_id, "s");
+    assert_eq!(v.sql, "SELECT 1");
+    assert_eq!(v.plan_encoding.as_deref(), Some("substrait"));
+    assert_eq!(v.plan_ir_version.as_deref(), Some("0.1"));
+    assert_eq!(v.plan_bytes.as_deref(), Some("AQID"));
+
+    let encoded = serde_json::to_string(&v).unwrap();
+    let back: SubmitJobRequest = serde_json::from_str(&encoded).unwrap();
+    assert_eq!(v, back);
+}
+
+#[test]
+fn submit_job_request_ignores_unknown_json_keys() {
+    let json = r#"{"session_id":"s","sql":"x","future_field":true}"#;
+    let v: SubmitJobRequest = serde_json::from_str(json).unwrap();
+    assert_eq!(v.session_id, "s");
+    assert_eq!(v.sql, "x");
 }
 
 #[test]

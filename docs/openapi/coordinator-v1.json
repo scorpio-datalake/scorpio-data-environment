@@ -133,7 +133,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Arrow IPC page",
+            "description": "Arrow IPC stream for one page (prefer Flight for bulk; HTTP stays JSON/IPC fallback).",
+            "headers": {
+              "X-Scorpio-Has-More": {
+                "description": "When present, `1` means another page exists; `0` means this is the terminal page.",
+                "schema": { "type": "string", "enum": ["0", "1"] }
+              },
+              "X-Scorpio-Next-Offset": {
+                "description": "Suggested `offset` query parameter for the next GET when X-Scorpio-Has-More is `1`.",
+                "schema": { "type": "integer", "minimum": 0 }
+              }
+            },
             "content": {
               "application/vnd.apache.arrow.stream": { "schema": { "type": "string", "format": "binary" } }
             }
@@ -183,8 +193,24 @@
         "required": ["session_id", "sql"],
         "properties": {
           "session_id": { "type": "string" },
-          "sql": { "type": "string" },
-          "tenant_id": { "type": "string", "nullable": true }
+          "sql": { "type": "string", "description": "Primary SQL text for MVP; retained when optional plan bytes are supplied." },
+          "tenant_id": { "type": "string", "nullable": true },
+          "plan_encoding": {
+            "type": "string",
+            "description": "When set together with plan_bytes, coordinator may execute serialized IR instead of parsing sql alone.",
+            "enum": ["substrait", "opaque"]
+          },
+          "plan_ir_version": {
+            "type": "string",
+            "nullable": true,
+            "description": "Opaque version tag for the serialized plan (e.g. Substrait minor or engine fork id)."
+          },
+          "plan_bytes": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true,
+            "description": "Base64-encoded plan blob; requires plan_encoding when coordinators accept non-SQL plans."
+          }
         }
       },
       "SubmitJobResponse": {

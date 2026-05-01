@@ -19,9 +19,11 @@
 
 from __future__ import annotations
 
+import base64
 import os
 import threading
 import unittest.mock
+from concurrent.futures import ThreadPoolExecutor
 from http.server import ThreadingHTTPServer
 
 import pyarrow as pa
@@ -142,6 +144,59 @@ def test_epic3_paginated_result_concat(monkeypatch: pytest.MonkeyPatch) -> None:
             tbl = session.submit_sql("SELECT 1").result_arrow(session)
             assert tbl.num_rows == 5
             assert pa.types.is_int64(tbl.schema.field("v").type)
+    finally:
+        server.shutdown()
+
+
+def test_epic3_submit_optional_plan_fields_on_wire() -> None:
+    cap: dict[str, object] = {}
+    h = build_epic3_handler(capture_submits=cap)
+    server = _serve(h)
+    try:
+        port = server.server_address[1]
+        url = f"http://127.0.0.1:{port}"
+        with unittest.mock.patch.dict(
+            os.environ,
+            {"SCORPIO_COORDINATOR_URL": url, "SCORPIO_HTTP_RETRIES": "1"},
+            clear=False,
+        ):
+            session = Session.connect()
+            blob = b"\xde\xad"
+            session.submit_sql(
+                "SELECT 1",
+                plan_encoding="opaque",
+                plan_ir_version="epic3-test",
+                plan_bytes=blob,
+            )
+        last = cap.get("last_submit")
+        assert isinstance(last, dict)
+        assert last.get("plan_encoding") == "opaque"
+        assert last.get("plan_ir_version") == "epic3-test"
+        assert last.get("plan_bytes") == base64.standard_b64encode(blob).decode("ascii")
+    finally:
+        server.shutdown()
+
+
+def test_epic3_concurrent_submits_unique_job_ids() -> None:
+    h = build_epic3_handler()
+    server = _serve(h)
+    try:
+        port = server.server_address[1]
+        url = f"http://127.0.0.1:{port}"
+
+        def _one(_: int) -> str:
+            s = Session.connect()
+            return s.submit_sql("SELECT 1").job_id
+
+        with unittest.mock.patch.dict(
+            os.environ,
+            {"SCORPIO_COORDINATOR_URL": url, "SCORPIO_HTTP_RETRIES": "1"},
+            clear=False,
+        ):
+            with ThreadPoolExecutor(max_workers=16) as pool:
+                ids = list(pool.map(_one, range(32)))
+        assert len(ids) == len(set(ids))
+        assert all(x.startswith("j-") for x in ids)
     finally:
         server.shutdown()
 

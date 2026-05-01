@@ -247,13 +247,30 @@ class Session:
         resp = self._client.execute_sql_raw(self._ensure_session_id(), query)
         return _table_from_coordinator_response(resp)
 
-    def submit_sql(self, sql: str) -> "JobHandle":
-        """Submit async job ``POST /v1/jobs`` (Epic 3); poll via :class:`scorpio.dataframe.job.JobHandle`."""
+    def submit_sql(
+        self,
+        sql: str,
+        *,
+        plan_encoding: str | None = None,
+        plan_ir_version: str | None = None,
+        plan_bytes: bytes | None = None,
+    ) -> "JobHandle":
+        """Submit async job ``POST /v1/jobs`` (Epic 3); poll via :class:`scorpio.dataframe.job.JobHandle`.
+
+        Optional ``plan_*`` arguments match OpenAPI v1 when the coordinator accepts serialized IR
+        (Substrait or opaque engine bytes); SQL remains required for compatibility.
+        """
         from scorpio.dataframe.job import JobHandle
 
         if self._stopped:
             raise ScorpioSqlError("Session is stopped")
-        job_id, _status = self._client.submit_job(self._ensure_session_id(), sql)
+        job_id, _status = self._client.submit_job(
+            self._ensure_session_id(),
+            sql,
+            plan_encoding=plan_encoding,
+            plan_ir_version=plan_ir_version,
+            plan_bytes=plan_bytes,
+        )
         return JobHandle(job_id=job_id, sql_text=sql)
 
     def run_dataframe(self, df: object) -> pa.Table:
