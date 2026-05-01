@@ -43,6 +43,8 @@ pub mod error;
 pub mod event_loop;
 /// Physical execution plans for distributed query processing.
 pub mod execution_plans;
+/// Epic 4 — Python scalar UDF payloads and session registry (executor IPC pending).
+pub mod python_udf;
 /// Extension traits and utilities for DataFusion integration.
 pub mod extension;
 #[cfg(feature = "build-binary")]

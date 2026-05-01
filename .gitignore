@@ -5,3 +5,5 @@ vendor/datafusion-ballista/
 *.pyc
 Planning/Phase2-OSS.md
 Planning/Phase3-OSS.md
+Planning/Phase4-OSS.md
+Planning/Phase5-OSS.md

@@ -56,6 +56,7 @@ def build_epic3_handler(
         "expected_tenant": expected_tenant,
         "full_rows": full_rows,
         "capture_submits": capture_submits,
+        "python_udfs": {},
     }
 
     class Epic3CoordinatorHandler(BaseHTTPRequestHandler):
@@ -238,6 +239,37 @@ def build_epic3_handler(
             if path.startswith("/v1/sessions/") and path.endswith("/close"):
                 self.send_response(204)
                 self.end_headers()
+                return
+            parts = path.strip("/").split("/")
+            if (
+                len(parts) == 5
+                and parts[0] == "v1"
+                and parts[1] == "sessions"
+                and parts[4] == "python-udfs"
+            ):
+                sess = parts[3]
+                udf_name = str(payload.get("name", "")).strip()
+                udf_src = str(payload.get("source", ""))
+                ret_type = str(payload.get("return_arrow_type", "float64") or "float64").strip()
+                if not udf_name or not udf_src.strip():
+                    self.send_response(400)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(b'{"error":"invalid_python_udf","code":"400"}')
+                    return
+                per_session = state["python_udfs"].setdefault(sess, {})
+                per_session[udf_name] = {
+                    "source": udf_src,
+                    "return_arrow_type": ret_type,
+                }
+                self.send_response(201)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(
+                    json.dumps(
+                        {"name": udf_name, "registered": True, "session_id": sess},
+                    ).encode("utf-8")
+                )
                 return
             self.send_response(404)
             self.end_headers()

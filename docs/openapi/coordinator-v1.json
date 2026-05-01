@@ -37,6 +37,38 @@
         "responses": { "204": { "description": "Closed" } }
       }
     },
+    "/v1/sessions/{session_id}/python-udfs": {
+      "post": {
+        "summary": "Register scalar Python UDF for session (Epic 4 coordinator contract)",
+        "description": "Stores user-authored Python source for a session-scoped scalar UDF. Executors apply this during plan execution once worker IPC is wired; coordinators return 201 on acceptance.",
+        "parameters": [
+          { "name": "session_id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterPythonScalarUdfRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registered",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RegisterPythonUdfResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body or UDF name",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorBody" } }
+            }
+          }
+        }
+      }
+    },
     "/v1/sql": {
       "post": {
         "summary": "Execute SQL synchronously",
@@ -178,6 +210,35 @@
           "session_id": { "type": "string" },
           "sql": { "type": "string" },
           "tenant_id": { "type": "string", "nullable": true }
+        }
+      },
+      "RegisterPythonScalarUdfRequest": {
+        "type": "object",
+        "required": ["name", "source"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "SQL-visible function name for this session (e.g. ``my_add``)."
+          },
+          "source": {
+            "type": "string",
+            "description": "UTF-8 Python source defining a callable scalar (MVP: coordinator stores verbatim; executor validates later)."
+          },
+          "return_arrow_type": {
+            "type": "string",
+            "description": "Arrow type string accepted by DataFusion for the return (e.g. ``float64``, ``int64``).",
+            "default": "float64"
+          },
+          "tenant_id": { "type": "string", "nullable": true }
+        }
+      },
+      "RegisterPythonUdfResponse": {
+        "type": "object",
+        "required": ["name", "registered"],
+        "properties": {
+          "name": { "type": "string" },
+          "registered": { "type": "boolean" },
+          "session_id": { "type": "string" }
         }
       },
       "JsonTable": {

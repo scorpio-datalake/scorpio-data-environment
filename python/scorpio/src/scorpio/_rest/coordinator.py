@@ -141,6 +141,38 @@ class CoordinatorClient:
         """POST ``/v1/sessions/{id}/close``."""
         self.request("POST", f"/v1/sessions/{session_id}/close", json_body={})
 
+    def register_python_scalar_udf(
+        self,
+        session_id: str,
+        name: str,
+        source: str,
+        *,
+        return_arrow_type: str = "float64",
+    ) -> dict[str, Any]:
+        """POST ``/v1/sessions/{id}/python-udfs`` — Epic 4 registration (OpenAPI v1)."""
+        safe_sid = quote(session_id, safe="")
+        payload: dict[str, Any] = {
+            "name": name,
+            "source": source,
+            "return_arrow_type": return_arrow_type,
+            "tenant_id": self._config.tenant_id,
+        }
+        resp = self.request(
+            "POST",
+            f"/v1/sessions/{safe_sid}/python-udfs",
+            json_body=payload,
+        )
+        if resp.status not in (200, 201):
+            raise ScorpioCoordinatorError(
+                f"register_python_scalar_udf: HTTP {resp.status}: {resp.body[:512]!r}"
+            )
+        out = json.loads(resp.body.decode("utf-8"))
+        if not isinstance(out, dict):
+            raise ScorpioCoordinatorError(
+                f"register_python_scalar_udf: expected JSON object, got {type(out)}"
+            )
+        return out
+
     def execute_sql_raw(self, session_id: str, sql: str) -> HttpResponse:
         """POST ``/v1/sql`` — response body is Arrow IPC stream or JSON error."""
         return self.request(

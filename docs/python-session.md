@@ -26,6 +26,7 @@ The session and catalog story must stay consistent with broader lake plans:
 | `session.version()` | `scorpio_python_api` package version plus optional `GET /v1/version` body. |
 | `session.verify_scheduler_reachable()` | gRPC channel readiness to `SCORPIO_SCHEDULER_HOST:SCORPIO_SCHEDULER_PORT` (TCP / protocol handshake only; RPC stubs live under `docs/grpc-codegen.md`). |
 | `session.run_dataframe(df)` | Run a lazy Epic 2 `scorpio.dataframe.DataFrame` (compiled SQL → same `sql()` path). |
+| `session.register_python_scalar_udf(name, source, …)` | Epic 4: `POST /v1/sessions/{id}/python-udfs` registers session-scoped scalar UDF source for executor Python workers (storied in OpenAPI `RegisterPythonScalarUdfRequest`). |
 
 ## Coordinator REST contract (MVP)
 
@@ -38,6 +39,7 @@ Until the real coordinator ships, the Compose stack may still use `hashicorp/htt
 | `POST` | `/v1/sessions` | JSON body may include `tenant_id`; response `{"session_id":"..."}`. |
 | `POST` | `/v1/sql` | JSON body `{"session_id","sql","tenant_id"}`; response **Arrow IPC stream** (preferred) or JSON `{"columns":[...],"rows":[[...],...]}`. |
 | `POST` | `/v1/sessions/{id}/close` | Session teardown. |
+| `POST` | `/v1/sessions/{id}/python-udfs` | Epic 4: JSON body `RegisterPythonScalarUdfRequest` (`name`, `source`, optional `return_arrow_type`); response `RegisterPythonUdfResponse` (`name`, `registered`, `session_id`). |
 
 All mutating coordinator calls send header **`X-Scorpio-Tenant-Id`** when `SCORPIO_TENANT_ID` (or builder `tenant_id`) is set. Optional **`Authorization: Bearer …`** is sent when `SCORPIO_AUTH_BEARER` is set (placeholder for OAuth2 / service tokens).
 

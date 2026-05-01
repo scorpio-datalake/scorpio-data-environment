@@ -34,6 +34,7 @@ def test_openapi_coordinator_v1_json_loads() -> None:
     paths = data["paths"]
     for key in (
         "/v1/sessions",
+        "/v1/sessions/{session_id}/python-udfs",
         "/v1/sql",
         "/v1/jobs",
         "/v1/jobs/{job_id}",
@@ -41,6 +42,10 @@ def test_openapi_coordinator_v1_json_loads() -> None:
         "/v1/jobs/{job_id}/result",
     ):
         assert key in paths, f"missing path {key}"
+
+    udf_req = data["components"]["schemas"]["RegisterPythonScalarUdfRequest"]
+    assert "name" in udf_req["required"]
+    assert "source" in udf_req["required"]
 
     submit_props = data["components"]["schemas"]["SubmitJobRequest"]["properties"]
     for field in ("plan_encoding", "plan_ir_version", "plan_bytes"):

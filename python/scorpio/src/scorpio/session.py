@@ -247,6 +247,25 @@ class Session:
         resp = self._client.execute_sql_raw(self._ensure_session_id(), query)
         return _table_from_coordinator_response(resp)
 
+    def register_python_scalar_udf(
+        self,
+        name: str,
+        source: str,
+        *,
+        return_arrow_type: str = "float64",
+    ) -> dict[str, Any]:
+        """Register session-scoped scalar Python UDF (``POST …/python-udfs``, Epic 4).
+
+        Coordinators persist ``source`` for executor-side Python worker pools once wired;
+        today this establishes the REST contract and validates JSON responses.
+        """
+        if self._stopped:
+            raise ScorpioSqlError("Session is stopped")
+        sid = self._ensure_session_id()
+        return self._client.register_python_scalar_udf(
+            sid, name, source, return_arrow_type=return_arrow_type
+        )
+
     def submit_sql(
         self,
         sql: str,

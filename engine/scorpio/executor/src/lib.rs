@@ -37,6 +37,8 @@ pub mod executor_server;
 pub mod flight_service;
 /// Metrics collection for executor runtime statistics.
 pub mod metrics;
+/// Epic 4 — concurrency limits for Python UDF subprocess / worker invokes.
+pub mod python_udf_worker_pool;
 /// Graceful shutdown coordination for executor components.
 pub mod shutdown;
 /// Signal handling for process termination.
