@@ -21,11 +21,17 @@ from __future__ import annotations
 
 import json
 import threading
-from http.server import BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 import pyarrow as pa
+
+
+class Epic3ThreadingHTTPServer(ThreadingHTTPServer):
+    """Raised TCP listen backlog for burst concurrent clients (stub tests)."""
+
+    request_queue_size = 256
 
 
 def _arrow_ipc_table_slice(values: list[int], *, offset: int, limit: int) -> bytes:
@@ -240,14 +246,15 @@ def build_epic3_handler(
                 self.send_response(204)
                 self.end_headers()
                 return
+            # `/v1/sessions/{session_id}/python-udfs` → ['v1','sessions',session_id,'python-udfs'] (length 4)
             parts = path.strip("/").split("/")
             if (
-                len(parts) == 5
+                len(parts) == 4
                 and parts[0] == "v1"
                 and parts[1] == "sessions"
-                and parts[4] == "python-udfs"
+                and parts[3] == "python-udfs"
             ):
-                sess = parts[3]
+                sess = parts[2]
                 udf_name = str(payload.get("name", "")).strip()
                 udf_src = str(payload.get("source", ""))
                 ret_type = str(payload.get("return_arrow_type", "float64") or "float64").strip()

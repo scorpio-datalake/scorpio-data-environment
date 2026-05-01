@@ -24,19 +24,18 @@ import os
 import threading
 import unittest.mock
 from concurrent.futures import ThreadPoolExecutor
-from http.server import ThreadingHTTPServer
 
 import pyarrow as pa
 import pytest
 
-from coordinator_epic3_handler import build_epic3_handler
+from coordinator_epic3_handler import Epic3ThreadingHTTPServer, build_epic3_handler
 
 from scorpio import DataFrame, Session
 from scorpio.exceptions import ScorpioJobError
 
 
-def _serve(handler_cls: type) -> ThreadingHTTPServer:
-    server = ThreadingHTTPServer(("127.0.0.1", 0), handler_cls)
+def _serve(handler_cls: type) -> Epic3ThreadingHTTPServer:
+    server = Epic3ThreadingHTTPServer(("127.0.0.1", 0), handler_cls)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     return server

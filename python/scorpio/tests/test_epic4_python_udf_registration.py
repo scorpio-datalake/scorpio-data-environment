@@ -20,16 +20,15 @@
 from __future__ import annotations
 
 import threading
-from http.server import ThreadingHTTPServer
 
-from coordinator_epic3_handler import build_epic3_handler
+from coordinator_epic3_handler import Epic3ThreadingHTTPServer, build_epic3_handler
 
 from scorpio.session import Session
 
 
 def test_register_python_scalar_udf_roundtrip() -> None:
     handler = build_epic3_handler()
-    server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    server = Epic3ThreadingHTTPServer(("127.0.0.1", 0), handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
