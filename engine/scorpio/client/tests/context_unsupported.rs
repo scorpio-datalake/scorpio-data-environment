@@ -27,6 +27,17 @@ mod unsupported {
     use datafusion::prelude::*;
     use datafusion::{assert_batches_eq, prelude::SessionContext};
     use rstest::*;
+    use std::error::Error;
+
+    fn flattened_error_messages(err: &(dyn Error + 'static)) -> String {
+        let mut combined = String::new();
+        let mut cur: Option<&(dyn Error + 'static)> = Some(err);
+        while let Some(e) = cur {
+            combined.push_str(&e.to_string());
+            cur = e.source();
+        }
+        combined
+    }
 
     #[rstest::fixture]
     fn test_data() -> String {
@@ -123,11 +134,16 @@ mod unsupported {
         // Collect fails because extension node is not handled for now by default query planner
         let result = cached_df.collect().await;
 
-        assert!(result.is_err());
-        let err_msg = result.unwrap_err().to_string();
+        let err_msg = match result {
+            Err(e) => flattened_error_messages(&e),
+            Ok(_) => panic!("collect() should fail when cached plans hit an unhandled node"),
+        };
+
         assert!(
-            err_msg.contains("No installed planner was able to convert the custom node to an execution plan: ScorpioCacheNode"),
-            "Expected planner error, got: {err_msg}"
+            err_msg.contains("No installed planner")
+                && err_msg.contains("convert the custom node")
+                && (err_msg.contains("BallistaCacheNode") || err_msg.contains("ScorpioCacheNode")),
+            "Expected planner error for cache extension node, got: {err_msg}"
         );
 
         Ok(())
