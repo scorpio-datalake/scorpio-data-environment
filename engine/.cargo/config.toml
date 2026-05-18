@@ -1,0 +1,29 @@
+# Local Cargo config for the Scorpio engine workspace.
+# Cargo discovers this file when the manifest is under `engine/` (including
+# `cargo build` / `cargo test` run from `engine/` or a member crate path).
+
+[build]
+# Intentionally no `rustflags` here. Extra flags belong in this file for the
+# whole team, or stay unset everywhere. If `RUSTFLAGS` differs between the
+# terminal and rust-analyzer, Cargo invalidates incremental artifacts and
+# rebuilds more than necessary — align both or leave both unset.
+
+# Scoped workflows (run from `engine/`). Full workspace: `cargo test-ws`.
+# CI parity (see `.github/workflows/scorpio-engine.yml`): `cargo fmt-check`, `cargo clippy-ws`, `cargo test-ws`.
+# See README.md "Iterating locally (scoped builds)".
+[alias]
+fmt-check = "fmt --all -- --check"
+clippy-ws = "clippy --workspace --locked --all-targets -- -D warnings"
+check-core = "check -p scorpio-core --locked"
+check-core-tests = "check -p scorpio-core --tests --locked"
+test-core = "test -p scorpio-core --locked"
+check-scheduler = "check -p scorpio-scheduler --locked"
+test-scheduler = "test -p scorpio-scheduler --locked"
+check-executor = "check -p scorpio-executor --locked"
+test-executor = "test -p scorpio-executor --locked"
+check-client = "check -p scorpio --locked"
+test-client = "test -p scorpio --locked"
+check-cli = "check -p scorpio-cli --locked"
+test-cli = "test -p scorpio-cli --locked"
+check-ws = "check --workspace --locked"
+test-ws = "test --workspace --locked"

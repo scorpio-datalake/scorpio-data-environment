@@ -1,0 +1,42 @@
+# syntax=docker/dockerfile:1
+# Build context: this directory (`engine/`, i.e. SCORPIO_ENGINE_ROOT). Builds scheduler + executor binaries.
+# Image targets: `scorpio-scheduler`, `scorpio-executor` (see deploy/docker-compose/docker-compose.scorpio-engine.yml).
+
+FROM rust:1.91.1-bookworm AS builder
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        protobuf-compiler \
+        libprotobuf-dev \
+        pkg-config \
+        libssl-dev \
+        cmake \
+    && rm -rf /var/lib/apt/lists/*
+
+# Well-known `google/protobuf/*.proto` imports (substrait / prost-build); prost-build reads PROTOC_INCLUDE.
+ENV PROTOC_INCLUDE=/usr/include
+
+WORKDIR /usr/src/engine
+COPY . .
+
+RUN cargo build --release -p scorpio-scheduler -p scorpio-executor --locked
+
+FROM debian:bookworm-slim AS scorpio-scheduler
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates libssl3 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /usr/src/engine/target/release/scorpio-scheduler /usr/local/bin/
+
+ENTRYPOINT ["scorpio-scheduler"]
+
+FROM debian:bookworm-slim AS scorpio-executor
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates libssl3 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /usr/src/engine/target/release/scorpio-executor /usr/local/bin/
+
+ENTRYPOINT ["scorpio-executor"]

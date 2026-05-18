@@ -1,0 +1,62 @@
+# Linux-only S3/MinIO integration for scorpio-core (uses docker run for MinIO — not a Docker
+# *build* of Scorpio images). Workspace fmt/clippy/test on Ubuntu/Windows/macOS:
+# see scorpio-engine-multi-os.yml.
+name: Scorpio engine (Rust) — MinIO S3 integration
+
+on:
+  push:
+    paths:
+      - "engine/**"
+      - ".github/workflows/scorpio-engine.yml"
+  pull_request:
+    paths:
+      - "engine/**"
+      - ".github/workflows/scorpio-engine.yml"
+
+defaults:
+  run:
+    working-directory: engine
+
+jobs:
+  minio-s3:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install protoc and well-known protos (substrait / prost-build)
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler libprotobuf-dev
+
+      - name: Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.91.1
+
+      - name: S3 / MinIO integration (scorpio-core)
+        run: |
+          docker run -d --name scorpio-minio -p 9000:9000 \
+            -e MINIO_ROOT_USER=minioadmin \
+            -e MINIO_ROOT_PASSWORD=minioadmin \
+            quay.io/minio/minio server /data
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:9000/minio/health/live >/dev/null 2>&1; then
+              echo "MinIO ready"
+              break
+            fi
+            sleep 1
+          done
+          # mc image ENTRYPOINT is `mc`; use a shell so `alias set` and `mb` run in one container.
+          docker run --rm --network host --entrypoint /bin/sh quay.io/minio/mc -c \
+            "mc --quiet alias set sc http://127.0.0.1:9000 minioadmin minioadmin && mc mb -p sc/scorpio-it"
+          cargo test -p scorpio-core --features build-binary --test s3_minio_integration --locked -- --ignored --nocapture
+        env:
+          PROTOC_INCLUDE: /usr/include
+          AWS_ACCESS_KEY_ID: minioadmin
+          AWS_SECRET_ACCESS_KEY: minioadmin
+          AWS_DEFAULT_REGION: us-east-1
+          AWS_ENDPOINT_URL_S3: http://127.0.0.1:9000
+          AWS_ALLOW_HTTP: "true"
+          AWS_EC2_METADATA_DISABLED: "true"
+
+      - name: Stop MinIO
+        if: always()
+        run: docker rm -f scorpio-minio 2>/dev/null || true

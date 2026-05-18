@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scheduler
+  namespace: scorpio
+  labels:
+    app.kubernetes.io/name: scorpio-scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: scorpio-scheduler
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: scorpio-scheduler
+    spec:
+      containers:
+        - name: scheduler
+          image: scorpio-scheduler:local
+          imagePullPolicy: IfNotPresent
+          args:
+            - --bind-host=0.0.0.0
+            - --external-host=scheduler
+            - --bind-port=50050
+          ports:
+            - name: grpc
+              containerPort: 50050
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scheduler
+  namespace: scorpio
+  labels:
+    app.kubernetes.io/name: scorpio-scheduler
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: scorpio-scheduler
+  ports:
+    - name: grpc
+      port: 50050
+      targetPort: 50050

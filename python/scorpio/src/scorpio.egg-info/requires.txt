@@ -1,0 +1,8 @@
+grpcio<2,>=1.60
+protobuf<6,>=4.25
+pyarrow<21,>=14
+typing-extensions>=4.8
+
+[dev]
+pytest
+grpcio-tools<2,>=1.60

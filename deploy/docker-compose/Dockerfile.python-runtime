@@ -1,0 +1,11 @@
+# syntax=docker/dockerfile:1
+# Context: monorepo root. Slim MLE/runtime image: client + pipeline + notebooks copy.
+FROM python:3.12-slim-bookworm
+WORKDIR /opt/scorpio
+COPY python/scorpio /src/scorpio
+COPY python/pipeline /src/pipeline
+COPY notebooks /opt/scorpio/notebooks
+RUN pip install --no-cache-dir /src/scorpio /src/pipeline \
+  && rm -rf /root/.cache/pip /src/scorpio /src/pipeline
+ENV PYTHONUNBUFFERED=1
+CMD ["sleep", "infinity"]

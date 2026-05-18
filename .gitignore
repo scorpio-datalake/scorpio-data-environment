@@ -1,0 +1,12 @@
+Planning/license-and-notice.txt
+Planning/Phase1.md
+Planning/ScorpioReleaseGapResearch.md
+vendor/datafusion-ballista/
+*.pyc
+Planning/Phase2-OSS.md
+Planning/Phase3-OSS.md
+Planning/Phase4-OSS.md
+Planning/Phase5-OSS.md
+
+web/node_modules/
+web/dist/
